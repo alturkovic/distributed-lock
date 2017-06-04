@@ -1,0 +1,113 @@
+= Distributed Lock
+
+Distributed lock ensures your method cannot be run in parallel in a cluster of servers.
+It uses a common store to keep track of used locks and your method needs to acquire one or more locks to run.
+
+== Enabling locking
+
+The project contains several configurations and annotations to help you enable locking and customize it.
+The simplest way to enable locking with Redis or MongoDB is to use `@EnableDistributedLockAutoConfiguration`.
+
+[source,java]
+----
+@Configuration
+@EnableDistributedLockAutoConfiguration
+public class MyConfiguration {
+    // rest of your configuration
+}
+----
+
+This will configure standard locks for Redis and Mongo if you have the dependencies on your classpath.
+If you are using Spring-Boot and Maven simply add these dependencies to your `pom.xml`.
+
+[source,xml]
+----
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-redis</artifactId>
+</dependency>
+ <dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-mongodb</artifactId>
+</dependency>
+----
+
+If however you only want to enable MongoDB locks but you are using Redis in your project also,
+you can use `@EnableDistributedLock` and add the appropriate configuration.
+
+[source,java]
+----
+@Configuration
+@EnableDistributedLock
+@Import(MongoDistributedLockConfiguration.class)
+public class MyConfiguration {
+    // rest of your configuration
+}
+----
+
+Both `@EnableXXX` annotations will import `DistributedLockConfiguration`.
+This configuration will configure AOP advice and all defined locks as well as default `KeyGenerator`.
+
+This will be explained later in the `Customization` section of this document.
+
+The out-of-the-box configurations can be found in `com.github.alturkovic.lock.configuration.type` package.
+
+== Using locks
+
+To lock your methods you need to first enable locking as described in the previous section.
+
+AOP advice works around the `@Locked` annotation. The `type` field described which implementation of the lock to use.
+To prevent repeating yourself if you plan on using the same implementation (as most people usually will), I've added alias support.
+
+Alias annotations can be found in the `com.github.alturkovic.lock.annotation.alias` package.
+They wrap the `@Locked` annotation and define the type used.
+
+Each lock needs to define a https://docs.spring.io/spring/docs/current/spring-framework-reference/html/expressions.html[SpEL] expression used to acquire the lock.
+
+For an example: `@MongoLocked` will always use the `SimpleMongoLock` implementation of the lock.
+
+To learn more about Spring aliases visit https://github.com/spring-projects/spring-framework/wiki/Spring-Annotation-Programming-Model[this] link.
+
+== Examples
+
+Locking a method with the name _aliased_ in the document called _lock_ in MongoDB:
+
+[source,java]
+----
+@MongoLocked(expression = "'aliased'", typeSpecificStoreId = "lock")
+public void runLockedWithMongo() {
+    // locked code
+}
+----
+
+Locking with multiple keys determined in runtime, use SpEL, for an example:
+
+[source,java]
+----
+@RedisMultiLocked(expression = "T(com.example.ClassWithStaticMethod).staticMethodThatAcceptsIntegerAndReturnsList(#p0)")
+public void runLockedWithMongo(final int myInteger) {
+    // locked code
+}
+----
+
+This means that the `runLockedWithMongo` method will execute only if all keys evaluated by expression were acquired.
+
+== SpEL key generator
+
+This is the default key generator the advice uses. If you wish to use your own, don't use any of the provided configurations,
+simply write your own and specify your own `KeyGenerator` implementation and pass it to `LockAdvice`.
+
+The default key generator has access to the currently executing context, meaning you can access your fields and methods from SpEL.
+By default, parameters of the method are accessible from SpEL with #p prefix followed by the parameter index, ie: `#p1` is the second parameter.
+
+Examples provided in `com.github.alturkovic.lock.key.SpelKeyGeneratorTest`.
+
+== Customization
+
+If you want to use custom lock implementations, simply implement `Lock` interface and register it in a configuration.
+The `LockAdvice` will pick it up and register it automatically.
+
+You can also create an alias for your lock so you don't have to specify `@Locked` type field.
+The `LockAdvice` will recognize your alias automatically.
+
+For examples, look at the aliases in the `com.github.alturkovic.lock.annotation.alias` package.

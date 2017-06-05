@@ -3,6 +3,9 @@
 Distributed lock ensures your method cannot be run in parallel in a cluster of servers.
 It uses a common store to keep track of used locks and your method needs to acquire one or more locks to run.
 
+All out-of-the-box locks will expire after 10 seconds or timeout after 1 second if unable to acquire lock and sleep for 50 ms between retries.
+These options are customizable per annotation.
+
 == Enabling locking
 
 The project contains several configurations and annotations to help you enable locking and customize it.
@@ -85,12 +88,19 @@ Locking with multiple keys determined in runtime, use SpEL, for an example:
 [source,java]
 ----
 @RedisMultiLocked(expression = "T(com.example.ClassWithStaticMethod).staticMethodThatAcceptsIntegerAndReturnsList(#p0)")
-public void runLockedWithMongo(final int myInteger) {
+public void runLockedWithRedis(final int myInteger) {
     // locked code
 }
 ----
 
 This means that the `runLockedWithMongo` method will execute only if all keys evaluated by expression were acquired.
+
+Locking with a custom lock implementation based on value of integer field `count`:
+
+@Locked(type = MyCustomLock.class, expression = "getCount", prefix = "using:")
+public void runLockedWithMyCustomLock() {
+    // locked code
+}
 
 == SpEL key generator
 

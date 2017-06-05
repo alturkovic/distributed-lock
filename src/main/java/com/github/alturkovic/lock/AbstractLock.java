@@ -25,7 +25,9 @@ import java.util.concurrent.TimeUnit;
 public abstract class AbstractLock implements Lock {
 
     @Override
-    public String acquire(final List<String> keys, final String storeId, final TimeUnit expirationUnit, final long expiration, final long retryMillis, final long timeout) {
+    public String acquire(final List<String> keys, final String storeId,
+                          final TimeUnit expirationUnit, final long expiration,
+                          final long retryMillis, final TimeUnit timeoutUnit, final long timeout) {
         if (timeout <= 0) {
             return acquireLock(keys, storeId, expirationUnit, expiration);
         }

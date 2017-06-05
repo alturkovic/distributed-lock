@@ -69,7 +69,7 @@ public final class LockAdvice {
 
         String token = null;
         try {
-            token = lock.acquire(keys, locked.typeSpecificStoreId(), locked.expirationTimeUnit(), locked.expire(), locked.retryMillis(), locked.timeout());
+            token = lock.acquire(keys, locked.typeSpecificStoreId(), locked.expirationTimeUnit(), locked.expire(), locked.retryMillis(), locked.timeoutTimeUnit(), locked.timeout());
 
             if (token != null) {
                 return joinPoint.proceed();

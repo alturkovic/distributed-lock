@@ -62,9 +62,14 @@ public @interface Locked {
     long expire() default 10;
 
     /**
-     * Timeout operation if unable to acquire lock after milliseconds
+     * Key expiration unit
      */
-    long timeout() default 1000;
+    TimeUnit timeoutTimeUnit() default TimeUnit.SECONDS;
+
+    /**
+     * Timeout operation if unable to acquire lock
+     */
+    long timeout() default 1;
 
     /**
      * Retry locking after milliseconds

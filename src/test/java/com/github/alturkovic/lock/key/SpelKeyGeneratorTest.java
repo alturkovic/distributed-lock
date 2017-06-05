@@ -17,6 +17,7 @@
 package com.github.alturkovic.lock.key;
 
 import com.github.alturkovic.lock.exception.EvaluationConvertException;
+import lombok.Getter;
 import org.aspectj.lang.JoinPoint;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,8 +40,8 @@ public class SpelKeyGeneratorTest {
     @SuppressWarnings("unused") // used in test expression, false IntelliJ warning
     public static final String CSV_DUMMY = "a,b,c";
 
-    @SuppressWarnings("unused") // used in test expression, false IntelliJ warning
-    public static final String STRING_DUMMY = "contextTest";
+    @Getter
+    private final String stringDummy = "contextTest";
 
     private final SpelKeyGenerator generator = new SpelKeyGenerator();
 
@@ -62,7 +63,7 @@ public class SpelKeyGeneratorTest {
         when(joinPoint.getArgs()).thenReturn(new Object[]{1});
         when(joinPoint.getTarget()).thenReturn(this);
 
-        final String exp = "STRING_DUMMY + 'Example' + #p0";
+        final String exp = "getStringDummy() + 'Example' + #p0";
         final List<String> keys = generator.resolveKeys("lock_", exp, "p", joinPoint);
         assertThat(keys).containsExactly("lock_contextTestExample1");
     }

@@ -60,7 +60,7 @@ public class SimpleMongoLockTest implements InitializingBean {
 
     @Test
     public void shouldLock() {
-        final String token = lock.acquire(Collections.singletonList("1"), "locks", TimeUnit.MINUTES, 1, 0, 0);
+        final String token = lock.acquire(Collections.singletonList("1"), "locks", TimeUnit.MINUTES, 1, 0, TimeUnit.SECONDS, 0);
         assertThat(token).isEqualTo("abc");
         assertThat(mongoTemplate.findById("1", LockDocument.class, "locks").getToken()).isEqualTo("abc");
     }
@@ -68,7 +68,7 @@ public class SimpleMongoLockTest implements InitializingBean {
     @Test
     public void shouldNotLock() {
         mongoTemplate.insert(new LockDocument("1", DateTime.now().plusMinutes(1), "def"), "locks");
-        final String token = lock.acquire(Collections.singletonList("1"), "locks", TimeUnit.MINUTES, 1, 0, 0);
+        final String token = lock.acquire(Collections.singletonList("1"), "locks", TimeUnit.MINUTES, 1, 0, TimeUnit.SECONDS, 0);
         assertThat(token).isNull();
         assertThat(mongoTemplate.findById("1", LockDocument.class, "locks").getToken()).isEqualTo("def");
     }

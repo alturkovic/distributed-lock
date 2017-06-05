@@ -32,7 +32,7 @@ public interface Lock {
      * @return list of tokens to use for releasing the lock or {@code null} if lock cannot be acquired
      * @throws com.github.alturkovic.lock.exception.DistributedLockException if lock cannot be acquired for any reason
      */
-    String acquire(List<String> keys, String storeId, TimeUnit expirationUnit, long expiration, long retryMillis, long timeoutMillis);
+    String acquire(List<String> keys, String storeId, TimeUnit expirationUnit, long expiration, long retryMillis, TimeUnit timeoutUnit, long timeoutMillis);
 
     void release(List<String> keys, String token, String storeId);
 }

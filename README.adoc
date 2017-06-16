@@ -87,20 +87,23 @@ Locking with multiple keys determined in runtime, use SpEL, for an example:
 
 [source,java]
 ----
-@RedisMultiLocked(expression = "T(com.example.ClassWithStaticMethod).staticMethodThatAcceptsIntegerAndReturnsList(#p0)")
-public void runLockedWithRedis(final int myInteger) {
+@RedisMultiLocked(expression = "T(com.example.MyUtils).getNamesWithId(#p0)")
+public void runLockedWithRedis(final int id) {
     // locked code
 }
 ----
 
-This means that the `runLockedWithMongo` method will execute only if all keys evaluated by expression were acquired.
+This means that the `runLockedWithRedis` method will execute only if all keys evaluated by expression were acquired.
 
 Locking with a custom lock implementation based on value of integer field `count`:
 
+[source,java]
+----
 @Locked(type = MyCustomLock.class, expression = "getCount", prefix = "using:")
 public void runLockedWithMyCustomLock() {
     // locked code
 }
+----
 
 == SpEL key generator
 

@@ -3,6 +3,9 @@
 Distributed lock ensures your method cannot be run in parallel in a cluster of servers.
 It uses a common store to keep track of used locks and your method needs to acquire one or more locks to run.
 
+By default, locks last as long as the method they are bound to with the annotation or they expire.
+Manual controlling is supported and explained later in this document.
+
 All out-of-the-box locks will expire after 10 seconds or timeout after 1 second if unable to acquire lock and sleep for 50 ms between retries.
 These options are customizable per annotation.
 
@@ -70,6 +73,55 @@ Each lock needs to define a https://docs.spring.io/spring/docs/current/spring-fr
 For an example: `@MongoLocked` will always use the `SimpleMongoLock` implementation of the lock.
 
 To learn more about Spring aliases visit https://github.com/spring-projects/spring-framework/wiki/Spring-Annotation-Programming-Model[this] link.
+
+=== Manually controlled locks
+
+Sometimes you might want lock to be acquired when calling a specific method and get released only when it expires (throttling).
+
+To acquire a lock that doesn't get released automatically set `manuallyReleased` to `false` on `@Locked` annotation.
+
+For more grained control, for an example, locking in the middle of one method and releasing in the middle of another, inject the lock in your service and acquire the lock manually.
+
+=== Example
+
+[source,java]
+----
+@Component
+public class Example {
+
+    @Qualifier("simpleRedisLock")
+    private Lock lock;
+
+    // other fields...
+
+    private void manuallyLocked() {
+        // code before locking...
+
+        final String token = lock.acquire(keys, storeId, expirationTimeUnit, expiration, retryMillis, timeoutTimeUnit, timeout);
+
+        // check if you acquired a token
+        if (StringUtils.isEmpty(token)) {
+            throw new IllegalStateException("Lock not acquired!");
+        }
+
+        // code after locking...
+
+        lock.release(keys, token, storeId);
+
+        // code after releasing the lock...
+    }
+}
+----
+
+=== Unsuccessful locks
+
+If method cannot be locked, `DistributedLockConfiguration` will be thrown.
+
+Method might not acquire the lock if:
+
+. keys from SpEL expression cannot be resolved
+. another method acquired the lock
+. Lock implementation threw an exception
 
 == Examples
 

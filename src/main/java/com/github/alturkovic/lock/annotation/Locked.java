@@ -29,6 +29,12 @@ import java.util.concurrent.TimeUnit;
 public @interface Locked {
 
     /**
+     * Flag to indicate if lock will be manually released.
+     * By default, lock will be released after method execution
+     */
+    boolean manuallyReleased() default false;
+
+    /**
      * Id of a specific store for lock to use.
      * For JDBC, this would be a lock table.
      * For Mongo, this would be a collection name.

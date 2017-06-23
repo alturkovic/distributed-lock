@@ -32,6 +32,9 @@ import java.util.concurrent.TimeUnit;
 public @interface MongoLocked {
 
     @AliasFor(annotation = Locked.class)
+    boolean manuallyReleased() default false;
+
+    @AliasFor(annotation = Locked.class)
     String typeSpecificStoreId() default "lock";
 
     @AliasFor(annotation = Locked.class)
@@ -48,6 +51,9 @@ public @interface MongoLocked {
 
     @AliasFor(annotation = Locked.class)
     long expire() default 10;
+
+    @AliasFor(annotation = Locked.class)
+    TimeUnit timeoutTimeUnit() default TimeUnit.SECONDS;
 
     @AliasFor(annotation = Locked.class)
     long timeout() default 1000;

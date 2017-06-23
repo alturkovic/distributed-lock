@@ -77,7 +77,7 @@ public final class LockAdvice {
                 throw new DistributedLockException("Unable to acquire lock with expression: " + locked.expression());
             }
         } finally {
-            if (token != null) {
+            if (token != null && !locked.manuallyReleased()) {
                 lock.release(keys, token, locked.typeSpecificStoreId());
             }
         }

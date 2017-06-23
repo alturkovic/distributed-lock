@@ -17,6 +17,7 @@
 package com.github.alturkovic.lock;
 
 import lombok.Data;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -35,12 +36,14 @@ public abstract class AbstractLock implements Lock {
         long currentTimeout = timeout;
 
         while (currentTimeout >= 0) {
-            final String locked = acquireLock(keys, storeId, expirationUnit, expiration);
+            final String token = acquireLock(keys, storeId, expirationUnit, expiration);
 
-            if (locked != null) {
-                return locked;
+            if (!StringUtils.isEmpty(token)) {
+                // token was acquired, method is considered locked
+                return token;
             }
 
+            // if token was not acquired, wait and try again until timeout
             currentTimeout -= retryMillis;
 
             try {

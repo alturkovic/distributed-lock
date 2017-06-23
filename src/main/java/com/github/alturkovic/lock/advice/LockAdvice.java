@@ -19,7 +19,6 @@ package com.github.alturkovic.lock.advice;
 import com.github.alturkovic.lock.Lock;
 import com.github.alturkovic.lock.annotation.Locked;
 import com.github.alturkovic.lock.exception.DistributedLockException;
-import com.github.alturkovic.lock.exception.EvaluationConvertException;
 import com.github.alturkovic.lock.key.KeyGenerator;
 import lombok.AllArgsConstructor;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -40,6 +39,12 @@ public final class LockAdvice {
     private final KeyGenerator keyGenerator;
     private final Map<Class<? extends Lock>, Lock> lockMap;
 
+    /**
+     * This advice will bind to all {@link Locked} alias methods.
+     * <p>
+     * Method will find the alias and merge it into {@link Locked} annotation and behave as if it was bind with {@link Locked} annotation.
+     * </p>
+     */
     @Around("execution(@(@com.github.alturkovic.lock.annotation.Locked *) * *(..))")
     public Object lockAlias(final ProceedingJoinPoint joinPoint) throws Throwable {
         final Method method = ClassUtils.getMostSpecificMethod(((MethodSignature) joinPoint.getSignature()).getMethod(), joinPoint.getTarget().getClass());
@@ -52,6 +57,9 @@ public final class LockAdvice {
         throw new DistributedLockException(String.format("Couldn't find the nested @Locked on the method %s", joinPoint.getSignature().toLongString()));
     }
 
+    /**
+     * This advice will bind to all {@link Locked} methods.
+     */
     @Around("@annotation(locked)")
     public Object lock(final ProceedingJoinPoint joinPoint, final Locked locked) throws Throwable {
         final Lock lock = lockMap.get(locked.type());

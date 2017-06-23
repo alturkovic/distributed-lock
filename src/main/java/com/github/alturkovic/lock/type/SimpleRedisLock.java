@@ -30,6 +30,9 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
+/**
+ * Works the same way as {@link MultiRedisLock} but is optimized better to work with a single key.
+ */
 @Data
 @Slf4j
 @AllArgsConstructor

@@ -63,8 +63,8 @@ public final class LockAdvice {
         final List<String> keys;
         try {
             keys = keyGenerator.resolveKeys(locked.prefix(), locked.expression(), locked.parameter(), joinPoint);
-        } catch (final EvaluationConvertException e) {
-            throw new DistributedLockException("Cannot get a list result from expression: " + locked.expression(), e);
+        } catch (final RuntimeException e) {
+            throw new DistributedLockException("Cannot resolve keys to lock from expression: " + locked.expression(), e);
         }
 
         String token = null;

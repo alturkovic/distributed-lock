@@ -21,18 +21,19 @@ import java.util.concurrent.TimeUnit;
 
 public interface Lock {
     /**
-     * Try to acquire lock and get a token to be used as safety check when releasing the lock or {@code null} if can't acquire lock
+     * Try to acquire the lock.
      *
-     * @param keys           keys to try to lock
-     * @param storeId        lock store id to save keys in (table, collection, ...)
-     * @param expirationUnit expiration unit
-     * @param expiration     expiration value in {@code expirationUnit}
-     * @param retryMillis    how much to wait before retrying to acquire the lock
-     * @param timeoutMillis  how long to try to acquire before failing
-     * @return list of tokens to use for releasing the lock or {@code null} if lock cannot be acquired
+     * @param keys              keys to try to lock
+     * @param storeId           lock store id to save keys in (table, collection, ...)
+     * @param expirationUnit    expiration unit
+     * @param retryMillis       how much to wait before retrying to acquire the lock
+     * @param timeoutUnit       timeout unit
+     * @param timeout     how long to try to acquire before failing
+     *
+     * @return token to use for releasing the lock or {@code null} if lock cannot be acquired
      * @throws com.github.alturkovic.lock.exception.DistributedLockException if lock cannot be acquired for any reason
      */
-    String acquire(List<String> keys, String storeId, TimeUnit expirationUnit, long expiration, long retryMillis, TimeUnit timeoutUnit, long timeoutMillis);
+    String acquire(List<String> keys, String storeId, TimeUnit expirationUnit, long expiration, long retryMillis, TimeUnit timeoutUnit, long timeout);
 
     void release(List<String> keys, String token, String storeId);
 }

@@ -80,7 +80,7 @@ Sometimes you might want lock to be acquired when calling a specific method and 
 
 To acquire a lock that doesn't get released automatically set `manuallyReleased` to `false` on `@Locked` annotation.
 
-For more grained control(IE, locking in the middle of the method and releasing later in the code), inject the lock in your service and acquire the lock manually.
+For more grained control (e.g., locking in the middle of the method and releasing later in the code), inject the lock in your service and acquire the lock manually.
 
 === Example
 

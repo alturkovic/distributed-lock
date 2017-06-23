@@ -77,7 +77,11 @@ public final class LockAdvice {
 
         String token = null;
         try {
-            token = lock.acquire(keys, locked.typeSpecificStoreId(), locked.expirationTimeUnit(), locked.expire(), locked.retryMillis(), locked.timeoutTimeUnit(), locked.timeout());
+            try {
+                token = lock.acquire(keys, locked.typeSpecificStoreId(), locked.expirationTimeUnit(), locked.expire(), locked.retryMillis(), locked.timeoutTimeUnit(), locked.timeout());
+            } catch (final Exception e) {
+                throw new DistributedLockException("Unable to acquire lock with expression: " + locked.expression(), e);
+            }
 
             if (token != null) {
                 return joinPoint.proceed();

@@ -18,16 +18,20 @@ This will import the configuration that will scan all provided `Lock` beans and 
 
 Project provides the following out-of-the-box lock implementations:
 
- - Mongo
- - Redis
+ * Mongo
+ * Redis
 
 === MongoDB locks
 
 MongoDB locks are provided in the `distributed-lock-mongo` project.
 
-It provides the following `Lock` implementations:
+.Mongo lock implementations
+|===
+|Implementation |Multiple key support
 
- - `SimpleMongoLock` - lock single key
+|`SimpleMongoLock`
+|+++<input type="checkbox">+++
+|===
 
 Include `@EnableMongoDistributedLock` to enable MongoDB locks.
 This will also include `@EnableDistributedLock` for you.
@@ -55,18 +59,28 @@ If you are using Spring Boot and Maven simply add these dependencies to your `po
 </dependency>
 ----
 
-Aliases used:
+.MongoDB lock aliases
+|===
+|Alias |Type
 
- - `@MongoLocked` - uses `SimpleMongoLock`
+|`@MongoLocked`
+|`SimpleMongoLock`
+|===
 
 === Redis locks
 
 Redis locks are provided in the `distributed-lock-redis` project.
 
-It provides the following `Lock` implementations:
+.Redis lock implementations
+|===
+|Implementation |Multiple key support
 
- - `SimpleRedisLock` - lock single key
- - `MultiRedisLock` - lock multiple keys
+|`SimpleRedisLock`
+|+++<input type="checkbox">+++
+
+|`MultiRedisLock`
+|+++<input type="checkbox" checked>+++
+|===
 
 Include `@EnableRedisDistributedLock` to enable Redis locks.
 This will also include `@EnableDistributedLock` for you.
@@ -94,10 +108,16 @@ If you are using Spring Boot and Maven simply add these dependencies to your `po
 </dependency>
 ----
 
-Aliases used:
+.Redis lock aliases
+|===
+|Alias |Type
 
- - `@RedisLocked` - uses `SimpleRedisLock`
- - `@RedisMultiLocked` - uses `MultiRedisLock`
+|`@RedisLocked`
+|`SimpleRedisLock`
+
+|`@RedisMultiLocked`
+|`MultiRedisLock`
+|===
 
 == Using locks
 
@@ -133,7 +153,7 @@ public class Example {
     private void manuallyLocked() {
         // code before locking...
 
-        final String token = lock.acquire(keys, storeId, expirationTimeUnit, expiration, retryMillis, timeoutTimeUnit, timeout);
+        final String token = lock.acquire(keys, storeId, expiration, retry, timeout);
 
         // check if you acquired a token
         if (StringUtils.isEmpty(token)) {
@@ -210,5 +230,3 @@ The `LockAdvice` will pick it up and register it automatically.
 
 You can also create an alias for your lock so you don't have to specify `@Locked` type field.
 The `LockAdvice` will recognize your alias automatically.
-
-For examples, look at the aliases in the `com.github.alturkovic.lock.annotation.alias` package.

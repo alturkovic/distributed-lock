@@ -1,64 +1,94 @@
 = Distributed Lock
 
-== OUTDATED WITH THE LAST MAJOR REFACTOR
-
-Distributed lock ensures your method cannot be run in parallel in a cluster of servers.
+Distributed lock ensures your method cannot be run in parallel from multiple JVMs (cluster of servers, microservices, ...).
 It uses a common store to keep track of used locks and your method needs to acquire one or more locks to run.
 
-By default, locks last as long as the method they are bound to with the annotation or they expire.
+By default, locks follow methods lifecycle. They are obtained at the start of the method and released at the end of the method.
 Manual controlling is supported and explained later in this document.
 
-All out-of-the-box locks will expire after 10 seconds or timeout after 1 second if unable to acquire lock and sleep for 50 ms between retries.
+All locks acquired by lock implementations in this project will expire after 10 seconds, timeout after 1 second if unable to acquire lock and sleep for 50 ms between retries.
 These options are customizable per annotation.
 
 == Enabling locking
 
 The project contains several configurations and annotations to help you enable locking and customize it.
-The simplest way to enable locking with Redis or MongoDB is to use `@EnableDistributedLockAutoConfiguration`.
+To enable locking you must first include `@EnableDistributedLock`.
+This will import the configuration that will scan all provided `Lock` beans and configure the `LockAdvice`.
+
+Project provides the following out-of-the-box lock implementations:
+
+ - Mongo
+ - Redis
+
+=== MongoDB locks
+
+MongoDB locks are provided in the `distributed-lock-mongo` project.
+It provides the following `Lock` implementations:
+ - `SimpleMongoLock` - lock single key
+
+Include `@EnableMongoDistributedLock` to enable MongoDB locks.
 
 [source,java]
 ----
 @Configuration
-@EnableDistributedLockAutoConfiguration
-public class MyConfiguration {
-    // rest of your configuration
+@EnableMongoDistributedLock
+public class LockConfiguration {
 }
 ----
 
-This will configure standard locks for Redis and Mongo if you have the dependencies on your classpath.
-If you are using Spring-Boot and Maven simply add these dependencies to your `pom.xml`.
+This will configure standard locks for MongoDB if you have the necessary dependencies on your classpath.
+If you are using Spring Boot and Maven simply add these dependencies to your `pom.xml`.
 
 [source,xml]
 ----
 <dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-data-redis</artifactId>
+    <groupId>com.github.alturkovic</groupId>
+    <artifactId>distributed-lock-mongo</artifactId>
 </dependency>
- <dependency>
+<dependency>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-data-mongodb</artifactId>
 </dependency>
 ----
 
-If however you only want to enable MongoDB locks but you are using Redis in your project also,
-you can use `@EnableDistributedLock` and add the appropriate configuration.
+Aliases used:
+ - `@MongoLocked` - uses `SimpleMongoLock`
+
+=== Redis locks
+
+Redis locks are provided in the `distributed-lock-redis` project.
+It provides the following `Lock` implementations:
+ - `SimpleRedisLock` - lock single key
+ - `MultiRedisLock` - lock multiple keys
+
+Include `@EnableRedisDistributedLock` to enable Redis locks.
 
 [source,java]
 ----
 @Configuration
-@EnableDistributedLock
-@Import(MongoDistributedLockConfiguration.class)
-public class MyConfiguration {
-    // rest of your configuration
+@EnableRedisDistributedLock
+public class LockConfiguration {
 }
 ----
 
-Both `@EnableXXX` annotations will import `DistributedLockConfiguration`.
-This configuration will configure AOP advice and all defined locks as well as default `KeyGenerator`.
+This will configure standard locks for Redis if you have the necessary dependencies on your classpath.
+If you are using Spring Boot and Maven simply add these dependencies to your `pom.xml`.
 
-This will be explained later in the `Customization` section of this document.
+[source,xml]
+----
+<dependency>
+    <groupId>com.github.alturkovic</groupId>
+    <artifactId>distributed-lock-redis</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-redis</artifactId>
+</dependency>
+----
 
-The out-of-the-box configurations can be found in `com.github.alturkovic.lock.configuration.type` package.
+Aliases used:
+ - `@RedisLocked` - uses `SimpleRedisLock`
+ - `@RedisMultiLocked` - uses `MultiRedisLock`
 
 == Using locks
 
@@ -66,14 +96,9 @@ To lock your methods you need to first enable locking as described in the previo
 
 AOP advice works around the `@Locked` annotation. The `type` field described which implementation of the lock to use.
 To prevent repeating yourself if you plan on using the same implementation (as most people usually will), I've added alias support.
-
-Alias annotations can be found in the `com.github.alturkovic.lock.annotation.alias` package.
 They wrap the `@Locked` annotation and define the type used.
 
 Each lock needs to define a https://docs.spring.io/spring/docs/current/spring-framework-reference/html/expressions.html[SpEL] expression used to acquire the lock.
-
-For an example: `@MongoLocked` will always use the `SimpleMongoLock` implementation of the lock.
-
 To learn more about Spring aliases visit https://github.com/spring-projects/spring-framework/wiki/Spring-Annotation-Programming-Model[this] link.
 
 === Manually controlled locks

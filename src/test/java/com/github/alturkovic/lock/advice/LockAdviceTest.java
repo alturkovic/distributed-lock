@@ -60,7 +60,7 @@ public class LockAdviceTest {
 
     @Test
     public void shouldAcquireLockAndCallMethod() {
-        when(lock.acquire(anyListOf(String.class), any(), any(), anyLong(), anyLong(), any(), anyLong())).thenReturn("abc");
+        when(lock.acquire(anyListOf(String.class), any(), anyLong(), anyLong(), anyLong())).thenReturn("abc");
         doNothing().when(lock).release(eq(Collections.singletonList("lock:test")), eq("abc"), any());
 
         locked.tryWithLock();
@@ -70,7 +70,7 @@ public class LockAdviceTest {
 
     @Test(expected = DistributedLockException.class)
     public void shouldNotAcquireLockAndThrowException() {
-        when(lock.acquire(anyListOf(String.class), any(), any(), anyLong(), anyLong(), any(), anyLong())).thenReturn(null);
+        when(lock.acquire(anyListOf(String.class), any(), anyLong(), anyLong(), anyLong())).thenReturn(null);
 
         locked.tryWithLock();
     }
@@ -82,7 +82,7 @@ public class LockAdviceTest {
 
     @Test
     public void shouldLockWithLockAlias() {
-        when(lock.acquire(anyListOf(String.class), any(), any(), anyLong(), anyLong(), any(), anyLong())).thenReturn("abc");
+        when(lock.acquire(anyListOf(String.class), any(), anyLong(), anyLong(), anyLong())).thenReturn("abc");
         doNothing().when(lock).release(eq(Collections.singletonList("lock:aliased")), eq("abc"), any());
 
         locked.tryWithLockAlias();

@@ -33,7 +33,6 @@ import org.springframework.util.Assert;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 @Data
@@ -50,7 +49,7 @@ public class SimpleMongoLock extends AbstractLock {
     }
 
     @Override
-    public String acquireLock(final List<String> keys, final String storeId, final TimeUnit expirationUnit, final long expiration) {
+    public String acquireLock(final List<String> keys, final String storeId, final long expiration) {
         Assert.isTrue(keys.size() == 1, "Cannot acquire lock for multiple keys with this lock: " + keys);
 
         final String key = keys.get(0);
@@ -59,7 +58,7 @@ public class SimpleMongoLock extends AbstractLock {
         final Query query = Query.query(Criteria.where("_id").is(key));
         final Update update = new Update()
                 .setOnInsert("_id", key)
-                .setOnInsert("expireAt", DateTime.now().plus(expirationUnit.toMillis(expiration)))
+                .setOnInsert("expireAt", DateTime.now().plus(expiration))
                 .setOnInsert("token", token);
         final FindAndModifyOptions options = new FindAndModifyOptions().upsert(true).returnNew(true);
 

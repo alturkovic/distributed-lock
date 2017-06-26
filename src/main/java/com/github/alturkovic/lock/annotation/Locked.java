@@ -58,29 +58,19 @@ public @interface Locked {
     String parameter() default "p";
 
     /**
-     * Key expiration unit
+     * Lock expiration interval
      */
-    TimeUnit expirationTimeUnit() default TimeUnit.SECONDS;
+    Interval expiration() default @Interval(10);
 
     /**
-     * Key expiration
+     * Lock timeout interval
      */
-    long expire() default 10;
+    Interval timeout() default @Interval(1);
 
     /**
-     * Key expiration unit
+     * Lock retry interval
      */
-    TimeUnit timeoutTimeUnit() default TimeUnit.SECONDS;
-
-    /**
-     * Timeout operation if unable to acquire lock
-     */
-    long timeout() default 1;
-
-    /**
-     * Retry locking after milliseconds
-     */
-    long retryMillis() default 50;
+    Interval retry() default @Interval(value = 50, unit = TimeUnit.MILLISECONDS);
 
     /**
      * Lock TYPE, see implementations of {@link Lock}

@@ -32,6 +32,8 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 
+import static com.github.alturkovic.lock.util.ConversionUtil.toMillis;
+
 @Aspect
 @AllArgsConstructor
 public final class LockAdvice {
@@ -78,7 +80,7 @@ public final class LockAdvice {
         String token = null;
         try {
             try {
-                token = lock.acquire(keys, locked.typeSpecificStoreId(), locked.expirationTimeUnit(), locked.expire(), locked.retryMillis(), locked.timeoutTimeUnit(), locked.timeout());
+                token = lock.acquire(keys, locked.typeSpecificStoreId(), toMillis(locked.expiration()), toMillis(locked.retry()), toMillis(locked.timeout()));
             } catch (final Exception e) {
                 throw new DistributedLockException("Unable to acquire lock with expression: " + locked.expression(), e);
             }

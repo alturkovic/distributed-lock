@@ -16,6 +16,7 @@
 
 package com.github.alturkovic.lock.annotation.alias;
 
+import com.github.alturkovic.lock.annotation.Interval;
 import com.github.alturkovic.lock.annotation.Locked;
 import com.github.alturkovic.lock.type.MultiRedisLock;
 import org.springframework.core.annotation.AliasFor;
@@ -44,17 +45,11 @@ public @interface RedisMultiLocked {
     String parameter() default "p";
 
     @AliasFor(annotation = Locked.class)
-    TimeUnit expirationTimeUnit() default TimeUnit.SECONDS;
+    Interval expiration() default @Interval(10);
 
     @AliasFor(annotation = Locked.class)
-    long expire() default 10;
+    Interval timeout() default @Interval(1);
 
     @AliasFor(annotation = Locked.class)
-    TimeUnit timeoutTimeUnit() default TimeUnit.SECONDS;
-
-    @AliasFor(annotation = Locked.class)
-    long timeout() default 1000;
-
-    @AliasFor(annotation = Locked.class)
-    long retryMillis() default 50;
+    Interval retry() default @Interval(value = 50, unit = TimeUnit.MILLISECONDS);
 }

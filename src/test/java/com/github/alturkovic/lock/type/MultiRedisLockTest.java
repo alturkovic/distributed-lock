@@ -39,7 +39,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -77,14 +76,14 @@ public class MultiRedisLockTest implements InitializingBean {
 
     @Test
     public void shouldLockSingleKey() {
-        final String token = lock.acquire(Collections.singletonList("1"), "locks", TimeUnit.MINUTES, 1, 0, TimeUnit.SECONDS, 0);
+        final String token = lock.acquire(Collections.singletonList("1"), "locks", 1000, 50, 0);
         assertThat(token).isEqualTo("abc");
         assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("abc");
     }
 
     @Test
     public void shouldLockMultipleKeys() {
-        final String token = lock.acquire(Arrays.asList("1", "2"), "locks", TimeUnit.MINUTES, 1, 0, TimeUnit.SECONDS, 0);
+        final String token = lock.acquire(Arrays.asList("1", "2"), "locks", 1000, 50, 0);
         assertThat(token).isEqualTo("abc");
         assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("abc");
         assertThat(redisTemplate.opsForValue().get("locks:2")).isEqualTo("abc");
@@ -94,7 +93,7 @@ public class MultiRedisLockTest implements InitializingBean {
     public void shouldNotLockWhenWholeLockIsTaken() {
         redisTemplate.opsForValue().set("locks:1", "def");
         redisTemplate.opsForValue().set("locks:2", "ghi");
-        final String token = lock.acquire(Arrays.asList("1", "2"), "locks", TimeUnit.MINUTES, 1, 0, TimeUnit.SECONDS, 0);
+        final String token = lock.acquire(Arrays.asList("1", "2"), "locks", 1000, 50, 0);
         assertThat(token).isNull();
         assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("def");
         assertThat(redisTemplate.opsForValue().get("locks:2")).isEqualTo("ghi");
@@ -103,7 +102,7 @@ public class MultiRedisLockTest implements InitializingBean {
     @Test
     public void shouldNotLockWhenLockIsPartiallyTaken() {
         redisTemplate.opsForValue().set("locks:1", "def");
-        final String token = lock.acquire(Arrays.asList("1", "2"), "locks", TimeUnit.MINUTES, 1, 0, TimeUnit.SECONDS, 0);
+        final String token = lock.acquire(Arrays.asList("1", "2"), "locks", 1000, 50, 0);
         assertThat(token).isNull();
         assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("def");
         assertThat(redisTemplate.opsForValue().get("locks:2")).isNull();

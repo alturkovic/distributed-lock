@@ -38,7 +38,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -76,7 +75,7 @@ public class SimpleRedisLockTest implements InitializingBean {
 
     @Test
     public void shouldLock() {
-        final String token = lock.acquire(Collections.singletonList("1"), "locks", TimeUnit.MINUTES, 1, 0, TimeUnit.SECONDS, 0);
+        final String token = lock.acquire(Collections.singletonList("1"), "locks", 1000, 50, 0);
         assertThat(token).isEqualTo("abc");
         assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("abc");
     }
@@ -84,7 +83,7 @@ public class SimpleRedisLockTest implements InitializingBean {
     @Test
     public void shouldNotLock() {
         redisTemplate.opsForValue().set("locks:1", "def");
-        final String token = lock.acquire(Collections.singletonList("1"), "locks", TimeUnit.MINUTES, 1, 0, TimeUnit.SECONDS, 0);
+        final String token = lock.acquire(Collections.singletonList("1"), "locks", 1000, 50, 0);
         assertThat(token).isNull();
         assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("def");
     }

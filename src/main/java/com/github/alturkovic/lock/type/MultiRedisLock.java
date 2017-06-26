@@ -26,7 +26,6 @@ import org.springframework.data.redis.core.script.RedisScript;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -46,11 +45,11 @@ public class MultiRedisLock extends AbstractLock {
     }
 
     @Override
-    public String acquireLock(final List<String> keys, final String storeId, final TimeUnit expirationUnit, final long expiration) {
+    public String acquireLock(final List<String> keys, final String storeId, final long expiration) {
         final List<String> keysWithStoreIdPrefix = keys.stream().map(key -> storeId + ":" + key).collect(Collectors.toList());
         final String token = tokenSupplier.get();
 
-        final Boolean locked = stringRedisTemplate.execute(lockScript, keysWithStoreIdPrefix, token, String.valueOf(expirationUnit.toSeconds(expiration)));
+        final Boolean locked = stringRedisTemplate.execute(lockScript, keysWithStoreIdPrefix, token, String.valueOf(expiration));
         log.debug("Tried to acquire lock for keys '{}' in store '{}' with safety token '{}'. Locked: {}", keys, storeId, token, locked);
         return locked ? token : null;
     }

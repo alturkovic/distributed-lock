@@ -28,7 +28,6 @@ import org.springframework.util.Assert;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 /**
@@ -50,12 +49,12 @@ public class SimpleRedisLock extends AbstractLock {
     }
 
     @Override
-    public String acquireLock(final List<String> keys, final String storeId, final TimeUnit expirationUnit, final long expiration) {
+    public String acquireLock(final List<String> keys, final String storeId, final long expiration) {
         Assert.isTrue(keys.size() == 1, "Cannot acquire lock for multiple keys with this lock: " + keys);
         final List<String> singletonKeyList = Collections.singletonList(storeId + ":" + keys.get(0));
 
         final String token = tokenSupplier.get();
-        final Boolean locked = stringRedisTemplate.execute(lockScript, singletonKeyList, token, String.valueOf(expirationUnit.toSeconds(expiration)));
+        final Boolean locked = stringRedisTemplate.execute(lockScript, singletonKeyList, token, String.valueOf(expiration));
         log.debug("Tried to acquire lock for key '{}' in store '{}' with safety token '{}'. Locked: {}", keys.get(0), storeId, token, locked);
         return locked ? token : null;
     }

@@ -20,23 +20,20 @@ import lombok.Data;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 @Data
 public abstract class AbstractLock implements Lock {
 
     @Override
-    public String acquire(final List<String> keys, final String storeId,
-                          final TimeUnit expirationUnit, final long expiration,
-                          final long retryMillis, final TimeUnit timeoutUnit, final long timeout) {
+    public String acquire(final List<String> keys, final String storeId, final long expiration, final long retry, final long timeout) {
         if (timeout <= 0) {
-            return acquireLock(keys, storeId, expirationUnit, expiration);
+            return acquireLock(keys, storeId, expiration);
         }
 
         long currentTimeout = timeout;
 
         while (currentTimeout >= 0) {
-            final String token = acquireLock(keys, storeId, expirationUnit, expiration);
+            final String token = acquireLock(keys, storeId, expiration);
 
             if (!StringUtils.isEmpty(token)) {
                 // token was acquired, method is considered locked
@@ -44,10 +41,10 @@ public abstract class AbstractLock implements Lock {
             }
 
             // if token was not acquired, wait and try again until timeout
-            currentTimeout -= retryMillis;
+            currentTimeout -= retry;
 
             try {
-                Thread.sleep(retryMillis);
+                Thread.sleep(retry);
             } catch (final InterruptedException e) {
                 // Do nothing...
             }
@@ -56,5 +53,5 @@ public abstract class AbstractLock implements Lock {
         return null;
     }
 
-    public abstract String acquireLock(List<String> keys, String storeId, TimeUnit expirationUnit, long expiration);
+    public abstract String acquireLock(List<String> keys, String storeId, long expiration);
 }

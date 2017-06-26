@@ -128,19 +128,18 @@ public class MultiRedisLockTest implements InitializingBean {
     @Test
     public void shouldNotReleaseWhenTokenDoesNotFullyMatch() {
         redisTemplate.opsForValue().set("locks:1", "def");
-        redisTemplate.opsForValue().set("locks:2", "def");
+        redisTemplate.opsForValue().set("locks:2", "ghi");
         lock.release(Arrays.asList("1", "2"), "abc", "locks");
         assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("def");
-        assertThat(redisTemplate.opsForValue().get("locks:2")).isEqualTo("def");
+        assertThat(redisTemplate.opsForValue().get("locks:2")).isEqualTo("ghi");
     }
 
     @Test
     public void shouldNotReleaseWhenTokenDoesNotPartiallyMatch() {
         redisTemplate.opsForValue().set("locks:1", "def");
-        redisTemplate.opsForValue().set("locks:2", "ghi");
         lock.release(Arrays.asList("1", "2"), "abc", "locks");
         assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("def");
-        assertThat(redisTemplate.opsForValue().get("locks:2")).isEqualTo("ghi");
+        assertThat(redisTemplate.opsForValue().get("locks:2")).isNull();
     }
 
     @SpringBootApplication(

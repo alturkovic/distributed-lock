@@ -1,5 +1,7 @@
 = Distributed Lock
 
+== OUTDATED WITH THE LAST MAJOR REFACTOR
+
 Distributed lock ensures your method cannot be run in parallel in a cluster of servers.
 It uses a common store to keep track of used locks and your method needs to acquire one or more locks to run.
 

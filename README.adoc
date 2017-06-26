@@ -52,6 +52,7 @@ If you are using Spring Boot and Maven simply add these dependencies to your `po
 ----
 
 Aliases used:
+
  - `@MongoLocked` - uses `SimpleMongoLock`
 
 === Redis locks
@@ -87,6 +88,7 @@ If you are using Spring Boot and Maven simply add these dependencies to your `po
 ----
 
 Aliases used:
+
  - `@RedisLocked` - uses `SimpleRedisLock`
  - `@RedisMultiLocked` - uses `MultiRedisLock`
 

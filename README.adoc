@@ -24,6 +24,7 @@ Project provides the following out-of-the-box lock implementations:
 
 MongoDB locks are provided in the `distributed-lock-mongo` project.
 It provides the following `Lock` implementations:
+
  - `SimpleMongoLock` - lock single key
 
 Include `@EnableMongoDistributedLock` to enable MongoDB locks.
@@ -59,6 +60,7 @@ Aliases used:
 
 Redis locks are provided in the `distributed-lock-redis` project.
 It provides the following `Lock` implementations:
+
  - `SimpleRedisLock` - lock single key
  - `MultiRedisLock` - lock multiple keys
 

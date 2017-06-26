@@ -27,10 +27,11 @@ MongoDB locks are provided in the `distributed-lock-mongo` project.
 
 .Mongo lock implementations
 |===
-|Implementation |Multiple key support
+|Implementation |Alias |Multiple key support
 
 |`SimpleMongoLock`
-|+++<input type="checkbox">+++
+|`@MongoLocked`
+|No
 |===
 
 Include `@EnableMongoDistributedLock` to enable MongoDB locks.
@@ -59,27 +60,21 @@ If you are using Spring Boot and Maven simply add these dependencies to your `po
 </dependency>
 ----
 
-.MongoDB lock aliases
-|===
-|Alias |Type
-
-|`@MongoLocked`
-|`SimpleMongoLock`
-|===
-
 === Redis locks
 
 Redis locks are provided in the `distributed-lock-redis` project.
 
 .Redis lock implementations
 |===
-|Implementation |Multiple key support
+|Implementation |Alias |Multiple key support
 
 |`SimpleRedisLock`
-|+++<input type="checkbox">+++
+|`@RedisLocked`
+|No
 
 |`MultiRedisLock`
-|+++<input type="checkbox" checked>+++
+|`@RedisMultiLocked`
+|Yes
 |===
 
 Include `@EnableRedisDistributedLock` to enable Redis locks.
@@ -107,17 +102,6 @@ If you are using Spring Boot and Maven simply add these dependencies to your `po
     <artifactId>spring-boot-starter-data-redis</artifactId>
 </dependency>
 ----
-
-.Redis lock aliases
-|===
-|Alias |Type
-
-|`@RedisLocked`
-|`SimpleRedisLock`
-
-|`@RedisMultiLocked`
-|`MultiRedisLock`
-|===
 
 == Using locks
 

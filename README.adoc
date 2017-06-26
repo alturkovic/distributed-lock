@@ -12,6 +12,7 @@ These options are customizable per annotation.
 == Enabling locking
 
 The project contains several configurations and annotations to help you enable locking and customize it.
+
 To enable locking you must first include `@EnableDistributedLock`.
 This will import the configuration that will scan all provided `Lock` beans and configure the `LockAdvice`.
 
@@ -23,11 +24,13 @@ Project provides the following out-of-the-box lock implementations:
 === MongoDB locks
 
 MongoDB locks are provided in the `distributed-lock-mongo` project.
+
 It provides the following `Lock` implementations:
 
  - `SimpleMongoLock` - lock single key
 
 Include `@EnableMongoDistributedLock` to enable MongoDB locks.
+This will also include `@EnableDistributedLock` for you.
 
 [source,java]
 ----
@@ -59,12 +62,14 @@ Aliases used:
 === Redis locks
 
 Redis locks are provided in the `distributed-lock-redis` project.
+
 It provides the following `Lock` implementations:
 
  - `SimpleRedisLock` - lock single key
  - `MultiRedisLock` - lock multiple keys
 
 Include `@EnableRedisDistributedLock` to enable Redis locks.
+This will also include `@EnableDistributedLock` for you.
 
 [source,java]
 ----

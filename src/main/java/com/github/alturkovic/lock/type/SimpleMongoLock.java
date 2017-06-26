@@ -65,7 +65,9 @@ public class SimpleMongoLock extends AbstractLock {
 
         final LockDocument doc = mongoTemplate.findAndModify(query, update, options, LockDocument.class, storeId);
 
-        return doc.getToken().equals(token) ? token : null;
+        final boolean locked = doc.getToken().equals(token);
+        log.debug("Tried to acquire lock for key '{}' in store '{}' with safety token '{}'. Locked: {}", key, storeId, token, locked);
+        return locked ? token : null;
     }
 
     @Override
@@ -76,9 +78,9 @@ public class SimpleMongoLock extends AbstractLock {
 
         final WriteResult result = mongoTemplate.remove(Query.query(Criteria.where("_id").is(key).and("token").is(token)), storeId);
         if (result.getN() == 1) {
-            log.debug("Released key '{}' with token '{}', result: {}", key, token, result);
+            log.debug("Released key '{}' with token '{}' in store '{}', result: {}", key, token, storeId, result);
         } else {
-            log.error("Couldn't release lock for key '{}' with token '{}', result: {}", key, token, result);
+            log.error("Couldn't release lock for key '{}' with token '{}' in store '{}', result: {}", key, token, storeId, result);
         }
     }
 }

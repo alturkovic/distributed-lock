@@ -51,7 +51,7 @@ public class MultiRedisLock extends AbstractLock {
         final String token = tokenSupplier.get();
 
         final Boolean locked = stringRedisTemplate.execute(lockScript, keysWithStoreIdPrefix, token, String.valueOf(expirationUnit.toSeconds(expiration)));
-        log.debug("Tried to acquire lock for key '{}' with safety token '{}'. Locked: {}", keys.get(0), token, locked);
+        log.debug("Tried to acquire lock for keys '{}' in store '{}' with safety token '{}'. Locked: {}", keys, storeId, token, locked);
         return locked ? token : null;
     }
 
@@ -59,10 +59,10 @@ public class MultiRedisLock extends AbstractLock {
     public void release(final List<String> keys, final String token, final String storeId) {
         final List<String> keysWithStoreIdPrefix = keys.stream().map(key -> storeId + ":" + key).collect(Collectors.toList());
         final long released = stringRedisTemplate.execute(lockReleaseScript, keysWithStoreIdPrefix, token);
-        if (!(released == keys.size())) {
-            log.error("Couldn't release all locks for keys '{}' with token '{}', released: {}", keys, token, released);
+        if (released == keys.size()) {
+            log.debug("Released keys '{}' with token '{}' in store '{}'", keys, token, storeId);
         } else {
-            log.debug("Released keys '{}' with token '{}'", keys, token);
+            log.error("Couldn't release all locks for keys '{}' with token '{}' in store '{}', released: {}", keys, token, storeId, released);
         }
     }
 }

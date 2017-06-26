@@ -25,6 +25,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.util.Assert;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -51,9 +52,10 @@ public class SimpleRedisLock extends AbstractLock {
     @Override
     public String acquireLock(final List<String> keys, final String storeId, final TimeUnit expirationUnit, final long expiration) {
         Assert.isTrue(keys.size() == 1, "Cannot acquire lock for multiple keys with this lock: " + keys);
+        final List<String> singletonKeyList = Collections.singletonList(storeId + ":" + keys.get(0));
 
         final String token = tokenSupplier.get();
-        final Boolean locked = stringRedisTemplate.execute(lockScript, keys, token, String.valueOf(expirationUnit.toSeconds(expiration)));
+        final Boolean locked = stringRedisTemplate.execute(lockScript, singletonKeyList, token, String.valueOf(expirationUnit.toSeconds(expiration)));
         log.debug("Tried to acquire lock for key '{}' with safety token '{}'. Locked: {}", keys.get(0), token, locked);
         return locked ? token : null;
     }
@@ -61,10 +63,11 @@ public class SimpleRedisLock extends AbstractLock {
     @Override
     public void release(final List<String> keys, final String token, final String storeId) {
         Assert.isTrue(keys.size() == 1, "Cannot release lock for multiple keys with this lock: " + keys);
+        final List<String> singletonKeyList = Collections.singletonList(storeId + ":" + keys.get(0));
 
         final String key = keys.get(0);
 
-        final Boolean released = stringRedisTemplate.execute(lockReleaseScript, keys, token);
+        final Boolean released = stringRedisTemplate.execute(lockReleaseScript, singletonKeyList, token);
         if (!released) {
             log.error("Couldn't release lock for key '{}' with token '{}'", key, token);
         } else {

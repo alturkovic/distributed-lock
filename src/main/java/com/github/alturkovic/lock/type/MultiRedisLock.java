@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 @Data
 @Slf4j
@@ -46,16 +47,18 @@ public class MultiRedisLock extends AbstractLock {
 
     @Override
     public String acquireLock(final List<String> keys, final String storeId, final TimeUnit expirationUnit, final long expiration) {
+        final List<String> keysWithStoreIdPrefix = keys.stream().map(key -> storeId + ":" + key).collect(Collectors.toList());
         final String token = tokenSupplier.get();
 
-        final Boolean locked = stringRedisTemplate.execute(lockScript, keys, token, String.valueOf(expirationUnit.toSeconds(expiration)));
+        final Boolean locked = stringRedisTemplate.execute(lockScript, keysWithStoreIdPrefix, token, String.valueOf(expirationUnit.toSeconds(expiration)));
         log.debug("Tried to acquire lock for key '{}' with safety token '{}'. Locked: {}", keys.get(0), token, locked);
         return locked ? token : null;
     }
 
     @Override
     public void release(final List<String> keys, final String token, final String storeId) {
-        final long released = stringRedisTemplate.execute(lockReleaseScript, keys, token);
+        final List<String> keysWithStoreIdPrefix = keys.stream().map(key -> storeId + ":" + key).collect(Collectors.toList());
+        final long released = stringRedisTemplate.execute(lockReleaseScript, keysWithStoreIdPrefix, token);
         if (!(released == keys.size())) {
             log.error("Couldn't release all locks for keys '{}' with token '{}', released: {}", keys, token, released);
         } else {

@@ -97,7 +97,7 @@ If you are using Spring Boot and Maven simply add this dependency to your `pom.x
 
 To lock your methods you need to first enable locking as described in the previous section.
 
-AOP advice works around the `@Locked` annotation. The `type` field described which implementation of the lock to use.
+AOP advice works around the `@Locked` annotation. The `type` field describes which implementation of the lock to use.
 To prevent repeating yourself if you plan on using the same implementation (as most people usually will), I've added alias support.
 They wrap the `@Locked` annotation and define the type used.
 

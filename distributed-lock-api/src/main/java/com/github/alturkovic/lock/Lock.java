@@ -29,7 +29,6 @@ public interface Lock {
      * @param timeout         how long to try to acquire before failing, in millis
      *
      * @return token to use for releasing the lock or {@code null} if lock cannot be acquired
-     * @throws com.github.alturkovic.lock.exception.DistributedLockException if lock cannot be acquired for any reason
      */
     String acquire(List<String> keys, String storeId, long expiration, long retry, long timeout);
 

@@ -32,7 +32,6 @@ import org.springframework.scripting.support.ResourceScriptSource;
 import redis.clients.jedis.Jedis;
 
 @Configuration
-@ConditionalOnClass({JedisConnection.class, RedisOperations.class, Jedis.class})
 public class RedisDistributedLockConfiguration {
 
     @Bean

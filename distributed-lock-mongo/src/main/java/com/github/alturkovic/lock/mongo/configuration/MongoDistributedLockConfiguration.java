@@ -25,7 +25,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
 @Configuration
-@ConditionalOnClass({MongoClient.class, MongoTemplate.class})
 public class MongoDistributedLockConfiguration {
 
     @Bean

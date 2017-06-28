@@ -22,18 +22,33 @@ import org.aspectj.lang.JoinPoint;
 import org.springframework.expression.Expression;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
-import org.springframework.util.ClassUtils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Data
 public class SpelKeyGenerator implements KeyGenerator {
+
+    private final Map<Class<?>, Function<Object, String>> converterMap;
+
+    public SpelKeyGenerator() {
+        converterMap = new HashMap<>();
+
+        final Function<Object, String> toStringFunction = Object::toString;
+        converterMap.put(Boolean.class, toStringFunction);
+        converterMap.put(Byte.class, toStringFunction);
+        converterMap.put(Character.class, toStringFunction);
+        converterMap.put(Double.class, toStringFunction);
+        converterMap.put(Float.class, toStringFunction);
+        converterMap.put(Integer.class, toStringFunction);
+        converterMap.put(Long.class, toStringFunction);
+        converterMap.put(Short.class, toStringFunction);
+        converterMap.put(String.class, toStringFunction);
+    }
 
     @Override
     public List<String> resolveKeys(final String lockKeyPrefix, final String expression, final String contextVariableName, final JoinPoint joinPoint) {
@@ -78,19 +93,34 @@ public class SpelKeyGenerator implements KeyGenerator {
         final List<String> list;
 
         if (expressionValue == null) {
-            list = null;
-        } else if (expressionValue instanceof String || ClassUtils.isPrimitiveOrWrapper(expressionValue.getClass())) {
-            list = Collections.singletonList(String.valueOf(expressionValue));
+            throw new EvaluationConvertException("Expression evaluated in a null list");
+        }
+
+        final Function<Object, String> converterFunction = converterMap.get(expressionValue.getClass());
+
+        if (converterFunction != null) {
+            list = Collections.singletonList(converterFunction.apply(expressionValue));
         } else if (expressionValue instanceof Collection) {
-            list = ((Collection<Object>) expressionValue).stream().map(Object::toString).collect(Collectors.toList());
+            list = ((Collection<Object>) expressionValue).stream().map(o -> {
+                final Function<Object, String> elementConvertFunction = converterMap.get(o.getClass());
+                if (elementConvertFunction == null) {
+                    throw new EvaluationConvertException(String.format("Expression evaluated in a list, but object '%s' in the list has no registered converter", o));
+                }
+                return elementConvertFunction.apply(o);
+            }).collect(Collectors.toList());
         } else {
-            throw new EvaluationConvertException(String.format("%s is not configured to convert '%s' to list", this.getClass().getName(), expressionValue));
+            throw new EvaluationConvertException(String.format("Expression evaluated in object '%s' that has no registered converter", expressionValue));
         }
 
         if (CollectionUtils.isEmpty(list)) {
-            throw new EvaluationConvertException("Expression evaluated in an empty or null list");
+            throw new EvaluationConvertException("Expression evaluated in an empty list");
         }
 
         return list;
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> void registerConverter(final Class<T> clazz, final Function<T, String> converter) {
+        converterMap.put(clazz, (Function<Object, String>) converter);
     }
 }

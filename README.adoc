@@ -195,6 +195,9 @@ simply write your own and specify your own `KeyGenerator` implementation and pas
 The default key generator has access to the currently executing context, meaning you can access your fields and methods from SpEL.
 By default, parameters of the method are accessible from SpEL with #p prefix followed by the parameter index, ie: `#p1` is the second parameter.
 
+You can register your own converters to convert your classes to strings that will be used as lock names
+using `com.github.alturkovic.lock.key.SpelKeyGenerator.registerConverter` method.
+
 Examples provided in `com.github.alturkovic.lock.key.SpelKeyGeneratorTest`.
 
 == Customization

@@ -24,10 +24,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -107,17 +104,18 @@ public class SpelKeyGeneratorTest {
     }
 
     @Test
-    public void shouldConvertStringList() {
-        assertThat(new SpelKeyGenerator().convertResultToList(Arrays.asList("a", "b", "c"))).containsExactly("a","b","c");
+    public void shouldConvertUsingRegisteredConverters() {
+        final SpelKeyGenerator spelKeyGenerator = new SpelKeyGenerator();
+        spelKeyGenerator.registerConverter(Date.class, date -> String.valueOf(date.getTime()));
+
+        assertThat(spelKeyGenerator.convertResultToList(new Date(123))).containsExactly("123");
+        assertThat(spelKeyGenerator.convertResultToList(true)).containsExactly("true");
+        assertThat(spelKeyGenerator.convertResultToList(Arrays.asList("a", "b", "c"))).containsExactly("a","b","c");
+        assertThat(spelKeyGenerator.convertResultToList(new HashSet<>(Arrays.asList(1, 2, 3)))).containsExactly("1","2","3");
     }
 
-    @Test
-    public void shouldConvertIntegerSetToStringList() {
-        assertThat(new SpelKeyGenerator().convertResultToList(new HashSet<>(Arrays.asList(1, 2, 3)))).containsExactly("1","2","3");
-    }
-
-    @Test
-    public void shouldConvertBooleanToStringList() {
-        assertThat(new SpelKeyGenerator().convertResultToList(true)).containsExactly("true");
+    @Test(expected = EvaluationConvertException.class)
+    public void shouldNotConvertUnregisteredClasses() {
+        new SpelKeyGenerator().convertResultToList(new HashMap<>());
     }
 }

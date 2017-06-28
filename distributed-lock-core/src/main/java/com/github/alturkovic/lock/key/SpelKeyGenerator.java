@@ -22,13 +22,13 @@ import org.aspectj.lang.JoinPoint;
 import org.springframework.expression.Expression;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
+import org.springframework.util.ClassUtils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -74,17 +74,15 @@ public class SpelKeyGenerator implements KeyGenerator {
     }
 
     @SuppressWarnings("unchecked")
-    private List<String> convertResultToList(final Object expressionValue) {
+    protected List<String> convertResultToList(final Object expressionValue) {
         final List<String> list;
 
         if (expressionValue == null) {
             list = null;
-        } else if (expressionValue instanceof String) {
-            list = Collections.singletonList((String) expressionValue);
-        } else if (expressionValue instanceof List) {
-            list = (List<String>) expressionValue;
-        } else if (expressionValue instanceof Set) {
-            list = new ArrayList<String>((Set) expressionValue);
+        } else if (expressionValue instanceof String || ClassUtils.isPrimitiveOrWrapper(expressionValue.getClass())) {
+            list = Collections.singletonList(String.valueOf(expressionValue));
+        } else if (expressionValue instanceof Collection) {
+            list = ((Collection<Object>) expressionValue).stream().map(Object::toString).collect(Collectors.toList());
         } else {
             throw new EvaluationConvertException(String.format("%s is not configured to convert '%s' to list", this.getClass().getName(), expressionValue));
         }

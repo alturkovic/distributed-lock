@@ -105,4 +105,19 @@ public class SpelKeyGeneratorTest {
         final String exp = "T(java.util.Collections).emptyList()";
         generator.resolveKeys("", exp, "", joinPoint);
     }
+
+    @Test
+    public void shouldConvertStringList() {
+        assertThat(new SpelKeyGenerator().convertResultToList(Arrays.asList("a", "b", "c"))).containsExactly("a","b","c");
+    }
+
+    @Test
+    public void shouldConvertIntegerSetToStringList() {
+        assertThat(new SpelKeyGenerator().convertResultToList(new HashSet<>(Arrays.asList(1, 2, 3)))).containsExactly("1","2","3");
+    }
+
+    @Test
+    public void shouldConvertBooleanToStringList() {
+        assertThat(new SpelKeyGenerator().convertResultToList(true)).containsExactly("true");
+    }
 }

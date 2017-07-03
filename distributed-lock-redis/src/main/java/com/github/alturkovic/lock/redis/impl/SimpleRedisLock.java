@@ -16,10 +16,9 @@
 
 package com.github.alturkovic.lock.redis.impl;
 
-import com.github.alturkovic.lock.AbstractLock;
+import com.github.alturkovic.lock.Lock;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.RedisScript;
@@ -36,8 +35,7 @@ import java.util.function.Supplier;
 @Data
 @Slf4j
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = true)
-public class SimpleRedisLock extends AbstractLock {
+public class SimpleRedisLock implements Lock {
 
     private final StringRedisTemplate stringRedisTemplate;
     private final RedisScript<Boolean> lockScript;
@@ -49,13 +47,13 @@ public class SimpleRedisLock extends AbstractLock {
     }
 
     @Override
-    public String acquireLock(final List<String> keys, final String storeId, final long expiration) {
+    public String acquire(final List<String> keys, final String storeId, final long expiration) {
         Assert.isTrue(keys.size() == 1, "Cannot acquire lock for multiple keys with this lock: " + keys);
         final List<String> singletonKeyList = Collections.singletonList(storeId + ":" + keys.get(0));
 
         final String token = tokenSupplier.get();
         final Boolean locked = stringRedisTemplate.execute(lockScript, singletonKeyList, token, String.valueOf(expiration));
-        log.debug("Tried to acquire lock for key '{}' in store '{}' with safety token '{}'. Locked: {}", keys.get(0), storeId, token, locked);
+        log.debug("Tried to acquire lock for key {} with token {} in store {}. Locked: {}", keys.get(0), token, storeId, locked);
         return locked ? token : null;
     }
 
@@ -66,9 +64,9 @@ public class SimpleRedisLock extends AbstractLock {
 
         final Boolean released = stringRedisTemplate.execute(lockReleaseScript, singletonKeyList, token);
         if (released) {
-            log.debug("Released key '{}' with token '{}' in store '{}'", keys.get(0), token, storeId);
+            log.debug("Released key {} with token {} in store {}", keys.get(0), token, storeId);
         } else {
-            log.error("Couldn't release lock for key '{}' with token '{}' in store '{}'", keys.get(0), token, storeId);
+            log.error("Couldn't release lock for key {} with token {} in store {}", keys.get(0), token, storeId);
         }
     }
 }

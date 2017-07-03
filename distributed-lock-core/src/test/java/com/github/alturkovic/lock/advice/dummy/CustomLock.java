@@ -22,7 +22,7 @@ import java.util.List;
 
 public class CustomLock implements Lock {
     @Override
-    public String acquire(final List<String> keys, final String storeId, final long expiration, final long retry, final long timeout) {
+    public String acquire(final List<String> keys, final String storeId, final long expiration) {
         return null;
     }
 

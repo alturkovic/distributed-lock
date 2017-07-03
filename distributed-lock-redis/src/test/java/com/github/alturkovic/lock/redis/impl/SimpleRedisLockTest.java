@@ -75,7 +75,7 @@ public class SimpleRedisLockTest implements InitializingBean {
 
     @Test
     public void shouldLock() {
-        final String token = lock.acquire(Collections.singletonList("1"), "locks", 1000, 50, 0);
+        final String token = lock.acquire(Collections.singletonList("1"), "locks", 1000);
         assertThat(token).isEqualTo("abc");
         assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("abc");
     }
@@ -83,7 +83,7 @@ public class SimpleRedisLockTest implements InitializingBean {
     @Test
     public void shouldNotLock() {
         redisTemplate.opsForValue().set("locks:1", "def");
-        final String token = lock.acquire(Collections.singletonList("1"), "locks", 1000, 50, 0);
+        final String token = lock.acquire(Collections.singletonList("1"), "locks", 1000);
         assertThat(token).isNull();
         assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("def");
     }

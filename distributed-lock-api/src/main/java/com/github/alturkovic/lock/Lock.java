@@ -25,12 +25,10 @@ public interface Lock {
      * @param keys            keys to try to lock
      * @param storeId         lock store id to save keys in (table, collection, ...)
      * @param expiration      how long to wait before releasing the key automatically, in millis
-     * @param retry           how much to wait before retrying to acquire the lock, in millis
-     * @param timeout         how long to try to acquire before failing, in millis
      *
      * @return token to use for releasing the lock or {@code null} if lock cannot be acquired
      */
-    String acquire(List<String> keys, String storeId, long expiration, long retry, long timeout);
+    String acquire(List<String> keys, String storeId, long expiration);
 
     void release(List<String> keys, String token, String storeId);
 }

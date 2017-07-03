@@ -104,12 +104,12 @@ public class SpelKeyGenerator implements KeyGenerator {
             list = ((Collection<Object>) expressionValue).stream().map(o -> {
                 final Function<Object, String> elementConvertFunction = converterMap.get(o.getClass());
                 if (elementConvertFunction == null) {
-                    throw new EvaluationConvertException(String.format("Expression evaluated in a list, but object '%s' in the list has no registered converter", o));
+                    throw new EvaluationConvertException(String.format("Expression evaluated in a list, but element %s has no registered converter", o));
                 }
                 return elementConvertFunction.apply(o);
             }).collect(Collectors.toList());
         } else {
-            throw new EvaluationConvertException(String.format("Expression evaluated in object '%s' that has no registered converter", expressionValue));
+            throw new EvaluationConvertException(String.format("Expression evaluated in %s that has no registered converter", expressionValue));
         }
 
         if (CollectionUtils.isEmpty(list)) {

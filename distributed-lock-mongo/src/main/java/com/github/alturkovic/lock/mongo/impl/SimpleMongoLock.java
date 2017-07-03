@@ -16,12 +16,11 @@
 
 package com.github.alturkovic.lock.mongo.impl;
 
-import com.github.alturkovic.lock.AbstractLock;
+import com.github.alturkovic.lock.Lock;
 import com.github.alturkovic.lock.mongo.model.LockDocument;
 import com.mongodb.WriteResult;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
@@ -38,8 +37,7 @@ import java.util.function.Supplier;
 @Data
 @Slf4j
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = true)
-public class SimpleMongoLock extends AbstractLock {
+public class SimpleMongoLock implements Lock {
 
     private final MongoTemplate mongoTemplate;
     private final Supplier<String> tokenSupplier;
@@ -49,7 +47,7 @@ public class SimpleMongoLock extends AbstractLock {
     }
 
     @Override
-    public String acquireLock(final List<String> keys, final String storeId, final long expiration) {
+    public String acquire(final List<String> keys, final String storeId, final long expiration) {
         Assert.isTrue(keys.size() == 1, "Cannot acquire lock for multiple keys with this lock: " + keys);
 
         final String key = keys.get(0);
@@ -65,7 +63,7 @@ public class SimpleMongoLock extends AbstractLock {
         final LockDocument doc = mongoTemplate.findAndModify(query, update, options, LockDocument.class, storeId);
 
         final boolean locked = doc.getToken().equals(token);
-        log.debug("Tried to acquire lock for key '{}' in store '{}' with safety token '{}'. Locked: {}", key, storeId, token, locked);
+        log.debug("Tried to acquire lock for key {} with token {} in store {}. Locked: {}", key, token, storeId, locked);
         return locked ? token : null;
     }
 
@@ -77,9 +75,9 @@ public class SimpleMongoLock extends AbstractLock {
 
         final WriteResult result = mongoTemplate.remove(Query.query(Criteria.where("_id").is(key).and("token").is(token)), storeId);
         if (result.getN() == 1) {
-            log.debug("Released key '{}' with token '{}' in store '{}', result: {}", key, token, storeId, result);
+            log.debug("Released key {} with token {} in store {}, result: {}", key, token, storeId, result);
         } else {
-            log.error("Couldn't release lock for key '{}' with token '{}' in store '{}', result: {}", key, token, storeId, result);
+            log.error("Couldn't release lock for key {} with token {} in store {}, result: {}", key, token, storeId, result);
         }
     }
 }

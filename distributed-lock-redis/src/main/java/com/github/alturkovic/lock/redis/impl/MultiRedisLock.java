@@ -16,10 +16,9 @@
 
 package com.github.alturkovic.lock.redis.impl;
 
-import com.github.alturkovic.lock.AbstractLock;
+import com.github.alturkovic.lock.Lock;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.RedisScript;
@@ -32,8 +31,7 @@ import java.util.stream.Collectors;
 @Data
 @Slf4j
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = true)
-public class MultiRedisLock extends AbstractLock {
+public class MultiRedisLock implements Lock {
 
     private final StringRedisTemplate stringRedisTemplate;
     private final RedisScript<Boolean> lockScript;
@@ -45,7 +43,7 @@ public class MultiRedisLock extends AbstractLock {
     }
 
     @Override
-    public String acquireLock(final List<String> keys, final String storeId, final long expiration) {
+    public String acquire(final List<String> keys, final String storeId, final long expiration) {
         final List<String> keysWithStoreIdPrefix = keys.stream().map(key -> storeId + ":" + key).collect(Collectors.toList());
         final String token = tokenSupplier.get();
 

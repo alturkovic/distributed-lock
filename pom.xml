@@ -29,6 +29,7 @@
     <modules>
         <module>distributed-lock-api</module>
         <module>distributed-lock-core</module>
+        <module>distributed-lock-jdbc</module>
         <module>distributed-lock-mongo</module>
         <module>distributed-lock-redis</module>
     </modules>

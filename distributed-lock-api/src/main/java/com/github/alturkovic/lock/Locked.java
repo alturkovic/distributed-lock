@@ -37,7 +37,7 @@ public @interface Locked {
      * For JDBC, this would be a lock table.
      * For Mongo, this would be a collection name.
      */
-    String typeSpecificStoreId() default "lock";
+    String storeId() default "lock";
 
     /**
      * Prefix of all generated lock keys

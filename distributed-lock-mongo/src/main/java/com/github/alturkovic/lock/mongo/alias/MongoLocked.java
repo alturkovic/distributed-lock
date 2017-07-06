@@ -36,7 +36,7 @@ public @interface MongoLocked {
     boolean manuallyReleased() default false;
 
     @AliasFor(annotation = Locked.class)
-    String typeSpecificStoreId() default "lock";
+    String storeId() default "lock";
 
     @AliasFor(annotation = Locked.class)
     String prefix() default "lock:";

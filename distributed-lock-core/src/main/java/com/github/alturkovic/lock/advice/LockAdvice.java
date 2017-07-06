@@ -34,7 +34,7 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 
-import static com.github.alturkovic.lock.util.ConversionUtil.toMillis;
+import static com.github.alturkovic.lock.util.ConversionUtils.toMillis;
 
 @Slf4j
 @Aspect
@@ -91,7 +91,7 @@ public final class LockAdvice {
         try {
             while (token == null && timeout >= 0) {
                 try {
-                    token = lock.acquire(keys, locked.typeSpecificStoreId(), toMillis(locked.expiration()));
+                    token = lock.acquire(keys, locked.storeId(), toMillis(locked.expiration()));
                 } catch (Exception e) {
                     throw new DistributedLockException("Unable to acquire lock with expression: " + locked.expression(), e);
                 }
@@ -112,12 +112,12 @@ public final class LockAdvice {
                 throw new DistributedLockException("Unable to acquire lock with expression: " + locked.expression());
             }
 
-            log.debug("Acquired lock for keys {} with token {} in store {}", keys, token, locked.typeSpecificStoreId());
+            log.debug("Acquired lock for keys {} with token {} in store {}", keys, token, locked.storeId());
             return joinPoint.proceed();
         } finally {
             if (token != null && !locked.manuallyReleased()) {
-                lock.release(keys, token, locked.typeSpecificStoreId());
-                log.debug("Released lock for keys {} with token {} in store {}", keys, token, locked.typeSpecificStoreId());
+                lock.release(keys, token, locked.storeId());
+                log.debug("Released lock for keys {} with token {} in store {}", keys, token, locked.storeId());
             }
         }
     }

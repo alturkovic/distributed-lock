@@ -75,9 +75,11 @@ public class SimpleMongoLock implements Lock {
 
         final WriteResult result = mongoTemplate.remove(Query.query(Criteria.where("_id").is(key).and("token").is(token)), storeId);
         if (result.getN() == 1) {
-            log.debug("Released key {} with token {} in store {}, result: {}", key, token, storeId, result);
+            log.debug("Released key {} with token {} in store {}", key, token, storeId);
+        } else if (result.getN() > 0) {
+            log.error("Unexpected result from release for key {} with token {} in store {}", key, token, storeId);
         } else {
-            log.error("Couldn't release lock for key {} with token {} in store {}, result: {}", key, token, storeId, result);
+            log.error("Couldn't release lock for key {} with token {} in store {}", key, token, storeId);
         }
     }
 }

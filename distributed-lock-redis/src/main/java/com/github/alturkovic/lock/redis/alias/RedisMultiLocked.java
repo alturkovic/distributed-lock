@@ -36,7 +36,10 @@ public @interface RedisMultiLocked {
     boolean manuallyReleased() default false;
 
     @AliasFor(annotation = Locked.class)
-    String prefix() default "lock:";
+    String storeId() default "lock";
+
+    @AliasFor(annotation = Locked.class)
+    String prefix() default "";
 
     @AliasFor(annotation = Locked.class)
     String expression() default "";

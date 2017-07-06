@@ -27,9 +27,10 @@ public interface KeyGenerator {
     /**
      * Generate keys by evaluating the given expression
      *
-     * @param lockKeyPrefix prefix to put on resolved keys
-     * @param expression    key expression to evaluate
-     * @param joinPoint     join point of advised method
+     * @param lockKeyPrefix         prefix to put on resolved keys
+     * @param expression            key expression to evaluate
+     * @param contextVariableName   parameter identifier in expression
+     * @param joinPoint             join point of advised method
      *
      * @return generated or resolved keys
      */

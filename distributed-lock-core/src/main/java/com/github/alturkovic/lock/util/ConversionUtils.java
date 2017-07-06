@@ -21,7 +21,7 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public final class ConversionUtil {
+public final class ConversionUtils {
     public static long toMillis(final Interval interval) {
         return interval.unit().toMillis(interval.value());
     }

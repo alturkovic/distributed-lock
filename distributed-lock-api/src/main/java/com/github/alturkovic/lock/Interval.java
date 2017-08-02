@@ -16,14 +16,27 @@
 
 package com.github.alturkovic.lock;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.util.concurrent.TimeUnit;
 
+@Retention(RetentionPolicy.RUNTIME)
 public @interface Interval {
+
+    /**
+     * Interval property
+     */
+    String property() default "";
+
+    /**
+     * Interval expression
+     */
+    String expression() default "";
 
     /**
      * Interval
      */
-    long value();
+    long value() default 0;
 
     /**
      * Interval {@link TimeUnit} used to recalculate

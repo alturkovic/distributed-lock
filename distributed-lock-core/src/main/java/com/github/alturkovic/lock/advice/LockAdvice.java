@@ -20,6 +20,7 @@ import com.github.alturkovic.lock.Lock;
 import com.github.alturkovic.lock.Locked;
 import com.github.alturkovic.lock.exception.DistributedLockException;
 import com.github.alturkovic.lock.key.KeyGenerator;
+import com.github.alturkovic.lock.converter.IntervalConverter;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -34,13 +35,12 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 
-import static com.github.alturkovic.lock.util.ConversionUtils.toMillis;
-
 @Slf4j
 @Aspect
 @AllArgsConstructor
 public final class LockAdvice {
 
+    private final IntervalConverter intervalConverter;
     private final KeyGenerator keyGenerator;
     private final Map<Class<? extends Lock>, Lock> lockMap;
 
@@ -84,14 +84,14 @@ public final class LockAdvice {
             throw new DistributedLockException("Cannot resolve keys to lock from expression: " + locked.expression(), e);
         }
 
-        long timeout = toMillis(locked.timeout());
-        final long retry = toMillis(locked.retry());
+        long timeout = intervalConverter.toMillis(locked.timeout(), locked.parameter(), joinPoint);
+        final long retry = intervalConverter.toMillis(locked.retry(), locked.parameter(), joinPoint);
 
         String token = null;
         try {
             while (token == null && timeout >= 0) {
                 try {
-                    token = lock.acquire(keys, locked.storeId(), toMillis(locked.expiration()));
+                    token = lock.acquire(keys, locked.storeId(), intervalConverter.toMillis(locked.expiration(), locked.parameter(), joinPoint));
                 } catch (Exception e) {
                     throw new DistributedLockException("Unable to acquire lock with expression: " + locked.expression(), e);
                 }

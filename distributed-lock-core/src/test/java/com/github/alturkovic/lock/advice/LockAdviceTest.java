@@ -21,6 +21,7 @@ import com.github.alturkovic.lock.Locked;
 import com.github.alturkovic.lock.advice.dummy.DummyLock;
 import com.github.alturkovic.lock.advice.dummy.DummyLocked;
 import com.github.alturkovic.lock.advice.dummy.CustomLocked;
+import com.github.alturkovic.lock.converter.IntervalConverter;
 import com.github.alturkovic.lock.exception.DistributedLockException;
 import com.github.alturkovic.lock.key.SpelKeyGenerator;
 import org.junit.Before;
@@ -54,7 +55,8 @@ public class LockAdviceTest {
         final Map<Class<? extends Lock>, Lock> lockMap = new HashMap<>();
         lockMap.put(Lock.class, lock);
         lockMap.put(DummyLock.class, lock);
-        proxyFactory.addAspect(new LockAdvice(new SpelKeyGenerator(), lockMap));
+        final IntervalConverter intervalConverter = new IntervalConverter(null); // this test does not use env, just null for simplicity
+        proxyFactory.addAspect(new LockAdvice(intervalConverter, new SpelKeyGenerator(), lockMap));
         locked = proxyFactory.getProxy();
     }
 

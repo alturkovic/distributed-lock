@@ -7,7 +7,7 @@
     <parent>
         <groupId>com.github.alturkovic</groupId>
         <artifactId>distributed-lock</artifactId>
-        <version>1.5.3.RELEASE-1.0</version>
+        <version>1.5.3.RELEASE-1.0.0</version>
     </parent>
 
     <artifactId>distributed-lock-mongo</artifactId>

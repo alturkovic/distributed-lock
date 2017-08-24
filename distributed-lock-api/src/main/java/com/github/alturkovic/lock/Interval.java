@@ -24,19 +24,10 @@ import java.util.concurrent.TimeUnit;
 public @interface Interval {
 
     /**
-     * Interval property
+     * Interval period.
+     * Can be specified as 'property placeholder', e.g. {@code ${locked.interval}}.
      */
-    String property() default "";
-
-    /**
-     * Interval expression
-     */
-    String expression() default "";
-
-    /**
-     * Interval
-     */
-    long value() default 0;
+    String value();
 
     /**
      * Interval {@link TimeUnit} used to recalculate

@@ -30,6 +30,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -55,7 +56,7 @@ public class LockAdviceTest {
         final Map<Class<? extends Lock>, Lock> lockMap = new HashMap<>();
         lockMap.put(Lock.class, lock);
         lockMap.put(DummyLock.class, lock);
-        final IntervalConverter intervalConverter = new IntervalConverter(null); // this test does not use env, just null for simplicity
+        final IntervalConverter intervalConverter = new IntervalConverter(new DefaultListableBeanFactory());
         proxyFactory.addAspect(new LockAdvice(intervalConverter, new SpelKeyGenerator(), lockMap));
         locked = proxyFactory.getProxy();
     }

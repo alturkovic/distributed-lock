@@ -48,11 +48,11 @@ public @interface RedisLocked {
     String parameter() default "p";
 
     @AliasFor(annotation = Locked.class)
-    Interval expiration() default @Interval(10);
+    Interval expiration() default @Interval("10");
 
     @AliasFor(annotation = Locked.class)
-    Interval timeout() default @Interval(1);
+    Interval timeout() default @Interval("1");
 
     @AliasFor(annotation = Locked.class)
-    Interval retry() default @Interval(value = 50, unit = TimeUnit.MILLISECONDS);
+    Interval retry() default @Interval(value = "50", unit = TimeUnit.MILLISECONDS);
 }

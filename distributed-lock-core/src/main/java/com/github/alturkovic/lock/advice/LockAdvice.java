@@ -84,14 +84,14 @@ public final class LockAdvice {
             throw new DistributedLockException("Cannot resolve keys to lock from expression: " + locked.expression(), e);
         }
 
-        long timeout = intervalConverter.toMillis(locked.timeout(), locked.parameter(), joinPoint);
-        final long retry = intervalConverter.toMillis(locked.retry(), locked.parameter(), joinPoint);
+        long timeout = intervalConverter.toMillis(locked.timeout());
+        final long retry = intervalConverter.toMillis(locked.retry());
 
         String token = null;
         try {
             while (token == null && timeout >= 0) {
                 try {
-                    token = lock.acquire(keys, locked.storeId(), intervalConverter.toMillis(locked.expiration(), locked.parameter(), joinPoint));
+                    token = lock.acquire(keys, locked.storeId(), intervalConverter.toMillis(locked.expiration()));
                 } catch (Exception e) {
                     throw new DistributedLockException("Unable to acquire lock with expression: " + locked.expression(), e);
                 }

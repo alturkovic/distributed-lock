@@ -24,7 +24,7 @@ import org.joda.time.DateTime;
 import org.springframework.data.annotation.Id;
 
 /**
- * Make sure you create a TTL index in your {@link Locked#typeSpecificStoreId()} collection on {@code expireAt} field to enable lock expiration.
+ * Make sure you create a TTL index in your {@link Locked#storeId()} collection on {@code expireAt} field to enable lock expiration.
  * You might also want to index the {@code token} field for better search performance.
  */
 @Data

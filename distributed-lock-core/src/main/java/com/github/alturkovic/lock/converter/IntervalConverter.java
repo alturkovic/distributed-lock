@@ -17,45 +17,26 @@
 package com.github.alturkovic.lock.converter;
 
 import com.github.alturkovic.lock.Interval;
-import org.aspectj.lang.JoinPoint;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
-import org.springframework.expression.spel.standard.SpelExpressionParser;
-import org.springframework.expression.spel.support.StandardEvaluationContext;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-
-import java.util.stream.IntStream;
 
 @Component
 public class IntervalConverter {
 
-    private final Environment env;
+    private final ConfigurableListableBeanFactory beanFactory;
 
     @Autowired
-    public IntervalConverter(final Environment env) {
-        this.env = env;
+    public IntervalConverter(final ConfigurableListableBeanFactory beanFactory) {
+        this.beanFactory = beanFactory;
     }
 
-    public long toMillis(final Interval interval, final String contextVariableName, final JoinPoint joinPoint) {
-        long amount = interval.value();
-
-        final String property = interval.property();
-        final String expression = interval.expression();
-
-        if (!StringUtils.isEmpty(property)) {
-            amount = env.getProperty(property, Long.class);
-        } else if (!StringUtils.isEmpty(expression)) {
-            final StandardEvaluationContext context = new StandardEvaluationContext(joinPoint.getTarget());
-
-            final Object[] args = joinPoint.getArgs();
-            if (args != null && args.length > 0) {
-                IntStream.range(0, args.length).forEach(idx -> context.setVariable(contextVariableName + idx, args[idx]));
-            }
-
-            amount = new SpelExpressionParser().parseRaw(expression).getValue(context, Long.class);
+    public long toMillis(final Interval interval) {
+        final String value = beanFactory.resolveEmbeddedValue(interval.value());
+        if (!StringUtils.hasText(value)) {
+            throw new IllegalArgumentException("Cannot convert interval " + interval + " to milliseconds");
         }
-
-        return interval.unit().toMillis(amount);
+        return interval.unit().toMillis(Long.valueOf(value));
     }
 }

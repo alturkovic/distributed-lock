@@ -45,9 +45,10 @@ public @interface Locked {
     String prefix() default "lock:";
 
     /**
-     * SpEL expression with all arguments passed as SpEL variables {@code args} and available execution context
+     * SpEL expression with all arguments passed as SpEL variables {@code args} and available execution context.
+     * By default, it will evaluate to the absolute method path (class + method) by evaluating a special 'executionPath' variable
      */
-    String expression() default "";
+    String expression() default "#executionPath";
 
     /**
      * Names of parameters in expression.
@@ -71,7 +72,7 @@ public @interface Locked {
     Interval retry() default @Interval(value = "50", unit = TimeUnit.MILLISECONDS);
 
     /**
-     * Lock TYPE, see implementations of {@link Lock}
+     * Lock type, see implementations of {@link Lock}
      */
-    Class<? extends Lock> type();
+    Class<? extends Lock> type() default Lock.class;
 }

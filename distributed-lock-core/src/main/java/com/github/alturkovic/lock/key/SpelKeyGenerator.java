@@ -19,6 +19,9 @@ package com.github.alturkovic.lock.key;
 import com.github.alturkovic.lock.exception.EvaluationConvertException;
 import lombok.Data;
 import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.Signature;
+import org.aspectj.lang.reflect.MethodSignature;
+import org.springframework.aop.aspectj.MethodInvocationProceedingJoinPoint;
 import org.springframework.expression.Expression;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
@@ -67,6 +70,11 @@ public class SpelKeyGenerator implements KeyGenerator {
         final Object[] args = joinPoint.getArgs();
         if (args != null && args.length > 0) {
             IntStream.range(0, args.length).forEach(idx -> context.setVariable(contextVariableName + idx, args[idx]));
+        }
+
+        final Signature signature = joinPoint.getSignature();
+        if (signature instanceof MethodSignature) {
+            context.setVariable("executionPath", joinPoint.getTarget().getClass().getCanonicalName() + "." + ((MethodSignature) signature).getMethod().getName());
         }
 
         final SpelExpressionParser parser = new SpelExpressionParser();

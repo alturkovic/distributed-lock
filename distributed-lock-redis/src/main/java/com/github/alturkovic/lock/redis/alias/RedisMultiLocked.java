@@ -39,7 +39,7 @@ public @interface RedisMultiLocked {
     String storeId() default "lock";
 
     @AliasFor(annotation = Locked.class)
-    String prefix() default "";
+    String prefix() default "#executionPath";
 
     @AliasFor(annotation = Locked.class)
     String expression() default "";

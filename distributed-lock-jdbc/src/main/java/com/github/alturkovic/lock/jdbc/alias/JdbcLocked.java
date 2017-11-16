@@ -42,7 +42,7 @@ public @interface JdbcLocked {
     String prefix() default "lock:";
 
     @AliasFor(annotation = Locked.class)
-    String expression() default "";
+    String expression() default "#executionPath";
 
     @AliasFor(annotation = Locked.class)
     String parameter() default "p";

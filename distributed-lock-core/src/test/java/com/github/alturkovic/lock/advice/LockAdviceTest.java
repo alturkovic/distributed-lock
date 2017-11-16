@@ -62,20 +62,33 @@ public class LockAdviceTest {
     }
 
     @Test
-    public void shouldAcquireLockAndCallMethod() {
+    public void shouldAcquireDefaultLockAndCallMethod() {
+        when(lock.acquire(anyListOf(String.class), any(), anyLong())).thenReturn("abc");
+        doNothing()
+                .when(lock)
+                .release(eq(Collections.singletonList("lock:com.github.alturkovic.lock.advice.LockAdviceTest.LockedService.tryWithDefaultLock")), eq("abc"), any());
+
+        locked.tryWithDefaultLock();
+
+        verify(lock, atLeastOnce())
+                .release(eq(Collections.singletonList("lock:com.github.alturkovic.lock.advice.LockAdviceTest.LockedService.tryWithDefaultLock")), eq("abc"), any());
+    }
+
+    @Test
+    public void shouldAcquireNamedLockAndCallMethod() {
         when(lock.acquire(anyListOf(String.class), any(), anyLong())).thenReturn("abc");
         doNothing().when(lock).release(eq(Collections.singletonList("lock:test")), eq("abc"), any());
 
-        locked.tryWithLock();
+        locked.tryWithNamedLock();
 
         verify(lock, atLeastOnce()).release(eq(Collections.singletonList("lock:test")), eq("abc"), any());
     }
 
     @Test(expected = DistributedLockException.class)
-    public void shouldNotAcquireLockAndThrowException() {
+    public void shouldNotAcquireNamedLockAndThrowException() {
         when(lock.acquire(anyListOf(String.class), any(), anyLong())).thenReturn(null);
 
-        locked.tryWithLock();
+        locked.tryWithNamedLock();
     }
 
     @Test(expected = DistributedLockException.class)
@@ -94,7 +107,9 @@ public class LockAdviceTest {
     }
 
     interface LockedInterface {
-        void tryWithLock();
+        void tryWithDefaultLock();
+
+        void tryWithNamedLock();
 
         void tryWithLockAlias();
 
@@ -103,8 +118,12 @@ public class LockAdviceTest {
 
     static class LockedService implements LockedInterface {
 
-        @Locked(expression = "'test'", type = Lock.class)
-        public void tryWithLock() {
+        @Locked
+        public void tryWithDefaultLock() {
+        }
+
+        @Locked(expression = "'test'")
+        public void tryWithNamedLock() {
         }
 
         @Override

@@ -42,7 +42,7 @@ public @interface RedisLocked {
     String prefix() default "";
 
     @AliasFor(annotation = Locked.class)
-    String expression() default "";
+    String expression() default "#executionPath";
 
     @AliasFor(annotation = Locked.class)
     String parameter() default "p";

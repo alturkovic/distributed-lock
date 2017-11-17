@@ -21,7 +21,7 @@ import org.aspectj.lang.JoinPoint;
 import java.util.List;
 
 /**
- * Used to generate key for rate limited operation
+ * Used to generate keys to lock
  */
 public interface KeyGenerator {
     /**

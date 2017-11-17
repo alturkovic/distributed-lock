@@ -40,6 +40,9 @@ public class SpelKeyGeneratorTest {
     @Getter
     private final String stringDummy = "contextTest";
 
+    @Getter
+    private final int integerDummy = 15;
+
     private final SpelKeyGenerator generator = new SpelKeyGenerator();
 
     @Mock
@@ -63,6 +66,16 @@ public class SpelKeyGeneratorTest {
         final String exp = "getStringDummy() + 'Example' + #p0";
         final List<String> keys = generator.resolveKeys("lock_", exp, "p", joinPoint);
         assertThat(keys).containsExactly("lock_contextTestExample1");
+    }
+
+    @Test
+    public void shouldGenerateWithDefaultConverter() {
+        when(joinPoint.getArgs()).thenReturn(new Object[]{1});
+        when(joinPoint.getTarget()).thenReturn(this);
+
+        final String exp = "getIntegerDummy()";
+        final List<String> keys = generator.resolveKeys("lock_", exp, "p", joinPoint);
+        assertThat(keys).containsExactly("lock_15");
     }
 
     @Test

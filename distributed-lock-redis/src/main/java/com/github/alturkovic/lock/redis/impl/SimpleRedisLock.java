@@ -17,17 +17,16 @@
 package com.github.alturkovic.lock.redis.impl;
 
 import com.github.alturkovic.lock.Lock;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+import java.util.function.Supplier;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.util.Assert;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
-import java.util.function.Supplier;
 
 /**
  * Works the same way as {@link MultiRedisLock} but is optimized better to work with a single key.
@@ -37,36 +36,39 @@ import java.util.function.Supplier;
 @AllArgsConstructor
 public class SimpleRedisLock implements Lock {
 
-    private final StringRedisTemplate stringRedisTemplate;
-    private final RedisScript<Boolean> lockScript;
-    private final RedisScript<Boolean> lockReleaseScript;
-    private final Supplier<String> tokenSupplier;
+  private final StringRedisTemplate stringRedisTemplate;
+  private final RedisScript<Boolean> lockScript;
+  private final RedisScript<Boolean> lockReleaseScript;
+  private final Supplier<String> tokenSupplier;
 
-    public SimpleRedisLock(final StringRedisTemplate stringRedisTemplate, final RedisScript<Boolean> lockScript, final RedisScript<Boolean> lockReleaseScript) {
-        this(stringRedisTemplate, lockScript, lockReleaseScript, () -> UUID.randomUUID().toString());
+  public SimpleRedisLock(final StringRedisTemplate stringRedisTemplate, final RedisScript<Boolean> lockScript, final RedisScript<Boolean> lockReleaseScript) {
+    this(stringRedisTemplate, lockScript, lockReleaseScript, () -> UUID.randomUUID().toString());
+  }
+
+  @Override
+  public String acquire(final List<String> keys, final String storeId, final long expiration) {
+    Assert.isTrue(keys.size() == 1, "Cannot acquire lock for multiple keys with this lock: " + keys);
+    final List<String> singletonKeyList = Collections.singletonList(storeId + ":" + keys.get(0));
+
+    final String token = tokenSupplier.get();
+    final boolean locked = stringRedisTemplate.execute(lockScript, singletonKeyList, token, String.valueOf(expiration));
+    log.debug("Tried to acquire lock for key {} with token {} in store {}. Locked: {}", keys.get(0), token, storeId, locked);
+    return locked ? token : null;
+  }
+
+  @Override
+  public boolean release(final List<String> keys, final String token, final String storeId) {
+    Assert.isTrue(keys.size() == 1, "Cannot release lock for multiple keys with this lock: " + keys);
+    final String key = keys.get(0);
+
+    final List<String> singletonKeyList = Collections.singletonList(storeId + ":" + key);
+
+    final boolean released = stringRedisTemplate.execute(lockReleaseScript, singletonKeyList, token);
+    if (released) {
+      log.debug("Release script deleted the record for key {} with token {} in store {}", key, token, storeId);
+    } else {
+      log.error("Release script failed for key {} with token {} in store {}", key, token, storeId);
     }
-
-    @Override
-    public String acquire(final List<String> keys, final String storeId, final long expiration) {
-        Assert.isTrue(keys.size() == 1, "Cannot acquire lock for multiple keys with this lock: " + keys);
-        final List<String> singletonKeyList = Collections.singletonList(storeId + ":" + keys.get(0));
-
-        final String token = tokenSupplier.get();
-        final Boolean locked = stringRedisTemplate.execute(lockScript, singletonKeyList, token, String.valueOf(expiration));
-        log.debug("Tried to acquire lock for key {} with token {} in store {}. Locked: {}", keys.get(0), token, storeId, locked);
-        return locked ? token : null;
-    }
-
-    @Override
-    public void release(final List<String> keys, final String token, final String storeId) {
-        Assert.isTrue(keys.size() == 1, "Cannot release lock for multiple keys with this lock: " + keys);
-        final List<String> singletonKeyList = Collections.singletonList(storeId + ":" + keys.get(0));
-
-        final Boolean released = stringRedisTemplate.execute(lockReleaseScript, singletonKeyList, token);
-        if (released) {
-            log.debug("Released key {} with token {} in store {}", keys.get(0), token, storeId);
-        } else {
-            log.error("Couldn't release lock for key {} with token {} in store {}", keys.get(0), token, storeId);
-        }
-    }
+    return released;
+  }
 }

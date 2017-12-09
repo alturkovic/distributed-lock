@@ -18,6 +18,7 @@ package com.github.alturkovic.lock.mongo.impl;
 
 import com.github.alturkovic.lock.Lock;
 import com.github.alturkovic.lock.mongo.model.LockDocument;
+import java.util.Collections;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,8 +32,6 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.Collections;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataMongoTest
@@ -41,52 +40,54 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 public class SimpleMongoLockTest implements InitializingBean {
 
-    @Autowired
-    private MongoTemplate mongoTemplate;
+  @Autowired
+  private MongoTemplate mongoTemplate;
 
-    private Lock lock;
+  private Lock lock;
 
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        // instead of writing a custom test configuration, we can just initialize it after autowiring mongoTemplate with a custom tokenSupplier
-        lock = new SimpleMongoLock(mongoTemplate, () -> "abc");
-    }
+  @Override
+  public void afterPropertiesSet() throws Exception {
+    // instead of writing a custom test configuration, we can just initialize it after autowiring mongoTemplate with a custom tokenSupplier
+    lock = new SimpleMongoLock(mongoTemplate, () -> "abc");
+  }
 
-    @Before
-    public void cleanMongoCollection() {
-        mongoTemplate.dropCollection("locks");
-    }
+  @Before
+  public void cleanMongoCollection() {
+    mongoTemplate.dropCollection("locks");
+  }
 
-    @Test
-    public void shouldLock() {
-        final String token = lock.acquire(Collections.singletonList("1"), "locks", 1000);
-        assertThat(token).isEqualTo("abc");
-        assertThat(mongoTemplate.findById("1", LockDocument.class, "locks").getToken()).isEqualTo("abc");
-    }
+  @Test
+  public void shouldLock() {
+    final String token = lock.acquire(Collections.singletonList("1"), "locks", 1000);
+    assertThat(token).isEqualTo("abc");
+    assertThat(mongoTemplate.findById("1", LockDocument.class, "locks").getToken()).isEqualTo("abc");
+  }
 
-    @Test
-    public void shouldNotLock() {
-        mongoTemplate.insert(new LockDocument("1", DateTime.now().plusMinutes(1), "def"), "locks");
-        final String token = lock.acquire(Collections.singletonList("1"), "locks", 1000);
-        assertThat(token).isNull();
-        assertThat(mongoTemplate.findById("1", LockDocument.class, "locks").getToken()).isEqualTo("def");
-    }
+  @Test
+  public void shouldNotLock() {
+    mongoTemplate.insert(new LockDocument("1", DateTime.now().plusMinutes(1), "def"), "locks");
+    final String token = lock.acquire(Collections.singletonList("1"), "locks", 1000);
+    assertThat(token).isNull();
+    assertThat(mongoTemplate.findById("1", LockDocument.class, "locks").getToken()).isEqualTo("def");
+  }
 
-    @Test
-    public void shouldRelease() {
-        mongoTemplate.insert(new LockDocument("1", DateTime.now().plusMinutes(1), "abc"), "locks");
-        lock.release(Collections.singletonList("1"), "abc", "locks");
-        assertThat(mongoTemplate.findById("1", LockDocument.class, "locks")).isNull();
-    }
+  @Test
+  public void shouldRelease() {
+    mongoTemplate.insert(new LockDocument("1", DateTime.now().plusMinutes(1), "abc"), "locks");
+    final boolean released = lock.release(Collections.singletonList("1"), "abc", "locks");
+    assertThat(released).isTrue();
+    assertThat(mongoTemplate.findById("1", LockDocument.class, "locks")).isNull();
+  }
 
-    @Test
-    public void shouldNotRelease() {
-        mongoTemplate.insert(new LockDocument("1", DateTime.now().plusMinutes(1), "def"), "locks");
-        lock.release(Collections.singletonList("1"), "abc", "locks");
-        assertThat(mongoTemplate.findById("1", LockDocument.class, "locks").getToken()).isEqualTo("def");
-    }
+  @Test
+  public void shouldNotRelease() {
+    mongoTemplate.insert(new LockDocument("1", DateTime.now().plusMinutes(1), "def"), "locks");
+    final boolean released = lock.release(Collections.singletonList("1"), "abc", "locks");
+    assertThat(released).isFalse();
+    assertThat(mongoTemplate.findById("1", LockDocument.class, "locks").getToken()).isEqualTo("def");
+  }
 
-    @SpringBootApplication
-    static class TestApplication {
-    }
+  @SpringBootApplication
+  static class TestApplication {
+  }
 }

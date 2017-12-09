@@ -17,49 +17,51 @@
 package com.github.alturkovic.lock.redis.impl;
 
 import com.github.alturkovic.lock.Lock;
+import java.util.List;
+import java.util.UUID;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.RedisScript;
 
-import java.util.List;
-import java.util.UUID;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-
 @Data
 @Slf4j
 @AllArgsConstructor
 public class MultiRedisLock implements Lock {
 
-    private final StringRedisTemplate stringRedisTemplate;
-    private final RedisScript<Boolean> lockScript;
-    private final RedisScript<Long> lockReleaseScript;
-    private final Supplier<String> tokenSupplier;
+  private final StringRedisTemplate stringRedisTemplate;
+  private final RedisScript<Boolean> lockScript;
+  private final RedisScript<Long> lockReleaseScript;
+  private final Supplier<String> tokenSupplier;
 
-    public MultiRedisLock(final StringRedisTemplate stringRedisTemplate, final RedisScript<Boolean> lockScript, final RedisScript<Long> lockReleaseScript) {
-        this(stringRedisTemplate, lockScript, lockReleaseScript, () -> UUID.randomUUID().toString());
+  public MultiRedisLock(final StringRedisTemplate stringRedisTemplate, final RedisScript<Boolean> lockScript, final RedisScript<Long> lockReleaseScript) {
+    this(stringRedisTemplate, lockScript, lockReleaseScript, () -> UUID.randomUUID().toString());
+  }
+
+  @Override
+  public String acquire(final List<String> keys, final String storeId, final long expiration) {
+    final List<String> keysWithStoreIdPrefix = keys.stream().map(key -> storeId + ":" + key).collect(Collectors.toList());
+    final String token = tokenSupplier.get();
+
+    final Boolean locked = stringRedisTemplate.execute(lockScript, keysWithStoreIdPrefix, token, String.valueOf(expiration));
+    log.debug("Tried to acquire lock for keys '{}' in store '{}' with safety token '{}'. Locked: {}", keys, storeId, token, locked);
+    return locked ? token : null;
+  }
+
+  @Override
+  public boolean release(final List<String> keys, final String token, final String storeId) {
+    final List<String> keysWithStoreIdPrefix = keys.stream().map(key -> storeId + ":" + key).collect(Collectors.toList());
+    final long releasedKeys = stringRedisTemplate.execute(lockReleaseScript, keysWithStoreIdPrefix, token);
+
+    final boolean released = releasedKeys == keys.size();
+    if (released) {
+      log.debug("Release script deleted the record for keys {} with token {} in store {}", keys, token, storeId);
+    } else {
+      log.error("Release script failed for keys {} with token {} in store {}", keys, token, storeId);
     }
-
-    @Override
-    public String acquire(final List<String> keys, final String storeId, final long expiration) {
-        final List<String> keysWithStoreIdPrefix = keys.stream().map(key -> storeId + ":" + key).collect(Collectors.toList());
-        final String token = tokenSupplier.get();
-
-        final Boolean locked = stringRedisTemplate.execute(lockScript, keysWithStoreIdPrefix, token, String.valueOf(expiration));
-        log.debug("Tried to acquire lock for keys '{}' in store '{}' with safety token '{}'. Locked: {}", keys, storeId, token, locked);
-        return locked ? token : null;
-    }
-
-    @Override
-    public void release(final List<String> keys, final String token, final String storeId) {
-        final List<String> keysWithStoreIdPrefix = keys.stream().map(key -> storeId + ":" + key).collect(Collectors.toList());
-        final long released = stringRedisTemplate.execute(lockReleaseScript, keysWithStoreIdPrefix, token);
-        if (released == keys.size()) {
-            log.debug("Released keys '{}' with token '{}' in store '{}'", keys, token, storeId);
-        } else {
-            log.error("Couldn't release all locks for keys '{}' with token '{}' in store '{}', released: {}", keys, token, storeId, released);
-        }
-    }
+    return released;
+  }
 }

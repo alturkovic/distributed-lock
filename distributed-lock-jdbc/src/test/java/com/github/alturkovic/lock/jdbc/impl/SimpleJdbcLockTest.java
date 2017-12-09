@@ -18,6 +18,10 @@ package com.github.alturkovic.lock.jdbc.impl;
 
 import com.github.alturkovic.lock.Lock;
 import com.github.alturkovic.lock.jdbc.service.SimpleJdbcLockSingleKeyService;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import org.assertj.core.data.Offset;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,11 +36,6 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DirtiesContext
@@ -46,77 +45,78 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 public class SimpleJdbcLockTest implements InitializingBean {
 
-    @Autowired
-    @SuppressWarnings("SpringJavaAutowiringInspection") // false IntelliJ warning
-    private JdbcTemplate jdbcTemplate;
+  @Autowired
+  @SuppressWarnings("SpringJavaAutowiringInspection") // false IntelliJ warning
+  private JdbcTemplate jdbcTemplate;
 
-    private Lock lock;
+  private Lock lock;
 
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        // instead of writing a custom test configuration, we can just initialize it after autowiring mongoTemplate with a custom tokenSupplier
-        lock = new SimpleJdbcLock(new SimpleJdbcLockSingleKeyService(jdbcTemplate), () -> "abc");
-    }
+  @Override
+  public void afterPropertiesSet() throws Exception {
+    // instead of writing a custom test configuration, we can just initialize it after autowiring mongoTemplate with a custom tokenSupplier
+    lock = new SimpleJdbcLock(new SimpleJdbcLockSingleKeyService(jdbcTemplate), () -> "abc");
+  }
 
-    @Test
-    public void shouldLock() {
-        final long now = System.currentTimeMillis();
-        final String token = lock.acquire(Collections.singletonList("1"), "locks", 1000);
-        assertThat(token).isEqualTo("abc");
+  @Test
+  public void shouldLock() {
+    final long now = System.currentTimeMillis();
+    final String token = lock.acquire(Collections.singletonList("1"), "locks", 1000);
+    assertThat(token).isEqualTo("abc");
 
-        final Map<String, Object> acquiredLockMap = jdbcTemplate.queryForObject("SELECT * FROM locks WHERE id = 1", new ColumnMapRowMapper());
+    final Map<String, Object> acquiredLockMap = jdbcTemplate.queryForObject("SELECT * FROM locks WHERE id = 1", new ColumnMapRowMapper());
 
-        assertThat(acquiredLockMap).containsAllEntriesOf(values("1", "abc"));
-        final Object expireAt = acquiredLockMap.get("expireAt");
-        assertThat(((Date) expireAt).getTime()).isCloseTo(now + 1000, Offset.offset(100L));
-    }
+    assertThat(acquiredLockMap).containsAllEntriesOf(values("1", "abc"));
+    final Object expireAt = acquiredLockMap.get("expireAt");
+    assertThat(((Date) expireAt).getTime()).isCloseTo(now + 1000, Offset.offset(100L));
+  }
 
-    @Test
-    public void shouldNotLock() {
-        new SimpleJdbcInsert(jdbcTemplate)
-                .withTableName("locks")
-                .usingGeneratedKeyColumns("id")
-                .executeAndReturnKey(values("1", "def"));
+  @Test
+  public void shouldNotLock() {
+    new SimpleJdbcInsert(jdbcTemplate)
+        .withTableName("locks")
+        .usingGeneratedKeyColumns("id")
+        .executeAndReturnKey(values("1", "def"));
 
-        final String token = lock.acquire(Collections.singletonList("1"), "locks", 1000);
-        assertThat(token).isNull();
+    final String token = lock.acquire(Collections.singletonList("1"), "locks", 1000);
+    assertThat(token).isNull();
 
-        final Map<String, Object> acquiredLockMap = jdbcTemplate.queryForObject("SELECT * FROM locks WHERE id = 1", new ColumnMapRowMapper());
-        assertThat(acquiredLockMap).containsAllEntriesOf(values("1", "def"));
-    }
+    final Map<String, Object> acquiredLockMap = jdbcTemplate.queryForObject("SELECT * FROM locks WHERE id = 1", new ColumnMapRowMapper());
+    assertThat(acquiredLockMap).containsAllEntriesOf(values("1", "def"));
+  }
 
-    @Test
-    public void shouldRelease() {
-        new SimpleJdbcInsert(jdbcTemplate)
-                .withTableName("locks")
-                .usingGeneratedKeyColumns("id")
-                .executeAndReturnKey(values("1", "abc"));
+  @Test
+  public void shouldRelease() {
+    new SimpleJdbcInsert(jdbcTemplate)
+        .withTableName("locks")
+        .usingGeneratedKeyColumns("id")
+        .executeAndReturnKey(values("1", "abc"));
 
-        lock.release(Collections.singletonList("1"), "abc", "locks");
-        assertThat(jdbcTemplate.queryForList("SELECT * FROM locks")).isNullOrEmpty();
-    }
+    final boolean released = lock.release(Collections.singletonList("1"), "abc", "locks");
+    assertThat(released).isTrue();
+    assertThat(jdbcTemplate.queryForList("SELECT * FROM locks")).isNullOrEmpty();
+  }
 
-    @Test
-    public void shouldNotRelease() {
-        new SimpleJdbcInsert(jdbcTemplate)
-                .withTableName("locks")
-                .usingGeneratedKeyColumns("id")
-                .executeAndReturnKey(values("1", "def"));
+  @Test
+  public void shouldNotRelease() {
+    new SimpleJdbcInsert(jdbcTemplate)
+        .withTableName("locks")
+        .usingGeneratedKeyColumns("id")
+        .executeAndReturnKey(values("1", "def"));
 
-        lock.release(Collections.singletonList("1"), "abc", "locks");
+    lock.release(Collections.singletonList("1"), "abc", "locks");
 
-        final Map<String, Object> acquiredLockMap = jdbcTemplate.queryForObject("SELECT * FROM locks WHERE id = 1", new ColumnMapRowMapper());
-        assertThat(acquiredLockMap).containsAllEntriesOf(values("1", "def"));
-    }
+    final Map<String, Object> acquiredLockMap = jdbcTemplate.queryForObject("SELECT * FROM locks WHERE id = 1", new ColumnMapRowMapper());
+    assertThat(acquiredLockMap).containsAllEntriesOf(values("1", "def"));
+  }
 
-    private static Map<String, Object> values(final String key, final String token) {
-        final Map<String, Object> values = new HashMap<>();
-        values.put("key", key);
-        values.put("token", token);
-        return values;
-    }
+  private static Map<String, Object> values(final String key, final String token) {
+    final Map<String, Object> values = new HashMap<>();
+    values.put("key", key);
+    values.put("token", token);
+    return values;
+  }
 
-    @SpringBootApplication
-    static class TestApplication {
-    }
+  @SpringBootApplication
+  static class TestApplication {
+  }
 }

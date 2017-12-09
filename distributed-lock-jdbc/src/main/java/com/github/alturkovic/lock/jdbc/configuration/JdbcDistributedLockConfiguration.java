@@ -27,13 +27,13 @@ import org.springframework.jdbc.core.JdbcTemplate;
 @Configuration
 public class JdbcDistributedLockConfiguration {
 
-    @Bean
-    public Lock simpleMongoLock(final JdbcLockSingleKeyService jdbcLockSingleKeyService) {
-        return new SimpleJdbcLock(jdbcLockSingleKeyService);
-    }
+  @Bean
+  public Lock simpleMongoLock(final JdbcLockSingleKeyService jdbcLockSingleKeyService) {
+    return new SimpleJdbcLock(jdbcLockSingleKeyService);
+  }
 
-    @Bean
-    public JdbcLockSingleKeyService jdbcLockSingleKeyService(final JdbcTemplate jdbcTemplate) {
-        return new SimpleJdbcLockSingleKeyService(jdbcTemplate);
-    }
+  @Bean
+  public JdbcLockSingleKeyService jdbcLockSingleKeyService(final JdbcTemplate jdbcTemplate) {
+    return new SimpleJdbcLockSingleKeyService(jdbcTemplate);
+  }
 }

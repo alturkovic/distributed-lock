@@ -17,17 +17,16 @@
 package com.github.alturkovic.lock.advice.dummy;
 
 import com.github.alturkovic.lock.Lock;
-
 import java.util.List;
 
 public class DummyLock implements Lock {
-    @Override
-    public String acquire(final List<String> keys, final String storeId, final long expiration) {
-        return null;
-    }
+  @Override
+  public String acquire(final List<String> keys, final String storeId, final long expiration) {
+    return null;
+  }
 
-    @Override
-    public void release(final List<String> keys, final String token, final String storeId) {
-
-    }
+  @Override
+  public boolean release(final List<String> keys, final String token, final String storeId) {
+    return true;
+  }
 }

@@ -23,14 +23,14 @@ import java.util.concurrent.TimeUnit;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Interval {
 
-    /**
-     * Interval period.
-     * Can be specified as 'property placeholder', e.g. {@code ${locked.interval}}.
-     */
-    String value();
+  /**
+   * Interval period.
+   * Can be specified as 'property placeholder', e.g. {@code ${locked.interval}}.
+   */
+  String value();
 
-    /**
-     * Interval {@link TimeUnit} used to recalculate
-     */
-    TimeUnit unit() default TimeUnit.SECONDS;
+  /**
+   * Interval {@link TimeUnit} used to recalculate
+   */
+  TimeUnit unit() default TimeUnit.SECONDS;
 }

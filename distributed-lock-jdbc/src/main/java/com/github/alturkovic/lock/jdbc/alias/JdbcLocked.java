@@ -19,40 +19,39 @@ package com.github.alturkovic.lock.jdbc.alias;
 import com.github.alturkovic.lock.Interval;
 import com.github.alturkovic.lock.Locked;
 import com.github.alturkovic.lock.jdbc.impl.SimpleJdbcLock;
-import org.springframework.core.annotation.AliasFor;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.concurrent.TimeUnit;
+import org.springframework.core.annotation.AliasFor;
 
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Locked(type = SimpleJdbcLock.class)
 public @interface JdbcLocked {
 
-    @AliasFor(annotation = Locked.class)
-    boolean manuallyReleased() default false;
+  @AliasFor(annotation = Locked.class)
+  boolean manuallyReleased() default false;
 
-    @AliasFor(annotation = Locked.class)
-    String storeId() default "lock";
+  @AliasFor(annotation = Locked.class)
+  String storeId() default "lock";
 
-    @AliasFor(annotation = Locked.class)
-    String prefix() default "lock:";
+  @AliasFor(annotation = Locked.class)
+  String prefix() default "lock:";
 
-    @AliasFor(annotation = Locked.class)
-    String expression() default "#executionPath";
+  @AliasFor(annotation = Locked.class)
+  String expression() default "#executionPath";
 
-    @AliasFor(annotation = Locked.class)
-    String parameter() default "p";
+  @AliasFor(annotation = Locked.class)
+  String parameter() default "p";
 
-    @AliasFor(annotation = Locked.class)
-    Interval expiration() default @Interval("10");
+  @AliasFor(annotation = Locked.class)
+  Interval expiration() default @Interval("10");
 
-    @AliasFor(annotation = Locked.class)
-    Interval timeout() default @Interval("1");
+  @AliasFor(annotation = Locked.class)
+  Interval timeout() default @Interval("1");
 
-    @AliasFor(annotation = Locked.class)
-    Interval retry() default @Interval(value = "50", unit = TimeUnit.MILLISECONDS);
+  @AliasFor(annotation = Locked.class)
+  Interval retry() default @Interval(value = "50", unit = TimeUnit.MILLISECONDS);
 }

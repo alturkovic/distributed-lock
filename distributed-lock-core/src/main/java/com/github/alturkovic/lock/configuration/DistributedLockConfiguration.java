@@ -18,30 +18,29 @@ package com.github.alturkovic.lock.configuration;
 
 import com.github.alturkovic.lock.Lock;
 import com.github.alturkovic.lock.advice.LockAdvice;
+import com.github.alturkovic.lock.converter.IntervalConverter;
 import com.github.alturkovic.lock.key.KeyGenerator;
 import com.github.alturkovic.lock.key.SpelKeyGenerator;
-import com.github.alturkovic.lock.converter.IntervalConverter;
+import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
-
-import java.util.List;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Configuration
 @EnableAspectJAutoProxy
 @ComponentScan("com.github.alturkovic.lock.converter")
 public class DistributedLockConfiguration {
 
-    @Bean
-    public LockAdvice lockAdvice(final IntervalConverter intervalConverter, final KeyGenerator spelKeyGenerator, final List<Lock> locks) {
-        return new LockAdvice(intervalConverter, spelKeyGenerator, locks.stream().collect(Collectors.toMap(Lock::getClass, Function.identity())));
-    }
+  @Bean
+  public LockAdvice lockAdvice(final IntervalConverter intervalConverter, final KeyGenerator spelKeyGenerator, final List<Lock> locks) {
+    return new LockAdvice(intervalConverter, spelKeyGenerator, locks.stream().collect(Collectors.toMap(Lock::getClass, Function.identity())));
+  }
 
-    @Bean
-    public KeyGenerator spelKeyGenerator() {
-        return new SpelKeyGenerator();
-    }
+  @Bean
+  public KeyGenerator spelKeyGenerator() {
+    return new SpelKeyGenerator();
+  }
 }

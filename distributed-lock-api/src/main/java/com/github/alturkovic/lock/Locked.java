@@ -26,53 +26,53 @@ import java.util.concurrent.TimeUnit;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Locked {
 
-    /**
-     * Flag to indicate if lock will be manually released.
-     * By default, lock will be released after method execution
-     */
-    boolean manuallyReleased() default false;
+  /**
+   * Flag to indicate if lock will be manually released.
+   * By default, lock will be released after method execution
+   */
+  boolean manuallyReleased() default false;
 
-    /**
-     * Id of a specific store for lock to use.
-     * For JDBC, this would be a lock table.
-     * For Mongo, this would be a collection name.
-     */
-    String storeId() default "lock";
+  /**
+   * Id of a specific store for lock to use.
+   * For JDBC, this would be a lock table.
+   * For Mongo, this would be a collection name.
+   */
+  String storeId() default "lock";
 
-    /**
-     * Prefix of all generated lock keys
-     */
-    String prefix() default "lock:";
+  /**
+   * Prefix of all generated lock keys
+   */
+  String prefix() default "lock:";
 
-    /**
-     * SpEL expression with all arguments passed as SpEL variables {@code args} and available execution context.
-     * By default, it will evaluate to the absolute method path (class + method) by evaluating a special 'executionPath' variable
-     */
-    String expression() default "#executionPath";
+  /**
+   * SpEL expression with all arguments passed as SpEL variables {@code args} and available execution context.
+   * By default, it will evaluate to the absolute method path (class + method) by evaluating a special 'executionPath' variable
+   */
+  String expression() default "#executionPath";
 
-    /**
-     * Names of parameters in expression.
-     * Parameters will be available to the SpEL as: 'parameter' + index (default: p0, p1, ...)
-     */
-    String parameter() default "p";
+  /**
+   * Names of parameters in expression.
+   * Parameters will be available to the SpEL as: 'parameter' + index (default: p0, p1, ...)
+   */
+  String parameter() default "p";
 
-    /**
-     * Lock expiration interval
-     */
-    Interval expiration() default @Interval("10");
+  /**
+   * Lock expiration interval
+   */
+  Interval expiration() default @Interval("10");
 
-    /**
-     * Lock timeout interval
-     */
-    Interval timeout() default @Interval("1");
+  /**
+   * Lock timeout interval
+   */
+  Interval timeout() default @Interval("1");
 
-    /**
-     * Lock retry interval
-     */
-    Interval retry() default @Interval(value = "50", unit = TimeUnit.MILLISECONDS);
+  /**
+   * Lock retry interval
+   */
+  Interval retry() default @Interval(value = "50", unit = TimeUnit.MILLISECONDS);
 
-    /**
-     * Lock type, see implementations of {@link Lock}
-     */
-    Class<? extends Lock> type() default Lock.class;
+  /**
+   * Lock type, see implementations of {@link Lock}
+   */
+  Class<? extends Lock> type() default Lock.class;
 }

@@ -18,6 +18,8 @@ package com.github.alturkovic.lock.redis.impl;
 
 import com.github.alturkovic.lock.Lock;
 import com.github.alturkovic.lock.redis.embedded.EmbeddedRedis;
+import java.io.IOException;
+import java.util.Collections;
 import org.assertj.core.data.Offset;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,9 +39,6 @@ import org.springframework.scripting.support.ResourceScriptSource;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.io.IOException;
-import java.util.Collections;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DirtiesContext
@@ -47,67 +46,67 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 public class SimpleRedisLockTest implements InitializingBean {
 
-    @Autowired
-    @SuppressWarnings("SpringJavaAutowiringInspection") // false IntelliJ warning
-    private StringRedisTemplate redisTemplate;
+  @Autowired
+  @SuppressWarnings("SpringJavaAutowiringInspection") // false IntelliJ warning
+  private StringRedisTemplate redisTemplate;
 
-    private Lock lock;
+  private Lock lock;
 
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        final DefaultRedisScript<Boolean> lockScript = new DefaultRedisScript<>();
-        lockScript.setScriptSource(new ResourceScriptSource(new ClassPathResource("scripts/lock.lua")));
-        lockScript.setResultType(Boolean.class);
+  @Override
+  public void afterPropertiesSet() throws Exception {
+    final DefaultRedisScript<Boolean> lockScript = new DefaultRedisScript<>();
+    lockScript.setScriptSource(new ResourceScriptSource(new ClassPathResource("scripts/lock.lua")));
+    lockScript.setResultType(Boolean.class);
 
-        final DefaultRedisScript<Boolean> lockReleaseScript = new DefaultRedisScript<>();
-        lockReleaseScript.setScriptSource(new ResourceScriptSource(new ClassPathResource("scripts/release-lock.lua")));
-        lockReleaseScript.setResultType(Boolean.class);
+    final DefaultRedisScript<Boolean> lockReleaseScript = new DefaultRedisScript<>();
+    lockReleaseScript.setScriptSource(new ResourceScriptSource(new ClassPathResource("scripts/release-lock.lua")));
+    lockReleaseScript.setResultType(Boolean.class);
 
-        lock = new SimpleRedisLock(redisTemplate, lockScript, lockReleaseScript, () -> "abc");
-    }
+    lock = new SimpleRedisLock(redisTemplate, lockScript, lockReleaseScript, () -> "abc");
+  }
 
-    @Before
-    public void cleanRedis() throws IOException {
-        redisTemplate.execute((RedisCallback<?>) connection -> {
-            connection.flushDb();
-            return null;
-        });
-    }
+  @Before
+  public void cleanRedis() throws IOException {
+    redisTemplate.execute((RedisCallback<?>) connection -> {
+      connection.flushDb();
+      return null;
+    });
+  }
 
-    @Test
-    public void shouldLock() {
-        final String token = lock.acquire(Collections.singletonList("1"), "locks", 1000);
-        assertThat(token).isEqualTo("abc");
-        assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("abc");
-        assertThat(redisTemplate.getExpire("locks:1")).isCloseTo(1000, Offset.offset(100L));
-    }
+  @Test
+  public void shouldLock() {
+    final String token = lock.acquire(Collections.singletonList("1"), "locks", 1000);
+    assertThat(token).isEqualTo("abc");
+    assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("abc");
+    assertThat(redisTemplate.getExpire("locks:1")).isCloseTo(1000, Offset.offset(100L));
+  }
 
-    @Test
-    public void shouldNotLock() {
-        redisTemplate.opsForValue().set("locks:1", "def");
-        final String token = lock.acquire(Collections.singletonList("1"), "locks", 1000);
-        assertThat(token).isNull();
-        assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("def");
-    }
+  @Test
+  public void shouldNotLock() {
+    redisTemplate.opsForValue().set("locks:1", "def");
+    final String token = lock.acquire(Collections.singletonList("1"), "locks", 1000);
+    assertThat(token).isNull();
+    assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("def");
+  }
 
-    @Test
-    public void shouldRelease() {
-        redisTemplate.opsForValue().set("locks:1", "abc");
-        lock.release(Collections.singletonList("1"), "abc", "locks");
-        assertThat(redisTemplate.opsForValue().get("locks:1")).isNull();
-    }
+  @Test
+  public void shouldRelease() {
+    redisTemplate.opsForValue().set("locks:1", "abc");
+    lock.release(Collections.singletonList("1"), "abc", "locks");
+    assertThat(redisTemplate.opsForValue().get("locks:1")).isNull();
+  }
 
-    @Test
-    public void shouldNotRelease() {
-        redisTemplate.opsForValue().set("locks:1", "def");
-        lock.release(Collections.singletonList("1"), "abc", "locks");
-        assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("def");
-    }
+  @Test
+  public void shouldNotRelease() {
+    redisTemplate.opsForValue().set("locks:1", "def");
+    lock.release(Collections.singletonList("1"), "abc", "locks");
+    assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("def");
+  }
 
-    @SpringBootApplication(
-            exclude = {MongoAutoConfiguration.class, MongoDataAutoConfiguration.class, EmbeddedMongoAutoConfiguration.class},
-            scanBasePackageClasses = EmbeddedRedis.class
-    )
-    static class TestApplication {
-    }
+  @SpringBootApplication(
+      exclude = {MongoAutoConfiguration.class, MongoDataAutoConfiguration.class, EmbeddedMongoAutoConfiguration.class},
+      scanBasePackageClasses = EmbeddedRedis.class
+  )
+  static class TestApplication {
+  }
 }

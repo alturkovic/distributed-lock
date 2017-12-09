@@ -18,6 +18,9 @@ package com.github.alturkovic.lock.redis.impl;
 
 import com.github.alturkovic.lock.Lock;
 import com.github.alturkovic.lock.redis.embedded.EmbeddedRedis;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,10 +39,6 @@ import org.springframework.scripting.support.ResourceScriptSource;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DirtiesContext
@@ -47,104 +46,104 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 public class MultiRedisLockTest implements InitializingBean {
 
-    @Autowired
-    @SuppressWarnings("SpringJavaAutowiringInspection") // false IntelliJ warning
-    private StringRedisTemplate redisTemplate;
+  @Autowired
+  @SuppressWarnings("SpringJavaAutowiringInspection") // false IntelliJ warning
+  private StringRedisTemplate redisTemplate;
 
-    private Lock lock;
+  private Lock lock;
 
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        final DefaultRedisScript<Boolean> lockScript = new DefaultRedisScript<>();
-        lockScript.setScriptSource(new ResourceScriptSource(new ClassPathResource("scripts/multilock.lua")));
-        lockScript.setResultType(Boolean.class);
+  @Override
+  public void afterPropertiesSet() throws Exception {
+    final DefaultRedisScript<Boolean> lockScript = new DefaultRedisScript<>();
+    lockScript.setScriptSource(new ResourceScriptSource(new ClassPathResource("scripts/multilock.lua")));
+    lockScript.setResultType(Boolean.class);
 
-        final DefaultRedisScript<Long> lockReleaseScript = new DefaultRedisScript<>();
-        lockReleaseScript.setScriptSource(new ResourceScriptSource(new ClassPathResource("scripts/release-multilock.lua")));
-        lockReleaseScript.setResultType(Long.class);
+    final DefaultRedisScript<Long> lockReleaseScript = new DefaultRedisScript<>();
+    lockReleaseScript.setScriptSource(new ResourceScriptSource(new ClassPathResource("scripts/release-multilock.lua")));
+    lockReleaseScript.setResultType(Long.class);
 
-        lock = new MultiRedisLock(redisTemplate, lockScript, lockReleaseScript, () -> "abc");
-    }
+    lock = new MultiRedisLock(redisTemplate, lockScript, lockReleaseScript, () -> "abc");
+  }
 
-    @Before
-    public void cleanRedis() throws IOException {
-        redisTemplate.execute((RedisCallback<?>) connection -> {
-            connection.flushDb();
-            return null;
-        });
-    }
+  @Before
+  public void cleanRedis() throws IOException {
+    redisTemplate.execute((RedisCallback<?>) connection -> {
+      connection.flushDb();
+      return null;
+    });
+  }
 
-    @Test
-    public void shouldLockSingleKey() {
-        final String token = lock.acquire(Collections.singletonList("1"), "locks", 1000);
-        assertThat(token).isEqualTo("abc");
-        assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("abc");
-    }
+  @Test
+  public void shouldLockSingleKey() {
+    final String token = lock.acquire(Collections.singletonList("1"), "locks", 1000);
+    assertThat(token).isEqualTo("abc");
+    assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("abc");
+  }
 
-    @Test
-    public void shouldLockMultipleKeys() {
-        final String token = lock.acquire(Arrays.asList("1", "2"), "locks", 1000);
-        assertThat(token).isEqualTo("abc");
-        assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("abc");
-        assertThat(redisTemplate.opsForValue().get("locks:2")).isEqualTo("abc");
-    }
+  @Test
+  public void shouldLockMultipleKeys() {
+    final String token = lock.acquire(Arrays.asList("1", "2"), "locks", 1000);
+    assertThat(token).isEqualTo("abc");
+    assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("abc");
+    assertThat(redisTemplate.opsForValue().get("locks:2")).isEqualTo("abc");
+  }
 
-    @Test
-    public void shouldNotLockWhenWholeLockIsTaken() {
-        redisTemplate.opsForValue().set("locks:1", "def");
-        redisTemplate.opsForValue().set("locks:2", "ghi");
-        final String token = lock.acquire(Arrays.asList("1", "2"), "locks", 1000);
-        assertThat(token).isNull();
-        assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("def");
-        assertThat(redisTemplate.opsForValue().get("locks:2")).isEqualTo("ghi");
-    }
+  @Test
+  public void shouldNotLockWhenWholeLockIsTaken() {
+    redisTemplate.opsForValue().set("locks:1", "def");
+    redisTemplate.opsForValue().set("locks:2", "ghi");
+    final String token = lock.acquire(Arrays.asList("1", "2"), "locks", 1000);
+    assertThat(token).isNull();
+    assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("def");
+    assertThat(redisTemplate.opsForValue().get("locks:2")).isEqualTo("ghi");
+  }
 
-    @Test
-    public void shouldNotLockWhenLockIsPartiallyTaken() {
-        redisTemplate.opsForValue().set("locks:1", "def");
-        final String token = lock.acquire(Arrays.asList("1", "2"), "locks", 1000);
-        assertThat(token).isNull();
-        assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("def");
-        assertThat(redisTemplate.opsForValue().get("locks:2")).isNull();
-    }
+  @Test
+  public void shouldNotLockWhenLockIsPartiallyTaken() {
+    redisTemplate.opsForValue().set("locks:1", "def");
+    final String token = lock.acquire(Arrays.asList("1", "2"), "locks", 1000);
+    assertThat(token).isNull();
+    assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("def");
+    assertThat(redisTemplate.opsForValue().get("locks:2")).isNull();
+  }
 
-    @Test
-    public void shouldReleaseSingleKey() {
-        redisTemplate.opsForValue().set("locks:1", "abc");
-        lock.release(Collections.singletonList("1"), "abc", "locks");
-        assertThat(redisTemplate.opsForValue().get("locks:1")).isNull();
-    }
+  @Test
+  public void shouldReleaseSingleKey() {
+    redisTemplate.opsForValue().set("locks:1", "abc");
+    lock.release(Collections.singletonList("1"), "abc", "locks");
+    assertThat(redisTemplate.opsForValue().get("locks:1")).isNull();
+  }
 
-    @Test
-    public void shouldReleaseMultipleKeys() {
-        redisTemplate.opsForValue().set("locks:1", "abc");
-        redisTemplate.opsForValue().set("locks:2", "abc");
-        lock.release(Arrays.asList("1", "2"), "abc", "locks");
-        assertThat(redisTemplate.opsForValue().get("locks:1")).isNull();
-        assertThat(redisTemplate.opsForValue().get("locks:2")).isNull();
-    }
+  @Test
+  public void shouldReleaseMultipleKeys() {
+    redisTemplate.opsForValue().set("locks:1", "abc");
+    redisTemplate.opsForValue().set("locks:2", "abc");
+    lock.release(Arrays.asList("1", "2"), "abc", "locks");
+    assertThat(redisTemplate.opsForValue().get("locks:1")).isNull();
+    assertThat(redisTemplate.opsForValue().get("locks:2")).isNull();
+  }
 
-    @Test
-    public void shouldNotReleaseWhenTokenDoesNotFullyMatch() {
-        redisTemplate.opsForValue().set("locks:1", "def");
-        redisTemplate.opsForValue().set("locks:2", "ghi");
-        lock.release(Arrays.asList("1", "2"), "abc", "locks");
-        assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("def");
-        assertThat(redisTemplate.opsForValue().get("locks:2")).isEqualTo("ghi");
-    }
+  @Test
+  public void shouldNotReleaseWhenTokenDoesNotFullyMatch() {
+    redisTemplate.opsForValue().set("locks:1", "def");
+    redisTemplate.opsForValue().set("locks:2", "ghi");
+    lock.release(Arrays.asList("1", "2"), "abc", "locks");
+    assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("def");
+    assertThat(redisTemplate.opsForValue().get("locks:2")).isEqualTo("ghi");
+  }
 
-    @Test
-    public void shouldNotReleaseWhenTokenDoesNotPartiallyMatch() {
-        redisTemplate.opsForValue().set("locks:1", "def");
-        lock.release(Arrays.asList("1", "2"), "abc", "locks");
-        assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("def");
-        assertThat(redisTemplate.opsForValue().get("locks:2")).isNull();
-    }
+  @Test
+  public void shouldNotReleaseWhenTokenDoesNotPartiallyMatch() {
+    redisTemplate.opsForValue().set("locks:1", "def");
+    lock.release(Arrays.asList("1", "2"), "abc", "locks");
+    assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("def");
+    assertThat(redisTemplate.opsForValue().get("locks:2")).isNull();
+  }
 
-    @SpringBootApplication(
-            exclude = {MongoAutoConfiguration.class, MongoDataAutoConfiguration.class, EmbeddedMongoAutoConfiguration.class},
-            scanBasePackageClasses = EmbeddedRedis.class
-    )
-    static class TestApplication {
-    }
+  @SpringBootApplication(
+      exclude = {MongoAutoConfiguration.class, MongoDataAutoConfiguration.class, EmbeddedMongoAutoConfiguration.class},
+      scanBasePackageClasses = EmbeddedRedis.class
+  )
+  static class TestApplication {
+  }
 }

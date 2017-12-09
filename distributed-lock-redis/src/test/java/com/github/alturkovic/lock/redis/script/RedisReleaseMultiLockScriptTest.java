@@ -17,6 +17,9 @@
 package com.github.alturkovic.lock.redis.script;
 
 import com.github.alturkovic.lock.redis.embedded.EmbeddedRedis;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,10 +39,6 @@ import org.springframework.scripting.support.ResourceScriptSource;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DirtiesContext
@@ -47,63 +46,63 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 public class RedisReleaseMultiLockScriptTest implements InitializingBean {
 
-    @Autowired
-    @SuppressWarnings("SpringJavaAutowiringInspection") // false IntelliJ warning
-    private StringRedisTemplate redisTemplate;
+  @Autowired
+  @SuppressWarnings("SpringJavaAutowiringInspection") // false IntelliJ warning
+  private StringRedisTemplate redisTemplate;
 
-    private RedisScript<Long> releaseLockScript;
+  private RedisScript<Long> releaseLockScript;
 
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        final DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>();
-        redisScript.setScriptSource(new ResourceScriptSource(new ClassPathResource("scripts/release-multilock.lua")));
-        redisScript.setResultType(Long.class);
+  @Override
+  public void afterPropertiesSet() throws Exception {
+    final DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>();
+    redisScript.setScriptSource(new ResourceScriptSource(new ClassPathResource("scripts/release-multilock.lua")));
+    redisScript.setResultType(Long.class);
 
-        releaseLockScript = redisScript;
-    }
+    releaseLockScript = redisScript;
+  }
 
-    @Before
-    public void cleanRedis() throws IOException {
-        redisTemplate.execute((RedisCallback<?>) connection -> {
-            connection.flushDb();
-            return null;
-        });
-    }
+  @Before
+  public void cleanRedis() throws IOException {
+    redisTemplate.execute((RedisCallback<?>) connection -> {
+      connection.flushDb();
+      return null;
+    });
+  }
 
-    @Test
-    public void shouldReleaseSingleKey() {
-        redisTemplate.opsForValue().set("lock:test", "token");
-        final Long released = redisTemplate.execute(releaseLockScript, Collections.singletonList("lock:test"), "token");
-        assertThat(released).isEqualTo(1);
-        assertThat(redisTemplate.opsForValue().get("lock:test")).isNull();
-    }
+  @Test
+  public void shouldReleaseSingleKey() {
+    redisTemplate.opsForValue().set("lock:test", "token");
+    final Long released = redisTemplate.execute(releaseLockScript, Collections.singletonList("lock:test"), "token");
+    assertThat(released).isEqualTo(1);
+    assertThat(redisTemplate.opsForValue().get("lock:test")).isNull();
+  }
 
-    @Test
-    public void shouldReleaseMultipleKeys() {
-        redisTemplate.opsForValue().set("lock:test", "token");
-        redisTemplate.opsForValue().set("lock:another", "token");
-        final Long released = redisTemplate.execute(releaseLockScript, Arrays.asList("lock:test", "lock:another"), "token");
-        assertThat(released).isEqualTo(2);
-        assertThat(redisTemplate.opsForValue().get("lock:test")).isNull();
-        assertThat(redisTemplate.opsForValue().get("lock:another")).isNull();
-    }
+  @Test
+  public void shouldReleaseMultipleKeys() {
+    redisTemplate.opsForValue().set("lock:test", "token");
+    redisTemplate.opsForValue().set("lock:another", "token");
+    final Long released = redisTemplate.execute(releaseLockScript, Arrays.asList("lock:test", "lock:another"), "token");
+    assertThat(released).isEqualTo(2);
+    assertThat(redisTemplate.opsForValue().get("lock:test")).isNull();
+    assertThat(redisTemplate.opsForValue().get("lock:another")).isNull();
+  }
 
-    @Test
-    public void shouldNotReleaseWithDifferentToken() {
-        redisTemplate.opsForValue().set("lock:test", "exists");
-        final Long released = redisTemplate.execute(releaseLockScript, Collections.singletonList("lock:test"), "token");
-        assertThat(released).isZero();
-        assertThat(redisTemplate.opsForValue().get("lock:test")).isEqualTo("exists");
-    }
+  @Test
+  public void shouldNotReleaseWithDifferentToken() {
+    redisTemplate.opsForValue().set("lock:test", "exists");
+    final Long released = redisTemplate.execute(releaseLockScript, Collections.singletonList("lock:test"), "token");
+    assertThat(released).isZero();
+    assertThat(redisTemplate.opsForValue().get("lock:test")).isEqualTo("exists");
+  }
 
-    @Test
-    public void shouldNotReleaseNotExistingKey() {
-        final Long released = redisTemplate.execute(releaseLockScript, Collections.singletonList("lock:test"), "token");
-        assertThat(released).isZero();
-    }
+  @Test
+  public void shouldNotReleaseNotExistingKey() {
+    final Long released = redisTemplate.execute(releaseLockScript, Collections.singletonList("lock:test"), "token");
+    assertThat(released).isZero();
+  }
 
-    @SpringBootApplication(exclude = {MongoAutoConfiguration.class, MongoDataAutoConfiguration.class, EmbeddedMongoAutoConfiguration.class},
-            scanBasePackageClasses = EmbeddedRedis.class)
-    static class TestApplication {
-    }
+  @SpringBootApplication(exclude = {MongoAutoConfiguration.class, MongoDataAutoConfiguration.class, EmbeddedMongoAutoConfiguration.class},
+      scanBasePackageClasses = EmbeddedRedis.class)
+  static class TestApplication {
+  }
 }

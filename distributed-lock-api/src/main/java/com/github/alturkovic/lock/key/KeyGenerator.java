@@ -16,23 +16,21 @@
 
 package com.github.alturkovic.lock.key;
 
-import org.aspectj.lang.JoinPoint;
-
 import java.util.List;
+import org.aspectj.lang.JoinPoint;
 
 /**
  * Used to generate keys to lock
  */
 public interface KeyGenerator {
-    /**
-     * Generate keys by evaluating the given expression
-     *
-     * @param lockKeyPrefix         prefix to put on resolved keys
-     * @param expression            key expression to evaluate
-     * @param contextVariableName   parameter identifier in expression
-     * @param joinPoint             join point of advised method
-     *
-     * @return generated or resolved keys
-     */
-    List<String> resolveKeys(String lockKeyPrefix, String expression, String contextVariableName, JoinPoint joinPoint);
+  /**
+   * Generate keys by evaluating the given expression
+   *
+   * @param lockKeyPrefix       prefix to put on resolved keys
+   * @param expression          key expression to evaluate
+   * @param contextVariableName parameter identifier in expression
+   * @param joinPoint           join point of advised method
+   * @return generated or resolved keys
+   */
+  List<String> resolveKeys(String lockKeyPrefix, String expression, String contextVariableName, JoinPoint joinPoint);
 }

@@ -1,46 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+  <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>com.github.alturkovic</groupId>
-        <artifactId>distributed-lock</artifactId>
-        <version>1.5.6.RELEASE-1.0.0</version>
-    </parent>
+  <parent>
+    <groupId>com.github.alturkovic</groupId>
+    <artifactId>distributed-lock</artifactId>
+    <version>1.5.6.RELEASE-1.1.0</version>
+  </parent>
 
-    <artifactId>distributed-lock-redis</artifactId>
+  <artifactId>distributed-lock-redis</artifactId>
 
-    <properties>
-        <embedded-redis.version>0.11.0</embedded-redis.version>
-    </properties>
+  <properties>
+    <embedded-redis.version>0.11.0</embedded-redis.version>
+  </properties>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>com.github.alturkovic</groupId>
-            <artifactId>distributed-lock-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-redis</artifactId>
-        </dependency>
+  <dependencies>
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>com.github.alturkovic</groupId>
+      <artifactId>distributed-lock-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-redis</artifactId>
+    </dependency>
 
-        <dependency>
-            <groupId>com.bfjournal</groupId>
-            <artifactId>embedded-redis</artifactId>
-            <version>${embedded-redis.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
+    <dependency>
+      <groupId>com.bfjournal</groupId>
+      <artifactId>embedded-redis</artifactId>
+      <version>${embedded-redis.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
 </project>

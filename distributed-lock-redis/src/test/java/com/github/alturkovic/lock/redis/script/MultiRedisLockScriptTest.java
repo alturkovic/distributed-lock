@@ -17,6 +17,9 @@
 package com.github.alturkovic.lock.redis.script;
 
 import com.github.alturkovic.lock.redis.embedded.EmbeddedRedis;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
 import org.assertj.core.data.Offset;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,10 +40,6 @@ import org.springframework.scripting.support.ResourceScriptSource;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DirtiesContext
@@ -48,70 +47,70 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 public class MultiRedisLockScriptTest implements InitializingBean {
 
-    @Autowired
-    @SuppressWarnings("SpringJavaAutowiringInspection") // false IntelliJ warning
-    private StringRedisTemplate redisTemplate;
+  @Autowired
+  @SuppressWarnings("SpringJavaAutowiringInspection") // false IntelliJ warning
+  private StringRedisTemplate redisTemplate;
 
-    private RedisScript<Boolean> lockScript;
+  private RedisScript<Boolean> lockScript;
 
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        final DefaultRedisScript<Boolean> redisScript = new DefaultRedisScript<>();
-        redisScript.setScriptSource(new ResourceScriptSource(new ClassPathResource("scripts/multilock.lua")));
-        redisScript.setResultType(Boolean.class);
+  @Override
+  public void afterPropertiesSet() throws Exception {
+    final DefaultRedisScript<Boolean> redisScript = new DefaultRedisScript<>();
+    redisScript.setScriptSource(new ResourceScriptSource(new ClassPathResource("scripts/multilock.lua")));
+    redisScript.setResultType(Boolean.class);
 
-        lockScript = redisScript;
-    }
+    lockScript = redisScript;
+  }
 
-    @Before
-    public void cleanRedis() throws IOException {
-        redisTemplate.execute((RedisCallback<?>) connection -> {
-            connection.flushDb();
-            return null;
-        });
-    }
+  @Before
+  public void cleanRedis() throws IOException {
+    redisTemplate.execute((RedisCallback<?>) connection -> {
+      connection.flushDb();
+      return null;
+    });
+  }
 
-    @Test
-    public void shouldLockSingleKey() {
-        final Boolean locked = redisTemplate.execute(lockScript, Collections.singletonList("lock:test"), "token", "10000");
-        assertThat(locked).isTrue();
-        assertThat(redisTemplate.opsForValue().get("lock:test")).isEqualTo("token");
-        assertThat(redisTemplate.getExpire("lock:test")).isCloseTo(10000L, Offset.offset(100L));
-    }
+  @Test
+  public void shouldLockSingleKey() {
+    final Boolean locked = redisTemplate.execute(lockScript, Collections.singletonList("lock:test"), "token", "10000");
+    assertThat(locked).isTrue();
+    assertThat(redisTemplate.opsForValue().get("lock:test")).isEqualTo("token");
+    assertThat(redisTemplate.getExpire("lock:test")).isCloseTo(10000L, Offset.offset(100L));
+  }
 
-    @Test
-    public void shouldLockMultipleKeys() {
-        final Boolean locked = redisTemplate.execute(lockScript, Arrays.asList("lock:test", "lock:another"), "token", "10000");
-        assertThat(locked).isTrue();
-        assertThat(redisTemplate.opsForValue().get("lock:test")).isEqualTo("token");
-        assertThat(redisTemplate.opsForValue().get("lock:another")).isEqualTo("token");
-        assertThat(redisTemplate.getExpire("lock:test")).isCloseTo(10000L, Offset.offset(100L));
-        assertThat(redisTemplate.getExpire("lock:another")).isCloseTo(10000L, Offset.offset(100L));
-    }
+  @Test
+  public void shouldLockMultipleKeys() {
+    final Boolean locked = redisTemplate.execute(lockScript, Arrays.asList("lock:test", "lock:another"), "token", "10000");
+    assertThat(locked).isTrue();
+    assertThat(redisTemplate.opsForValue().get("lock:test")).isEqualTo("token");
+    assertThat(redisTemplate.opsForValue().get("lock:another")).isEqualTo("token");
+    assertThat(redisTemplate.getExpire("lock:test")).isCloseTo(10000L, Offset.offset(100L));
+    assertThat(redisTemplate.getExpire("lock:another")).isCloseTo(10000L, Offset.offset(100L));
+  }
 
-    @Test
-    public void shouldNotLockSingleLockedKey() {
-        redisTemplate.opsForValue().set("lock:test", "exists");
-        final Boolean locked = redisTemplate.execute(lockScript, Collections.singletonList("lock:test"), "token", "10000");
-        assertThat(locked).isFalse();
-        assertThat(redisTemplate.opsForValue().get("lock:test")).isEqualTo("exists");
-        assertThat(redisTemplate.getExpire("lock:test")).isEqualTo(-1);
-    }
+  @Test
+  public void shouldNotLockSingleLockedKey() {
+    redisTemplate.opsForValue().set("lock:test", "exists");
+    final Boolean locked = redisTemplate.execute(lockScript, Collections.singletonList("lock:test"), "token", "10000");
+    assertThat(locked).isFalse();
+    assertThat(redisTemplate.opsForValue().get("lock:test")).isEqualTo("exists");
+    assertThat(redisTemplate.getExpire("lock:test")).isEqualTo(-1);
+  }
 
-    @Test
-    public void shouldNotLockMultipleBecauseOneOfTheKeysIsAlreadyLocked() {
-        redisTemplate.opsForValue().set("lock:test", "exists");
-        final Boolean locked = redisTemplate.execute(lockScript, Arrays.asList("lock:test", "lock:another"), "token", "10000");
-        assertThat(locked).isFalse();
-        assertThat(redisTemplate.opsForValue().get("lock:test")).isEqualTo("exists");
-        assertThat(redisTemplate.opsForValue().get("lock:another")).isNull();
-        assertThat(redisTemplate.getExpire("lock:test")).isEqualTo(-1);
-    }
+  @Test
+  public void shouldNotLockMultipleBecauseOneOfTheKeysIsAlreadyLocked() {
+    redisTemplate.opsForValue().set("lock:test", "exists");
+    final Boolean locked = redisTemplate.execute(lockScript, Arrays.asList("lock:test", "lock:another"), "token", "10000");
+    assertThat(locked).isFalse();
+    assertThat(redisTemplate.opsForValue().get("lock:test")).isEqualTo("exists");
+    assertThat(redisTemplate.opsForValue().get("lock:another")).isNull();
+    assertThat(redisTemplate.getExpire("lock:test")).isEqualTo(-1);
+  }
 
-    @SpringBootApplication(
-            exclude = {MongoAutoConfiguration.class, MongoDataAutoConfiguration.class, EmbeddedMongoAutoConfiguration.class},
-            scanBasePackageClasses = EmbeddedRedis.class
-    )
-    static class TestApplication {
-    }
+  @SpringBootApplication(
+      exclude = {MongoAutoConfiguration.class, MongoDataAutoConfiguration.class, EmbeddedMongoAutoConfiguration.class},
+      scanBasePackageClasses = EmbeddedRedis.class
+  )
+  static class TestApplication {
+  }
 }

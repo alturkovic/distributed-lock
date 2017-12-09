@@ -17,7 +17,7 @@
 package com.github.alturkovic.lock.exception;
 
 public class EvaluationConvertException extends RuntimeException {
-    public EvaluationConvertException(final String msg) {
-        super(msg);
-    }
+  public EvaluationConvertException(final String msg) {
+    super(msg);
+  }
 }

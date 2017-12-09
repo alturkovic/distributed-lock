@@ -25,18 +25,18 @@ import org.springframework.util.StringUtils;
 @Component
 public class IntervalConverter {
 
-    private final ConfigurableListableBeanFactory beanFactory;
+  private final ConfigurableListableBeanFactory beanFactory;
 
-    @Autowired
-    public IntervalConverter(final ConfigurableListableBeanFactory beanFactory) {
-        this.beanFactory = beanFactory;
-    }
+  @Autowired
+  public IntervalConverter(final ConfigurableListableBeanFactory beanFactory) {
+    this.beanFactory = beanFactory;
+  }
 
-    public long toMillis(final Interval interval) {
-        final String value = beanFactory.resolveEmbeddedValue(interval.value());
-        if (!StringUtils.hasText(value)) {
-            throw new IllegalArgumentException("Cannot convert interval " + interval + " to milliseconds");
-        }
-        return interval.unit().toMillis(Long.valueOf(value));
+  public long toMillis(final Interval interval) {
+    final String value = beanFactory.resolveEmbeddedValue(interval.value());
+    if (!StringUtils.hasText(value)) {
+      throw new IllegalArgumentException("Cannot convert interval " + interval + " to milliseconds");
     }
+    return interval.unit().toMillis(Long.valueOf(value));
+  }
 }

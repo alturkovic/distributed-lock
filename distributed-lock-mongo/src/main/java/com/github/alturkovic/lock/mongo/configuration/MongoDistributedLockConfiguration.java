@@ -18,8 +18,6 @@ package com.github.alturkovic.lock.mongo.configuration;
 
 import com.github.alturkovic.lock.Lock;
 import com.github.alturkovic.lock.mongo.impl.SimpleMongoLock;
-import com.mongodb.MongoClient;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -27,8 +25,8 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 @Configuration
 public class MongoDistributedLockConfiguration {
 
-    @Bean
-    public Lock simpleMongoLock(final MongoTemplate mongoTemplate) {
-        return new SimpleMongoLock(mongoTemplate);
-    }
+  @Bean
+  public Lock simpleMongoLock(final MongoTemplate mongoTemplate) {
+    return new SimpleMongoLock(mongoTemplate);
+  }
 }

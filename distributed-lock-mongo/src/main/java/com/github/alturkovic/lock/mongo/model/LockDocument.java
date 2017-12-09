@@ -31,8 +31,8 @@ import org.springframework.data.annotation.Id;
 @NoArgsConstructor
 @AllArgsConstructor
 public class LockDocument {
-    @Id
-    private String id;
-    private DateTime expireAt;
-    private String token;
+  @Id
+  private String id;
+  private DateTime expireAt;
+  private String token;
 }

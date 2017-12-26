@@ -17,7 +17,6 @@
 package com.github.alturkovic.lock.redis.script;
 
 import com.github.alturkovic.lock.redis.embedded.EmbeddedRedis;
-import java.io.IOException;
 import java.util.Collections;
 import org.junit.Before;
 import org.junit.Test;
@@ -52,7 +51,7 @@ public class RedisReleaseLockScriptTest implements InitializingBean {
   private RedisScript<Boolean> releaseLockScript;
 
   @Override
-  public void afterPropertiesSet() throws Exception {
+  public void afterPropertiesSet() {
     final DefaultRedisScript<Boolean> redisScript = new DefaultRedisScript<>();
     redisScript.setScriptSource(new ResourceScriptSource(new ClassPathResource("scripts/release-lock.lua")));
     redisScript.setResultType(Boolean.class);
@@ -61,7 +60,7 @@ public class RedisReleaseLockScriptTest implements InitializingBean {
   }
 
   @Before
-  public void cleanRedis() throws IOException {
+  public void cleanRedis() {
     redisTemplate.execute((RedisCallback<?>) connection -> {
       connection.flushDb();
       return null;

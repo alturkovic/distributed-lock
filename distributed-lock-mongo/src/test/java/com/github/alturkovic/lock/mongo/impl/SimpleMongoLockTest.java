@@ -46,7 +46,7 @@ public class SimpleMongoLockTest implements InitializingBean {
   private Lock lock;
 
   @Override
-  public void afterPropertiesSet() throws Exception {
+  public void afterPropertiesSet() {
     // instead of writing a custom test configuration, we can just initialize it after autowiring mongoTemplate with a custom tokenSupplier
     lock = new SimpleMongoLock(mongoTemplate, () -> "abc");
   }

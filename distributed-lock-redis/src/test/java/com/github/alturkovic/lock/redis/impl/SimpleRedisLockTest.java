@@ -18,7 +18,6 @@ package com.github.alturkovic.lock.redis.impl;
 
 import com.github.alturkovic.lock.Lock;
 import com.github.alturkovic.lock.redis.embedded.EmbeddedRedis;
-import java.io.IOException;
 import java.util.Collections;
 import org.assertj.core.data.Offset;
 import org.junit.Before;
@@ -53,7 +52,7 @@ public class SimpleRedisLockTest implements InitializingBean {
   private Lock lock;
 
   @Override
-  public void afterPropertiesSet() throws Exception {
+  public void afterPropertiesSet() {
     final DefaultRedisScript<Boolean> lockScript = new DefaultRedisScript<>();
     lockScript.setScriptSource(new ResourceScriptSource(new ClassPathResource("scripts/lock.lua")));
     lockScript.setResultType(Boolean.class);
@@ -66,7 +65,7 @@ public class SimpleRedisLockTest implements InitializingBean {
   }
 
   @Before
-  public void cleanRedis() throws IOException {
+  public void cleanRedis() {
     redisTemplate.execute((RedisCallback<?>) connection -> {
       connection.flushDb();
       return null;

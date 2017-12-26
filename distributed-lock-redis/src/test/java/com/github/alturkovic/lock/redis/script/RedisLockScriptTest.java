@@ -19,6 +19,7 @@ package com.github.alturkovic.lock.redis.script;
 import com.github.alturkovic.lock.redis.embedded.EmbeddedRedis;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 import org.assertj.core.data.Offset;
 import org.junit.Before;
 import org.junit.Test;
@@ -74,7 +75,7 @@ public class RedisLockScriptTest implements InitializingBean {
     final Boolean locked = redisTemplate.execute(lockScript, Collections.singletonList("lock:test"), "token", "10000");
     assertThat(locked).isTrue();
     assertThat(redisTemplate.opsForValue().get("lock:test")).isEqualTo("token");
-    assertThat(redisTemplate.getExpire("lock:test")).isCloseTo(10000L, Offset.offset(100L));
+    assertThat(redisTemplate.getExpire("lock:test", TimeUnit.MILLISECONDS)).isCloseTo(10000L, Offset.offset(100L));
   }
 
   @Test

@@ -20,6 +20,7 @@ import com.github.alturkovic.lock.redis.embedded.EmbeddedRedis;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 import org.assertj.core.data.Offset;
 import org.junit.Before;
 import org.junit.Test;
@@ -75,7 +76,7 @@ public class MultiRedisLockScriptTest implements InitializingBean {
     final Boolean locked = redisTemplate.execute(lockScript, Collections.singletonList("lock:test"), "token", "10000");
     assertThat(locked).isTrue();
     assertThat(redisTemplate.opsForValue().get("lock:test")).isEqualTo("token");
-    assertThat(redisTemplate.getExpire("lock:test")).isCloseTo(10000L, Offset.offset(100L));
+    assertThat(redisTemplate.getExpire("lock:test", TimeUnit.MILLISECONDS)).isCloseTo(10000L, Offset.offset(100L));
   }
 
   @Test
@@ -84,8 +85,8 @@ public class MultiRedisLockScriptTest implements InitializingBean {
     assertThat(locked).isTrue();
     assertThat(redisTemplate.opsForValue().get("lock:test")).isEqualTo("token");
     assertThat(redisTemplate.opsForValue().get("lock:another")).isEqualTo("token");
-    assertThat(redisTemplate.getExpire("lock:test")).isCloseTo(10000L, Offset.offset(100L));
-    assertThat(redisTemplate.getExpire("lock:another")).isCloseTo(10000L, Offset.offset(100L));
+    assertThat(redisTemplate.getExpire("lock:test", TimeUnit.MILLISECONDS)).isCloseTo(10000L, Offset.offset(100L));
+    assertThat(redisTemplate.getExpire("lock:another", TimeUnit.MILLISECONDS)).isCloseTo(10000L, Offset.offset(100L));
   }
 
   @Test

@@ -48,7 +48,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class MultiRedisLockScriptTest implements InitializingBean {
 
   @Autowired
-  @SuppressWarnings("SpringJavaAutowiringInspection") // false IntelliJ warning
+  @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection") // false IntelliJ warning
   private StringRedisTemplate redisTemplate;
 
   private RedisScript<Boolean> lockScript;

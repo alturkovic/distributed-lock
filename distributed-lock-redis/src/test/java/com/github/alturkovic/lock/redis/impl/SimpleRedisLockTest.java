@@ -47,7 +47,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class SimpleRedisLockTest implements InitializingBean {
 
   @Autowired
-  @SuppressWarnings("SpringJavaAutowiringInspection") // false IntelliJ warning
+  @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
   private StringRedisTemplate redisTemplate;
 
   private Lock lock;

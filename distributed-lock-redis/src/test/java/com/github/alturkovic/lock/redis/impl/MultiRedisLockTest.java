@@ -20,6 +20,8 @@ import com.github.alturkovic.lock.Lock;
 import com.github.alturkovic.lock.redis.embedded.EmbeddedRedis;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.concurrent.TimeUnit;
+import org.assertj.core.data.Offset;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -77,6 +79,7 @@ public class MultiRedisLockTest implements InitializingBean {
     final String token = lock.acquire(Collections.singletonList("1"), "locks", 1000);
     assertThat(token).isEqualTo("abc");
     assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("abc");
+    assertThat(redisTemplate.getExpire("locks:1", TimeUnit.MILLISECONDS)).isCloseTo(1000, Offset.offset(100L));
   }
 
   @Test
@@ -85,6 +88,8 @@ public class MultiRedisLockTest implements InitializingBean {
     assertThat(token).isEqualTo("abc");
     assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("abc");
     assertThat(redisTemplate.opsForValue().get("locks:2")).isEqualTo("abc");
+    assertThat(redisTemplate.getExpire("locks:1", TimeUnit.MILLISECONDS)).isCloseTo(1000, Offset.offset(100L));
+    assertThat(redisTemplate.getExpire("locks:2", TimeUnit.MILLISECONDS)).isCloseTo(1000, Offset.offset(100L));
   }
 
   @Test

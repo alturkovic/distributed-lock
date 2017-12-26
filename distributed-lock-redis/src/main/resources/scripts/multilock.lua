@@ -13,6 +13,6 @@ end
 
 local expiration = tonumber(ARGV[2])
 for _, key in ipairs(KEYS) do
-    redis.call('EXPIRE', key, expiration)
+    redis.call('PEXPIRE', key, expiration)
 end
 return true

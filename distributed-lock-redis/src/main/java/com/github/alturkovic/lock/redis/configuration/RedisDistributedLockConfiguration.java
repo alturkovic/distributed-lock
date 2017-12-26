@@ -40,7 +40,7 @@ public class RedisDistributedLockConfiguration {
   @Bean
   public Lock multiRedisLock(final StringRedisTemplate stringRedisTemplate,
                              final RedisScript<Boolean> multiLockScript,
-                             final RedisScript<Long> multiLockReleaseScript) {
+                             final RedisScript<Boolean> multiLockReleaseScript) {
     return new MultiRedisLock(stringRedisTemplate, multiLockScript, multiLockReleaseScript);
   }
 
@@ -69,10 +69,10 @@ public class RedisDistributedLockConfiguration {
   }
 
   @Bean
-  public RedisScript<Long> multiLockReleaseScript() {
-    final DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>();
+  public RedisScript<Boolean> multiLockReleaseScript() {
+    final DefaultRedisScript<Boolean> redisScript = new DefaultRedisScript<>();
     redisScript.setScriptSource(new ResourceScriptSource(new ClassPathResource("scripts/release-multilock.lua")));
-    redisScript.setResultType(Long.class);
+    redisScript.setResultType(Boolean.class);
     return redisScript;
   }
 }

@@ -34,10 +34,10 @@ public class MultiRedisLock implements Lock {
 
   private final StringRedisTemplate stringRedisTemplate;
   private final RedisScript<Boolean> lockScript;
-  private final RedisScript<Long> lockReleaseScript;
+  private final RedisScript<Boolean> lockReleaseScript;
   private final Supplier<String> tokenSupplier;
 
-  public MultiRedisLock(final StringRedisTemplate stringRedisTemplate, final RedisScript<Boolean> lockScript, final RedisScript<Long> lockReleaseScript) {
+  public MultiRedisLock(final StringRedisTemplate stringRedisTemplate, final RedisScript<Boolean> lockScript, final RedisScript<Boolean> lockReleaseScript) {
     this(stringRedisTemplate, lockScript, lockReleaseScript, () -> UUID.randomUUID().toString());
   }
 
@@ -54,9 +54,8 @@ public class MultiRedisLock implements Lock {
   @Override
   public boolean release(final List<String> keys, final String token, final String storeId) {
     final List<String> keysWithStoreIdPrefix = keys.stream().map(key -> storeId + ":" + key).collect(Collectors.toList());
-    final long releasedKeys = stringRedisTemplate.execute(lockReleaseScript, keysWithStoreIdPrefix, token);
 
-    final boolean released = releasedKeys == keys.size();
+    final boolean released = stringRedisTemplate.execute(lockReleaseScript, keysWithStoreIdPrefix, token);
     if (released) {
       log.debug("Release script deleted the record for keys {} with token {} in store {}", keys, token, storeId);
     } else {

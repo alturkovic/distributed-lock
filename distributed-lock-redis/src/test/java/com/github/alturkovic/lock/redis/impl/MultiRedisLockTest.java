@@ -59,9 +59,9 @@ public class MultiRedisLockTest implements InitializingBean {
     lockScript.setScriptSource(new ResourceScriptSource(new ClassPathResource("scripts/multilock.lua")));
     lockScript.setResultType(Boolean.class);
 
-    final DefaultRedisScript<Long> lockReleaseScript = new DefaultRedisScript<>();
+    final DefaultRedisScript<Boolean> lockReleaseScript = new DefaultRedisScript<>();
     lockReleaseScript.setScriptSource(new ResourceScriptSource(new ClassPathResource("scripts/release-multilock.lua")));
-    lockReleaseScript.setResultType(Long.class);
+    lockReleaseScript.setResultType(Boolean.class);
 
     lock = new MultiRedisLock(redisTemplate, lockScript, lockReleaseScript, () -> "abc");
   }

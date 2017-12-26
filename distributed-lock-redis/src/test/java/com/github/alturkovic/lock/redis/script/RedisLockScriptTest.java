@@ -17,7 +17,6 @@
 package com.github.alturkovic.lock.redis.script;
 
 import com.github.alturkovic.lock.redis.embedded.EmbeddedRedis;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import org.assertj.core.data.Offset;
@@ -54,7 +53,7 @@ public class RedisLockScriptTest implements InitializingBean {
   private RedisScript<Boolean> lockScript;
 
   @Override
-  public void afterPropertiesSet() throws Exception {
+  public void afterPropertiesSet() {
     final DefaultRedisScript<Boolean> redisScript = new DefaultRedisScript<>();
     redisScript.setScriptSource(new ResourceScriptSource(new ClassPathResource("scripts/lock.lua")));
     redisScript.setResultType(Boolean.class);
@@ -63,7 +62,7 @@ public class RedisLockScriptTest implements InitializingBean {
   }
 
   @Before
-  public void cleanRedis() throws IOException {
+  public void cleanRedis() {
     redisTemplate.execute((RedisCallback<?>) connection -> {
       connection.flushDb();
       return null;

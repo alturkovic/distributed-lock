@@ -1,8 +1,9 @@
-local released = 0
 for _, key in pairs(KEYS) do
-    if redis.call("GET", key) == ARGV[1] then
-        released = released + redis.call("DEL", key)
+    if redis.call("GET", key) ~= ARGV[1] then
+        return false
     end
 end
 
-return released
+redis.call("DEL", unpack(KEYS))
+
+return true

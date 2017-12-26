@@ -17,7 +17,6 @@
 package com.github.alturkovic.lock.redis.script;
 
 import com.github.alturkovic.lock.redis.embedded.EmbeddedRedis;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
@@ -55,7 +54,7 @@ public class MultiRedisLockScriptTest implements InitializingBean {
   private RedisScript<Boolean> lockScript;
 
   @Override
-  public void afterPropertiesSet() throws Exception {
+  public void afterPropertiesSet() {
     final DefaultRedisScript<Boolean> redisScript = new DefaultRedisScript<>();
     redisScript.setScriptSource(new ResourceScriptSource(new ClassPathResource("scripts/multilock.lua")));
     redisScript.setResultType(Boolean.class);
@@ -64,7 +63,7 @@ public class MultiRedisLockScriptTest implements InitializingBean {
   }
 
   @Before
-  public void cleanRedis() throws IOException {
+  public void cleanRedis() {
     redisTemplate.execute((RedisCallback<?>) connection -> {
       connection.flushDb();
       return null;

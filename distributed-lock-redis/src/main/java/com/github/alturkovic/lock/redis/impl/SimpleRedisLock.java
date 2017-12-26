@@ -48,11 +48,13 @@ public class SimpleRedisLock implements Lock {
   @Override
   public String acquire(final List<String> keys, final String storeId, final long expiration) {
     Assert.isTrue(keys.size() == 1, "Cannot acquire lock for multiple keys with this lock: " + keys);
-    final List<String> singletonKeyList = Collections.singletonList(storeId + ":" + keys.get(0));
 
+    final String key = keys.get(0);
+    final List<String> singletonKeyList = Collections.singletonList(storeId + ":" + key);
     final String token = tokenSupplier.get();
+
     final boolean locked = stringRedisTemplate.execute(lockScript, singletonKeyList, token, String.valueOf(expiration));
-    log.debug("Tried to acquire lock for key {} with token {} in store {}. Locked: {}", keys.get(0), token, storeId, locked);
+    log.debug("Tried to acquire lock for key {} with token {} in store {}. Locked: {}", key, token, storeId, locked);
     return locked ? token : null;
   }
 

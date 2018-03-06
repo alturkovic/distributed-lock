@@ -59,17 +59,17 @@ public @interface Locked {
   /**
    * Lock expiration interval
    */
-  Interval expiration() default @Interval("10");
+  Interval expiration() default @Interval(value = "10", unit = TimeUnit.SECONDS);
 
   /**
    * Lock timeout interval
    */
-  Interval timeout() default @Interval("1");
+  Interval timeout() default @Interval(value = "1", unit = TimeUnit.SECONDS);
 
   /**
    * Lock retry interval
    */
-  Interval retry() default @Interval(value = "50", unit = TimeUnit.MILLISECONDS);
+  Interval retry() default @Interval(value = "50");
 
   /**
    * Lock type, see implementations of {@link Lock}

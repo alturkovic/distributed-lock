@@ -32,5 +32,5 @@ public @interface Interval {
   /**
    * Interval {@link TimeUnit} used to recalculate
    */
-  TimeUnit unit() default TimeUnit.SECONDS;
+  TimeUnit unit() default TimeUnit.MILLISECONDS;
 }

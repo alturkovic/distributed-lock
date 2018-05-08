@@ -36,7 +36,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 public class JdbcDistributedLockConfiguration {
 
   @Bean
-  public Lock simpleMongoLock(final JdbcLockSingleKeyService jdbcLockSingleKeyService) {
+  public Lock simpleJdbcLock(final JdbcLockSingleKeyService jdbcLockSingleKeyService) {
     return new SimpleJdbcLock(jdbcLockSingleKeyService);
   }
 

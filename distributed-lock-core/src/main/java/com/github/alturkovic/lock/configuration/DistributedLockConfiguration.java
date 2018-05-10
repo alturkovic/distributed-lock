@@ -27,6 +27,7 @@ package com.github.alturkovic.lock.configuration;
 import com.github.alturkovic.lock.Lock;
 import com.github.alturkovic.lock.advice.LockAdvice;
 import com.github.alturkovic.lock.converter.IntervalConverter;
+import com.github.alturkovic.lock.exception.DistributedLockException;
 import com.github.alturkovic.lock.key.KeyGenerator;
 import com.github.alturkovic.lock.key.SpelKeyGenerator;
 import java.util.List;
@@ -41,24 +42,26 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 
+@Slf4j
 @Configuration
 @EnableAspectJAutoProxy
 @ComponentScan("com.github.alturkovic.lock.converter")
-@Slf4j
 public class DistributedLockConfiguration {
 
   @Bean
   public LockAdvice lockAdvice(final IntervalConverter intervalConverter, final KeyGenerator spelKeyGenerator, final List<Lock> locks) {
-    return new LockAdvice(intervalConverter, spelKeyGenerator, locks.stream().map(l -> {
-      if (AopUtils.isAopProxy(l) && l instanceof Advised) {
-        final Advised advised = (Advised) l;
+    return new LockAdvice(intervalConverter, spelKeyGenerator, locks.stream().map(lock -> {
+      if (AopUtils.isAopProxy(lock) && lock instanceof Advised) {
+        final Advised advised = (Advised) lock;
         try {
           return (Lock) advised.getTargetSource().getTarget();
-        } catch (Exception e) {
-          log.error("Can't get lock type from AOP Proxy");
+        } catch (final Exception e) {
+          final String msgError = "Can't get lock type from AOP Proxy";
+          log.error(msgError, e);
+          throw new DistributedLockException(msgError, e);
         }
       }
-      return l;
+      return lock;
     }).collect(Collectors.toMap(Lock::getClass, Function.identity())));
   }
 
@@ -66,5 +69,4 @@ public class DistributedLockConfiguration {
   public KeyGenerator spelKeyGenerator() {
     return new SpelKeyGenerator();
   }
-
 }

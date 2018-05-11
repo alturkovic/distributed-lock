@@ -56,9 +56,7 @@ public class DistributedLockConfiguration {
         try {
           return (Lock) advised.getTargetSource().getTarget();
         } catch (final Exception e) {
-          final String msgError = "Can't get lock type from AOP Proxy";
-          log.error(msgError, e);
-          throw new DistributedLockException(msgError, e);
+          throw new DistributedLockException("Can't get lock type from AOP Proxy", e);
         }
       }
       return lock;

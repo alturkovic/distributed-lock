@@ -27,16 +27,22 @@ package com.github.alturkovic.lock.configuration;
 import com.github.alturkovic.lock.Lock;
 import com.github.alturkovic.lock.advice.LockAdvice;
 import com.github.alturkovic.lock.converter.IntervalConverter;
+import com.github.alturkovic.lock.exception.DistributedLockException;
 import com.github.alturkovic.lock.key.KeyGenerator;
 import com.github.alturkovic.lock.key.SpelKeyGenerator;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.aop.framework.Advised;
+import org.springframework.aop.support.AopUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 
+@Slf4j
 @Configuration
 @EnableAspectJAutoProxy
 @ComponentScan("com.github.alturkovic.lock.converter")
@@ -44,7 +50,17 @@ public class DistributedLockConfiguration {
 
   @Bean
   public LockAdvice lockAdvice(final IntervalConverter intervalConverter, final KeyGenerator spelKeyGenerator, final List<Lock> locks) {
-    return new LockAdvice(intervalConverter, spelKeyGenerator, locks.stream().collect(Collectors.toMap(Lock::getClass, Function.identity())));
+    return new LockAdvice(intervalConverter, spelKeyGenerator, locks.stream().map(lock -> {
+      if (AopUtils.isAopProxy(lock) && lock instanceof Advised) {
+        final Advised advised = (Advised) lock;
+        try {
+          return (Lock) advised.getTargetSource().getTarget();
+        } catch (final Exception e) {
+          throw new DistributedLockException("Can't get lock type from AOP Proxy", e);
+        }
+      }
+      return lock;
+    }).collect(Collectors.toMap(Lock::getClass, Function.identity())));
   }
 
   @Bean

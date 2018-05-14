@@ -25,6 +25,7 @@
 package com.github.alturkovic.lock.key;
 
 import com.github.alturkovic.lock.exception.EvaluationConvertException;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -35,6 +36,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.Getter;
 import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.reflect.MethodSignature;
+import org.aspectj.runtime.reflect.Factory;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -59,6 +62,17 @@ public class SpelKeyGeneratorTest {
 
   @Mock
   private JoinPoint joinPoint;
+
+  @Test
+  public void shouldGenerateExecutionPath() throws NoSuchMethodException {
+    when(joinPoint.getArgs()).thenReturn(new Object[]{});
+    when(joinPoint.getTarget()).thenReturn(this);
+    when(joinPoint.getSignature()).thenReturn(new TestingMethodSignature(this.getClass().getMethod("shouldGenerateExecutionPath")));
+
+    final String exp = "#executionPath";
+    final List<String> keys = generator.resolveKeys("lock_", exp, "p", joinPoint);
+    assertThat(keys).containsExactly("lock_com.github.alturkovic.lock.key.SpelKeyGeneratorTest.shouldGenerateExecutionPath");
+  }
 
   @Test
   public void shouldGenerateSingleKeyFromJoinPointContextAndVariables() {

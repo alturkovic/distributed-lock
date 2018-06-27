@@ -130,31 +130,16 @@ Add the JitPack repository into your `pom.xml`.
 </repositories>
 ----
 
-Add the BOM dependency under `<dependencyManagement>`:
-
-[source,xml]
-----
-<dependencyManagement>
-  <dependencies>
-    <dependency>
-      <groupId>com.github.alturkovic</groupId>
-      <artifactId>distributed-lock</artifactId>
-      <version>[insert release version here]</version>
-      <scope>import</scope>
-      <type>pom</type>
-    </dependency>
-  </dependencies>
-</dependencyManagement>
-----
-
-Add the dependency that you need under `<dependencies>`, for an example, if you want a Redis lock:
+JitPack builds multi-modules by appending the repo name in the `groupId`.
+To add the Redis dependency for an example, add the following under your `<dependencies>`:
 
 [source,xml]
 ----
 <dependencies>
   <dependency>
-    <groupId>com.github.alturkovic</groupId>
+    <groupId>com.github.alturkovic.distributed-lock</groupId>
     <artifactId>distributed-lock-redis</artifactId>
+    <version>[insert latest version here]</version>
   </dependency>
 </dependencies>
 ----

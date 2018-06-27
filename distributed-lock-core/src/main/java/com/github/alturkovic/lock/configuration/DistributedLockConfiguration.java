@@ -42,7 +42,6 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 
-@Slf4j
 @Configuration
 @EnableAspectJAutoProxy
 @ComponentScan("com.github.alturkovic.lock.converter")

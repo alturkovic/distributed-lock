@@ -46,16 +46,6 @@ public class LockConfiguration {
 }
 ----
 
-If you are using Spring Boot and Maven simply add this dependency to your `pom.xml`.
-
-[source,xml]
-----
-<dependency>
-    <groupId>com.github.alturkovic</groupId>
-    <artifactId>distributed-lock-jdbc</artifactId>
-</dependency>
-----
-
 [NOTE]
 ====
 Make sure you create the table and configure the table ID incrementer.
@@ -96,16 +86,6 @@ public class LockConfiguration {
 }
 ----
 
-If you are using Spring Boot and Maven simply add this dependency to your `pom.xml`.
-
-[source,xml]
-----
-<dependency>
-    <groupId>com.github.alturkovic</groupId>
-    <artifactId>distributed-lock-mongo</artifactId>
-</dependency>
-----
-
 === Redis locks
 
 Redis locks are provided in the `distributed-lock-redis` project.
@@ -134,14 +114,49 @@ public class LockConfiguration {
 }
 ----
 
-If you are using Spring Boot and Maven simply add this dependency to your `pom.xml`.
+== Importing into your project
+
+=== Maven
+
+Add the JitPack repository into your `pom.xml`.
 
 [source,xml]
 ----
-<dependency>
+<repositories>
+  <repository>
+    <id>jitpack.io</id>
+    <url>https://jitpack.io</url>
+  </repository>
+</repositories>
+----
+
+Add the BOM dependency under `<dependencyManagement>`:
+
+[source,xml]
+----
+<dependencyManagement>
+  <dependencies>
+    <dependency>
+      <groupId>com.github.alturkovic</groupId>
+      <artifactId>distributed-lock</artifactId>
+      <version>[insert release version here]</version>
+      <scope>import</scope>
+      <type>pom</type>
+    </dependency>
+  </dependencies>
+</dependencyManagement>
+----
+
+Add the dependency that you need under `<dependencies>`, for an example, if you want a Redis lock:
+
+[source,xml]
+----
+<dependencies>
+  <dependency>
     <groupId>com.github.alturkovic</groupId>
     <artifactId>distributed-lock-redis</artifactId>
-</dependency>
+  </dependency>
+</dependencies>
 ----
 
 == Using locks

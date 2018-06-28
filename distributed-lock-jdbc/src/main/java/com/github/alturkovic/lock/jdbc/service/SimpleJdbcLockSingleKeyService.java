@@ -24,6 +24,7 @@
 
 package com.github.alturkovic.lock.jdbc.service;
 
+import java.util.Date;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
@@ -31,8 +32,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Date;
 
 @Data
 @Slf4j
@@ -56,8 +55,7 @@ public class SimpleJdbcLockSingleKeyService implements JdbcLockSingleKeyService 
     try {
       final int created = jdbcTemplate.update(String.format(ACQUIRE_FORMATTED_QUERY, storeId), key, token, expireAt);
       return created == 1 ? token : null;
-    }
-    catch (final DuplicateKeyException e) {
+    } catch (final DuplicateKeyException e) {
       return null;
     }
   }

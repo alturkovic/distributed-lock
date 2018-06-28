@@ -25,7 +25,6 @@
 package com.github.alturkovic.lock.key;
 
 import com.github.alturkovic.lock.exception.EvaluationConvertException;
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -36,8 +35,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.Getter;
 import org.aspectj.lang.JoinPoint;
-import org.aspectj.lang.reflect.MethodSignature;
-import org.aspectj.runtime.reflect.Factory;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;

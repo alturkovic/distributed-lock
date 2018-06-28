@@ -87,8 +87,7 @@ public final class LockAdvice {
     final List<String> keys;
     try {
       keys = keyGenerator.resolveKeys(locked.prefix(), locked.expression(), locked.parameter(), joinPoint);
-    }
-    catch (final RuntimeException e) {
+    } catch (final RuntimeException e) {
       throw new DistributedLockException("Cannot resolve keys to lock from expression: " + locked.expression(), e);
     }
 
@@ -100,8 +99,7 @@ public final class LockAdvice {
       while (token == null && timeout >= 0) {
         try {
           token = lock.acquire(keys, locked.storeId(), intervalConverter.toMillis(locked.expiration()));
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
           throw new DistributedLockException("Unable to acquire lock with expression: " + locked.expression(), e);
         }
 
@@ -111,8 +109,7 @@ public final class LockAdvice {
 
           try {
             Thread.sleep(retry);
-          }
-          catch (final InterruptedException e) {
+          } catch (final InterruptedException e) {
             // Do nothing...
           }
         }
@@ -124,8 +121,7 @@ public final class LockAdvice {
 
       log.debug("Acquired lock for keys {} with token {} in store {}", keys, token, locked.storeId());
       return joinPoint.proceed();
-    }
-    finally {
+    } finally {
       if (token != null && !locked.manuallyReleased()) {
         final boolean released = lock.release(keys, token, locked.storeId());
         if (released) {

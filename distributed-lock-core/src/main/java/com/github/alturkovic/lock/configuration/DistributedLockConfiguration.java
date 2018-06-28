@@ -33,8 +33,6 @@ import com.github.alturkovic.lock.key.SpelKeyGenerator;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.framework.Advised;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.context.annotation.Bean;

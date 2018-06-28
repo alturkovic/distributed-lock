@@ -79,6 +79,37 @@ public class SpelKeyGenerator implements KeyGenerator {
     converterMap.put(clazz, (Function<Object, String>) converter);
   }
 
+  @SuppressWarnings("unchecked")
+  protected List<String> convertResultToList(final Object expressionValue) {
+    final List<String> list;
+
+    if (expressionValue == null) {
+      throw new EvaluationConvertException("Expression evaluated in a null list");
+    }
+
+    final Function<Object, String> converterFunction = converterMap.get(expressionValue.getClass());
+
+    if (converterFunction != null) {
+      list = Collections.singletonList(converterFunction.apply(expressionValue));
+    } else if (expressionValue instanceof Collection) {
+      list = ((Collection<Object>) expressionValue).stream().map(o -> {
+        final Function<Object, String> elementConvertFunction = converterMap.get(o.getClass());
+        if (elementConvertFunction == null) {
+          throw new EvaluationConvertException(String.format("Expression evaluated in a list, but element %s has no registered converter", o));
+        }
+        return elementConvertFunction.apply(o);
+      }).collect(Collectors.toList());
+    } else {
+      throw new EvaluationConvertException(String.format("Expression evaluated in %s that has no registered converter", expressionValue));
+    }
+
+    if (CollectionUtils.isEmpty(list)) {
+      throw new EvaluationConvertException("Expression evaluated in an empty list");
+    }
+
+    return list;
+  }
+
   private List<String> evaluateExpression(final String expression, final String contextVariableName, final JoinPoint joinPoint) {
     final StandardEvaluationContext context = new StandardEvaluationContext(joinPoint.getTarget());
 
@@ -109,36 +140,5 @@ public class SpelKeyGenerator implements KeyGenerator {
     }
 
     return lockKeyPrefix + key;
-  }
-
-  @SuppressWarnings("unchecked")
-  protected List<String> convertResultToList(final Object expressionValue) {
-    final List<String> list;
-
-    if (expressionValue == null) {
-      throw new EvaluationConvertException("Expression evaluated in a null list");
-    }
-
-    final Function<Object, String> converterFunction = converterMap.get(expressionValue.getClass());
-
-    if (converterFunction != null) {
-      list = Collections.singletonList(converterFunction.apply(expressionValue));
-    } else if (expressionValue instanceof Collection) {
-      list = ((Collection<Object>) expressionValue).stream().map(o -> {
-        final Function<Object, String> elementConvertFunction = converterMap.get(o.getClass());
-        if (elementConvertFunction == null) {
-          throw new EvaluationConvertException(String.format("Expression evaluated in a list, but element %s has no registered converter", o));
-        }
-        return elementConvertFunction.apply(o);
-      }).collect(Collectors.toList());
-    } else {
-      throw new EvaluationConvertException(String.format("Expression evaluated in %s that has no registered converter", expressionValue));
-    }
-
-    if (CollectionUtils.isEmpty(list)) {
-      throw new EvaluationConvertException("Expression evaluated in an empty list");
-    }
-
-    return list;
   }
 }

@@ -28,7 +28,9 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.stereotype.Component;
 import redis.embedded.RedisServer;
 
@@ -47,9 +49,7 @@ public class EmbeddedRedis {
     server = RedisServer.builder().setting("bind 127.0.0.1").port(port).build(); // bind to ignore windows firewall popup each time the server starts
     server.start();
 
-    final JedisConnectionFactory connectionFactory = new JedisConnectionFactory();
-    connectionFactory.setPort(port);
-    connectionFactory.setHostName("localhost");
+    final LettuceConnectionFactory connectionFactory = new LettuceConnectionFactory(new RedisStandaloneConfiguration("localhost", port));
     connectionFactory.setDatabase(0);
     connectionFactory.afterPropertiesSet();
 

@@ -27,6 +27,7 @@ package com.github.alturkovic.lock.mongo.impl;
 import com.github.alturkovic.lock.Lock;
 import com.github.alturkovic.lock.mongo.model.LockDocument;
 import com.mongodb.WriteResult;
+import com.mongodb.client.result.DeleteResult;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -80,12 +81,12 @@ public class SimpleMongoLock implements Lock {
 
     final String key = keys.get(0);
 
-    final WriteResult deleted = mongoTemplate.remove(Query.query(Criteria.where("_id").is(key).and("token").is(token)), storeId);
+    final DeleteResult deleted = mongoTemplate.remove(Query.query(Criteria.where("_id").is(key).and("token").is(token)), storeId);
 
-    final boolean released = deleted.getN() == 1;
+    final boolean released = deleted.getDeletedCount() == 1;
     if (released) {
       log.debug("Remove query successfully affected 1 record for key {} with token {} in store {}", key, token, storeId);
-    } else if (deleted.getN() > 0) {
+    } else if (deleted.getDeletedCount() > 0) {
       log.error("Unexpected result from release for key {} with token {} in store {}, released {}", key, token, storeId, deleted);
     } else {
       log.error("Remove query did not affect any records for key {} with token {} in store {}", key, token, storeId);

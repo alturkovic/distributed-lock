@@ -116,6 +116,18 @@ public class LockConfiguration {
 
 == Importing into your project
 
+=== Compatibility
+
+|===
+|Version |Spring Boot version
+
+|1.1.6 and lower
+|1.5.6.RELEASE
+
+|1.1.7 and higher
+|2.0.3.RELEASE
+|===
+
 === Maven
 
 Add the JitPack repository into your `pom.xml`.

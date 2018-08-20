@@ -1,24 +1,20 @@
-target/
-!.mvn/wrapper/maven-wrapper.jar
-
-### STS ###
-.apt_generated
-.classpath
-.factorypath
+.idea
+!.idea/codeStyles/**
+!.idea/codeStyleSettings.xml
 .project
 .settings
+.classpath
+.tern-project
 .springBeans
-
-### IntelliJ IDEA ###
-.idea
-*.iws
 *.iml
-*.ipr
 
-### NetBeans ###
-nbproject/private/
-build/
-nbbuild/
-dist/
-nbdist/
-.nb-gradle/
+.tmp
+
+**/generated
+target
+out
+bin
+**/*.log
+
+*.swp
+.DS_Store

@@ -34,9 +34,6 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration;
-import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
-import org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.RedisCallback;
@@ -94,10 +91,7 @@ public class RedisLockScriptTest implements InitializingBean {
     assertThat(redisTemplate.getExpire("lock:test")).isEqualTo(-1);
   }
 
-  @SpringBootApplication(
-      exclude = {MongoAutoConfiguration.class, MongoDataAutoConfiguration.class, EmbeddedMongoAutoConfiguration.class},
-      scanBasePackageClasses = EmbeddedRedis.class
-  )
+  @SpringBootApplication(scanBasePackageClasses = EmbeddedRedis.class)
   static class TestApplication {
   }
 }

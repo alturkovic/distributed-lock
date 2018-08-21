@@ -29,7 +29,7 @@ import com.github.alturkovic.lock.advice.LockTypeResolver;
 import com.github.alturkovic.lock.converter.BeanFactoryAwareIntervalConverter;
 import com.github.alturkovic.lock.key.KeyGenerator;
 import com.github.alturkovic.lock.key.SpelKeyGenerator;
-import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -41,8 +41,8 @@ public class DistributedLockConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  public LockBeanPostProcessor lockBeanPostProcessor(final ConfigurableListableBeanFactory configurableListableBeanFactory, final KeyGenerator keyGenerator) {
-    return new LockBeanPostProcessor(new BeanFactoryAwareIntervalConverter(configurableListableBeanFactory), configurableListableBeanFactory::getBean, keyGenerator);
+  public LockBeanPostProcessor lockBeanPostProcessor(final ConfigurableBeanFactory configurableBeanFactory, final KeyGenerator keyGenerator) {
+    return new LockBeanPostProcessor(new BeanFactoryAwareIntervalConverter(configurableBeanFactory), configurableBeanFactory::getBean, keyGenerator);
   }
 
   @Bean
@@ -53,8 +53,8 @@ public class DistributedLockConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  public LockTypeResolver lockTypeResolver(final ConfigurableListableBeanFactory configurableListableBeanFactory) {
-    return configurableListableBeanFactory::getBean;
+  public LockTypeResolver lockTypeResolver(final ConfigurableBeanFactory configurableBeanFactory) {
+    return configurableBeanFactory::getBean;
   }
 
   @Bean

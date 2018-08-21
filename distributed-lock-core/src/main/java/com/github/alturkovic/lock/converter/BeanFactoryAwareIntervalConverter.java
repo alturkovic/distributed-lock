@@ -26,7 +26,7 @@ package com.github.alturkovic.lock.converter;
 
 import com.github.alturkovic.lock.Interval;
 import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.util.StringUtils;
 
 /**
@@ -34,7 +34,7 @@ import org.springframework.util.StringUtils;
  */
 @AllArgsConstructor
 public class BeanFactoryAwareIntervalConverter implements IntervalConverter {
-  private final ConfigurableListableBeanFactory beanFactory;
+  private final ConfigurableBeanFactory beanFactory;
 
   public long toMillis(final Interval interval) {
     final String value = beanFactory.resolveEmbeddedValue(interval.value());

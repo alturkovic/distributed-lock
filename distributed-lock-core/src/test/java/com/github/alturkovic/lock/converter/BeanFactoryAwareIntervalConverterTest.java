@@ -47,15 +47,15 @@ public class BeanFactoryAwareIntervalConverterTest {
 
   @Test
   @Interval(value = "10")
-  public void shouldResolveStatic() throws NoSuchMethodException {
-    final long millis = intervalConverter.toMillis(this.getClass().getMethod("shouldResolveStatic").getAnnotation(Interval.class));
+  public void shouldResolveStatic() {
+    final long millis = intervalConverter.toMillis(new Object() {}.getClass().getEnclosingMethod().getAnnotation(Interval.class));
     assertThat(millis).isEqualTo(10);
   }
 
   @Test
   @Interval(value = "${locked.interval}")
-  public void shouldResolveProperty() throws NoSuchMethodException {
-    final long millis = intervalConverter.toMillis(this.getClass().getMethod("shouldResolveProperty").getAnnotation(Interval.class));
+  public void shouldResolveProperty() {
+    final long millis = intervalConverter.toMillis(new Object() {}.getClass().getEnclosingMethod().getAnnotation(Interval.class));
     assertThat(millis).isEqualTo(10);
   }
 

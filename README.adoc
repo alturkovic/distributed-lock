@@ -14,7 +14,7 @@ These options are customizable per annotation.
 The project contains several configurations and annotations to help you enable locking and customize it.
 
 To enable locking you must first include `@EnableDistributedLock`.
-This will import the configuration that will autoconfigure the `BeanPostProcessor` required for locking.
+This will import the configuration that will autoconfigure the `https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/beans/factory/config/BeanPostProcessor.html[BeanPostProcessor]` required for locking.
 
 Project provides the following out-of-the-box lock implementations:
 
@@ -163,7 +163,7 @@ To add the Redis dependency for an example, add the following under your `<depen
 
 To lock your methods you need to first enable locking as described in the previous section.
 
-Spring `BeanPostProcessor` will handle all `@Locked` methods including their aliases. The `type` field describes which implementation of the lock to use.
+Spring `https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/beans/factory/config/BeanPostProcessor.html[BeanPostProcessor]` will handle all `@Locked` methods including their aliases. The `type` field describes which implementation of the lock to use.
 To prevent repeating yourself if you plan on using the same implementation (as most people usually will), I've added alias support.
 They wrap the `@Locked` annotation and define the type used.
 
@@ -211,7 +211,7 @@ public class Example {
 
 === Unsuccessful locks
 
-If method cannot be locked, `DistributedLockConfiguration` will be thrown.
+If method cannot be locked, `DistributedLockException` will be thrown.
 
 Method might not acquire the lock if:
 
@@ -258,7 +258,7 @@ public void runLockedWithMyCustomLock() {
 This is the default key generator the advice uses. If you wish to use your own, simply write your own and define it as a `@Bean`.
 
 The default key generator has access to the currently executing context, meaning you can access your fields and methods from SpEL.
-It uses the `DefaultParameterNameDiscoverer` to discover parameter names, so you can access your parameters in several different ways:
+It uses the `https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/core/DefaultParameterNameDiscoverer.html[DefaultParameterNameDiscoverer]` to discover parameter names, so you can access your parameters in several different ways:
 
 1. using `p#` syntax, where `#` is the position of the parameter, for an example: `p0` for the first parameter
 2. using `a#` syntax, where `#` is the position of the parameter, for an example: `a2` for the third parameter
@@ -267,15 +267,12 @@ It uses the `DefaultParameterNameDiscoverer` to discover parameter names, so you
 A special variable named `executionPath` is used to define the method called. This is the default `expression` used to describe the annotated method.  
 
 All validated expressions that result in an `Iterable` or an array will be converted to `List<String>` and all other values will be wrapped with `Collections.toSingletonList`.
-Elements of `Iterable` or array will also be converted to Strings using the `ConversionService`. Custom converters can be registered.
-More about the `ConversionService` https://docs.spring.io/spring/docs/current/spring-framework-reference/core.html#core-convert[here].
+Elements of `Iterable` or array will also be converted to Strings using the `https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/core/convert/ConversionService.html[ConversionService]`. Custom converters can be registered.
+More about Spring conversion can be found https://docs.spring.io/spring/docs/current/spring-framework-reference/core.html#core-convert[here].
 
 For more examples, take a look at `com.github.alturkovic.lock.key.SpelKeyGeneratorTest`.
 
 == Customization
 
 If you want to use custom lock implementations, simply implement `Lock` interface and register it in a configuration.
-The `LockAdvice` will pick it up and register it automatically.
-
 You can also create an alias for your lock so you don't have to specify `@Locked` type field.
-The `LockAdvice` will recognize your alias automatically.

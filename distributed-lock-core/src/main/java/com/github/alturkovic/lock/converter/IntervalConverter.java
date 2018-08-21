@@ -25,26 +25,18 @@
 package com.github.alturkovic.lock.converter;
 
 import com.github.alturkovic.lock.Interval;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
-import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
-@Component
-public class IntervalConverter {
+/**
+ * Converter which converts {@link Interval} to milliseconds.
+ */
+@FunctionalInterface
+public interface IntervalConverter {
 
-  private final ConfigurableListableBeanFactory beanFactory;
-
-  @Autowired
-  public IntervalConverter(final ConfigurableListableBeanFactory beanFactory) {
-    this.beanFactory = beanFactory;
-  }
-
-  public long toMillis(final Interval interval) {
-    final String value = beanFactory.resolveEmbeddedValue(interval.value());
-    if (!StringUtils.hasText(value)) {
-      throw new IllegalArgumentException("Cannot convert interval " + interval + " to milliseconds");
-    }
-    return interval.unit().toMillis(Long.valueOf(value));
-  }
+  /**
+   * Convert {@link Interval} to milliseconds.
+   *
+   * @param interval interval to convert
+   * @return milliseconds represented by the given {@code interval}
+   */
+  long toMillis(Interval interval);
 }

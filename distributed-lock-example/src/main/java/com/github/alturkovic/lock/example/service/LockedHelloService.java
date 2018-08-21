@@ -22,23 +22,15 @@
  * SOFTWARE.
  */
 
-package com.github.alturkovic.lock;
+package com.github.alturkovic.lock.example.service;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.util.concurrent.TimeUnit;
+import com.github.alturkovic.lock.jdbc.alias.JdbcLocked;
 
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Interval {
+public class LockedHelloService implements HelloService {
 
-  /**
-   * Interval period.
-   * By default, can be specified as 'property placeholder', e.g. {@code ${locked.interval}}.
-   */
-  String value();
-
-  /**
-   * Interval {@link TimeUnit} represented by {@link #value()}.
-   */
-  TimeUnit unit() default TimeUnit.MILLISECONDS;
+  @Override
+  @JdbcLocked(expression = "#name")
+  public String sayHello(final String name) {
+    return "Hello " + name + "!";
+  }
 }

@@ -33,7 +33,7 @@ public interface Lock {
    * @param keys       keys to try to lock
    * @param storeId    lock store id to save keys in (table, collection, ...)
    * @param expiration how long to wait before releasing the key automatically, in millis
-   * @return token to use for releasing the lock or {@code null} if lock cannot be acquired
+   * @return token to use for releasing the lock or {@code null} if lock cannot be acquired at the moment
    */
   String acquire(List<String> keys, String storeId, long expiration);
 

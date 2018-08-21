@@ -22,19 +22,21 @@
  * SOFTWARE.
  */
 
-package com.github.alturkovic.lock.advice.dummy;
+package com.github.alturkovic.lock.advice;
 
 import com.github.alturkovic.lock.Lock;
-import java.util.List;
 
-public class DummyLock implements Lock {
-  @Override
-  public String acquire(final List<String> keys, final String storeId, final long expiration) {
-    return null;
-  }
+/**
+ * A resolver which can resolve {@link Lock} beans of a specific class.
+ */
+@FunctionalInterface
+public interface LockTypeResolver {
 
-  @Override
-  public boolean release(final List<String> keys, final String token, final String storeId) {
-    return true;
-  }
+  /**
+   * Get a {@link Lock} for the given {@code type}.
+   *
+   * @param type type of the lock
+   * @return lock of the given {@code type}
+   */
+  Lock get(Class<? extends Lock> type);
 }

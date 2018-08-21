@@ -22,23 +22,26 @@
  * SOFTWARE.
  */
 
-package com.github.alturkovic.lock;
+package com.github.alturkovic.lock.example.controller;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.util.concurrent.TimeUnit;
+import com.github.alturkovic.lock.example.service.HelloService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
 
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Interval {
+@RestController
+public class SimpleController {
 
-  /**
-   * Interval period.
-   * By default, can be specified as 'property placeholder', e.g. {@code ${locked.interval}}.
-   */
-  String value();
+  private final HelloService helloService;
 
-  /**
-   * Interval {@link TimeUnit} represented by {@link #value()}.
-   */
-  TimeUnit unit() default TimeUnit.MILLISECONDS;
+  @Autowired
+  public SimpleController(final HelloService helloService) {
+    this.helloService = helloService;
+  }
+
+  @GetMapping("/hello/{name}")
+  public String sayHello(@PathVariable("name") final String name) {
+    return helloService.sayHello(name);
+  }
 }

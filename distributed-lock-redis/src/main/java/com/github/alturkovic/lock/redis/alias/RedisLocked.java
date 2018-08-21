@@ -52,9 +52,6 @@ public @interface RedisLocked {
   String expression() default "#executionPath";
 
   @AliasFor(annotation = Locked.class)
-  String parameter() default "p";
-
-  @AliasFor(annotation = Locked.class)
   Interval expiration() default @Interval(value = "10", unit = TimeUnit.SECONDS);
 
   @AliasFor(annotation = Locked.class)

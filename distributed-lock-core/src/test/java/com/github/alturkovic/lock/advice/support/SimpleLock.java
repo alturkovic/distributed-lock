@@ -22,23 +22,39 @@
  * SOFTWARE.
  */
 
-package com.github.alturkovic.lock;
+package com.github.alturkovic.lock.advice.support;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.util.concurrent.TimeUnit;
+import com.github.alturkovic.lock.Lock;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import lombok.Data;
 
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Interval {
+@Data
+public class SimpleLock implements Lock {
+  private final Map<String, List<String>> lockMap = new HashMap<>();
 
-  /**
-   * Interval period.
-   * By default, can be specified as 'property placeholder', e.g. {@code ${locked.interval}}.
-   */
-  String value();
+  @Override
+  public String acquire(final List<String> keys, final String storeId, final long expiration) {
+    final List<String> locksForStore = lockMap.get(storeId);
+    if (locksForStore != null && keys.stream().anyMatch(locksForStore::contains)) {
+      return null;
+    }
 
-  /**
-   * Interval {@link TimeUnit} represented by {@link #value()}.
-   */
-  TimeUnit unit() default TimeUnit.MILLISECONDS;
+    lockMap.computeIfAbsent(storeId, s -> new ArrayList<>()).addAll(keys);
+
+    return UUID.randomUUID().toString();
+  }
+
+  @Override
+  public boolean release(final List<String> keys, final String token, final String storeId) {
+    // we do not release keys from here for easier testing, keys should be released with reset()
+    return true;
+  }
+
+  public void reset() {
+    lockMap.clear();
+  }
 }

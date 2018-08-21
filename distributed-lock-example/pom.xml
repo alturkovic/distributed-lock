@@ -10,7 +10,7 @@
     <version>1.1.8</version>
   </parent>
 
-  <artifactId>distributed-lock-mongo</artifactId>
+  <artifactId>distributed-lock-example</artifactId>
 
   <dependencies>
     <dependency>
@@ -19,27 +19,16 @@
       <optional>true</optional>
     </dependency>
     <dependency>
-      <groupId>joda-time</groupId>
-      <artifactId>joda-time</artifactId>
-    </dependency>
-    <dependency>
       <groupId>com.github.alturkovic</groupId>
-      <artifactId>distributed-lock-core</artifactId>
+      <artifactId>distributed-lock-jdbc</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-data-mongodb</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>de.flapdoodle.embed</groupId>
-      <artifactId>de.flapdoodle.embed.mongo</artifactId>
-      <scope>test</scope>
+      <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-test</artifactId>
-      <scope>test</scope>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
     </dependency>
   </dependencies>
 </project>

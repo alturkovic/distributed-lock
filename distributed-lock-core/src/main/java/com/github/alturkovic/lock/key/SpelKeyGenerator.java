@@ -25,58 +25,55 @@
 package com.github.alturkovic.lock.key;
 
 import com.github.alturkovic.lock.exception.EvaluationConvertException;
+import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import lombok.Data;
-import org.aspectj.lang.JoinPoint;
-import org.aspectj.lang.Signature;
-import org.aspectj.lang.reflect.MethodSignature;
+import lombok.EqualsAndHashCode;
+import org.springframework.aop.support.AopUtils;
+import org.springframework.context.expression.AnnotatedElementKey;
+import org.springframework.context.expression.CachedExpressionEvaluator;
+import org.springframework.context.expression.MethodBasedEvaluationContext;
+import org.springframework.core.DefaultParameterNameDiscoverer;
+import org.springframework.core.ParameterNameDiscoverer;
+import org.springframework.core.convert.ConversionService;
+import org.springframework.core.convert.TypeDescriptor;
+import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.Expression;
-import org.springframework.expression.spel.standard.SpelExpressionParser;
-import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 @Data
-public class SpelKeyGenerator implements KeyGenerator {
-
-  private final Map<Class<?>, Function<Object, String>> converterMap;
-
-  public SpelKeyGenerator() {
-    converterMap = new HashMap<>();
-
-    final Function<Object, String> toStringFunction = Object::toString;
-    converterMap.put(Boolean.class, toStringFunction);
-    converterMap.put(Byte.class, toStringFunction);
-    converterMap.put(Character.class, toStringFunction);
-    converterMap.put(Double.class, toStringFunction);
-    converterMap.put(Float.class, toStringFunction);
-    converterMap.put(Integer.class, toStringFunction);
-    converterMap.put(Long.class, toStringFunction);
-    converterMap.put(Short.class, toStringFunction);
-    converterMap.put(String.class, toStringFunction);
-  }
+@EqualsAndHashCode(callSuper = false)
+public class SpelKeyGenerator extends CachedExpressionEvaluator implements KeyGenerator {
+  private final ConversionService conversionService;
+  private final ParameterNameDiscoverer parameterNameDiscoverer = new DefaultParameterNameDiscoverer();
+  private final Map<ExpressionKey, Expression> conditionCache = new ConcurrentHashMap<>();
+  private final Map<AnnotatedElementKey, Method> targetMethodCache = new ConcurrentHashMap<>();
 
   @Override
-  public List<String> resolveKeys(final String lockKeyPrefix, final String expression, final String contextVariableName, final JoinPoint joinPoint) {
-    final List<String> keys = evaluateExpression(expression, contextVariableName, joinPoint);
+  public List<String> resolveKeys(final String lockKeyPrefix, final String expression, final Object object, final Method method, final Object[] args) {
+    final AnnotatedElementKey annotatedElementKey = new AnnotatedElementKey(method, object.getClass());
+    final Method targetMethod = this.targetMethodCache.computeIfAbsent(annotatedElementKey, key -> AopUtils.getMostSpecificMethod(method, object.getClass()));
+    final EvaluationContext context = new MethodBasedEvaluationContext(object, targetMethod, args, this.parameterNameDiscoverer);
+    context.setVariable("executionPath", object.getClass().getCanonicalName() + "." + method.getName());
+
+    final List<String> keys = convertResultToList(getExpression(this.conditionCache, annotatedElementKey, expression).getValue(context));
+
+    if (keys.stream().anyMatch(Objects::isNull)) {
+      throw new EvaluationConvertException("null keys are not supported: " + keys);
+    }
 
     if (StringUtils.isEmpty(lockKeyPrefix)) {
       return keys;
     }
 
-    return keys.stream().map(key -> formatKey(lockKeyPrefix, key)).collect(Collectors.toList());
-  }
-
-  @SuppressWarnings("unchecked")
-  public <T> void registerConverter(final Class<T> clazz, final Function<T, String> converter) {
-    converterMap.put(clazz, (Function<Object, String>) converter);
+    return keys.stream().map(key -> lockKeyPrefix + key).collect(Collectors.toList());
   }
 
   @SuppressWarnings("unchecked")
@@ -84,23 +81,21 @@ public class SpelKeyGenerator implements KeyGenerator {
     final List<String> list;
 
     if (expressionValue == null) {
-      throw new EvaluationConvertException("Expression evaluated in a null list");
+      throw new EvaluationConvertException("Expression evaluated in a null");
     }
 
-    final Function<Object, String> converterFunction = converterMap.get(expressionValue.getClass());
+    if (expressionValue instanceof Iterable) {
+      final TypeDescriptor genericCollection = TypeDescriptor.collection(Collection.class, TypeDescriptor.valueOf(Object.class));
+      final TypeDescriptor stringList = TypeDescriptor.collection(List.class, TypeDescriptor.valueOf(String.class));
 
-    if (converterFunction != null) {
-      list = Collections.singletonList(converterFunction.apply(expressionValue));
-    } else if (expressionValue instanceof Collection) {
-      list = ((Collection<Object>) expressionValue).stream().map(o -> {
-        final Function<Object, String> elementConvertFunction = converterMap.get(o.getClass());
-        if (elementConvertFunction == null) {
-          throw new EvaluationConvertException(String.format("Expression evaluated in a list, but element %s has no registered converter", o));
-        }
-        return elementConvertFunction.apply(o);
-      }).collect(Collectors.toList());
+      list = (List<String>) conversionService.convert(expressionValue, genericCollection, stringList);
+    } else if (expressionValue.getClass().isArray()) {
+      final TypeDescriptor genericArray = TypeDescriptor.array(TypeDescriptor.valueOf(Object.class));
+      final TypeDescriptor stringList = TypeDescriptor.collection(List.class, TypeDescriptor.valueOf(String.class));
+
+      list = (List<String>) conversionService.convert(expressionValue, genericArray, stringList);
     } else {
-      throw new EvaluationConvertException(String.format("Expression evaluated in %s that has no registered converter", expressionValue));
+      list = Collections.singletonList(expressionValue.toString());
     }
 
     if (CollectionUtils.isEmpty(list)) {
@@ -108,37 +103,5 @@ public class SpelKeyGenerator implements KeyGenerator {
     }
 
     return list;
-  }
-
-  private List<String> evaluateExpression(final String expression, final String contextVariableName, final JoinPoint joinPoint) {
-    final StandardEvaluationContext context = new StandardEvaluationContext(joinPoint.getTarget());
-
-    final Object[] args = joinPoint.getArgs();
-    if (args != null && args.length > 0) {
-      IntStream.range(0, args.length).forEach(idx -> context.setVariable(contextVariableName + idx, args[idx]));
-    }
-
-    final Signature signature = joinPoint.getSignature();
-    if (signature instanceof MethodSignature) {
-      context.setVariable("executionPath", joinPoint.getTarget().getClass().getCanonicalName() + "." + ((MethodSignature) signature).getMethod().getName());
-    }
-
-    final SpelExpressionParser parser = new SpelExpressionParser();
-    final Expression sExpression = parser.parseExpression(expression);
-
-    final Object expressionValue = sExpression.getValue(context);
-    return convertResultToList(expressionValue);
-  }
-
-  private String formatKey(final String lockKeyPrefix, final String key) {
-    if (StringUtils.isEmpty(key)) {
-      return null;
-    }
-
-    if (StringUtils.isEmpty(lockKeyPrefix)) {
-      return key;
-    }
-
-    return lockKeyPrefix + key;
   }
 }

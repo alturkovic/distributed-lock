@@ -46,13 +46,10 @@ public @interface JdbcLocked {
   String storeId() default "lock";
 
   @AliasFor(annotation = Locked.class)
-  String prefix() default "lock:";
+  String prefix() default "";
 
   @AliasFor(annotation = Locked.class)
   String expression() default "#executionPath";
-
-  @AliasFor(annotation = Locked.class)
-  String parameter() default "p";
 
   @AliasFor(annotation = Locked.class)
   Interval expiration() default @Interval(value = "10", unit = TimeUnit.SECONDS);

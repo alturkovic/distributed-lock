@@ -52,9 +52,6 @@ public @interface RedisMultiLocked {
   String expression() default "";
 
   @AliasFor(annotation = Locked.class)
-  String parameter() default "p";
-
-  @AliasFor(annotation = Locked.class)
   Interval expiration() default @Interval("10");
 
   @AliasFor(annotation = Locked.class)

@@ -22,40 +22,25 @@
  * SOFTWARE.
  */
 
-package com.github.alturkovic.lock.advice.dummy;
+package com.github.alturkovic.lock.converter;
 
 import com.github.alturkovic.lock.Interval;
-import com.github.alturkovic.lock.Locked;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import java.util.concurrent.TimeUnit;
-import org.springframework.core.annotation.AliasFor;
+import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.util.StringUtils;
 
-@Target({ElementType.METHOD, ElementType.TYPE})
-@Retention(RetentionPolicy.RUNTIME)
-@Locked(type = DummyLock.class)
-public @interface DummyLocked {
+/**
+ * {@link IntervalConverter} capable of resolving properties.
+ */
+@AllArgsConstructor
+public class BeanFactoryAwareIntervalConverter implements IntervalConverter {
+  private final ConfigurableListableBeanFactory beanFactory;
 
-  @AliasFor(annotation = Locked.class)
-  boolean manuallyReleased() default false;
-
-  @AliasFor(annotation = Locked.class)
-  String prefix() default "lock:";
-
-  @AliasFor(annotation = Locked.class)
-  String expression() default "#executionPath";
-
-  @AliasFor(annotation = Locked.class)
-  String parameter() default "p";
-
-  @AliasFor(annotation = Locked.class)
-  Interval expiration() default @Interval("10");
-
-  @AliasFor(annotation = Locked.class)
-  Interval timeout() default @Interval("1");
-
-  @AliasFor(annotation = Locked.class)
-  Interval retry() default @Interval(value = "50", unit = TimeUnit.MILLISECONDS);
+  public long toMillis(final Interval interval) {
+    final String value = beanFactory.resolveEmbeddedValue(interval.value());
+    if (!StringUtils.hasText(value)) {
+      throw new IllegalArgumentException("Cannot convert interval " + interval + " to milliseconds");
+    }
+    return interval.unit().toMillis(Long.valueOf(value));
+  }
 }

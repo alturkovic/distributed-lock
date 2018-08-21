@@ -24,44 +24,42 @@
 
 package com.github.alturkovic.lock.configuration;
 
-import com.github.alturkovic.lock.Lock;
-import com.github.alturkovic.lock.advice.LockAdvice;
-import com.github.alturkovic.lock.converter.IntervalConverter;
-import com.github.alturkovic.lock.exception.DistributedLockException;
+import com.github.alturkovic.lock.advice.LockBeanPostProcessor;
+import com.github.alturkovic.lock.advice.LockTypeResolver;
+import com.github.alturkovic.lock.converter.BeanFactoryAwareIntervalConverter;
 import com.github.alturkovic.lock.key.KeyGenerator;
 import com.github.alturkovic.lock.key.SpelKeyGenerator;
-import java.util.List;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import org.springframework.aop.framework.Advised;
-import org.springframework.aop.support.AopUtils;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.core.convert.ConversionService;
+import org.springframework.core.convert.support.DefaultConversionService;
 
 @Configuration
-@EnableAspectJAutoProxy
-@ComponentScan("com.github.alturkovic.lock.converter")
 public class DistributedLockConfiguration {
 
   @Bean
-  public LockAdvice lockAdvice(final IntervalConverter intervalConverter, final KeyGenerator spelKeyGenerator, final List<Lock> locks) {
-    return new LockAdvice(intervalConverter, spelKeyGenerator, locks.stream().map(lock -> {
-      if (AopUtils.isAopProxy(lock) && lock instanceof Advised) {
-        final Advised advised = (Advised) lock;
-        try {
-          return (Lock) advised.getTargetSource().getTarget();
-        } catch (final Exception e) {
-          throw new DistributedLockException("Can't get lock type from AOP Proxy", e);
-        }
-      }
-      return lock;
-    }).collect(Collectors.toMap(Lock::getClass, Function.identity())));
+  @ConditionalOnMissingBean
+  public LockBeanPostProcessor lockBeanPostProcessor(final ConfigurableListableBeanFactory configurableListableBeanFactory, final KeyGenerator keyGenerator) {
+    return new LockBeanPostProcessor(new BeanFactoryAwareIntervalConverter(configurableListableBeanFactory), configurableListableBeanFactory::getBean, keyGenerator);
   }
 
   @Bean
-  public KeyGenerator spelKeyGenerator() {
-    return new SpelKeyGenerator();
+  @ConditionalOnMissingBean
+  public KeyGenerator spelKeyGenerator(final ConversionService conversionService) {
+    return new SpelKeyGenerator(conversionService);
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
+  public LockTypeResolver lockTypeResolver(final ConfigurableListableBeanFactory configurableListableBeanFactory) {
+    return configurableListableBeanFactory::getBean;
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
+  public ConversionService conversionService() {
+    return new DefaultConversionService();
   }
 }

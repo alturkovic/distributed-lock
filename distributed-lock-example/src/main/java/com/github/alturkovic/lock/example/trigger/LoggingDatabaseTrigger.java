@@ -22,19 +22,31 @@
  * SOFTWARE.
  */
 
-package com.github.alturkovic.lock.advice.dummy;
+package com.github.alturkovic.lock.example.trigger;
 
-import com.github.alturkovic.lock.Lock;
-import java.util.List;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.Arrays;
+import lombok.extern.slf4j.Slf4j;
+import org.h2.api.Trigger;
 
-public class CustomLock implements Lock {
+@Slf4j
+public class LoggingDatabaseTrigger implements Trigger {
+
   @Override
-  public String acquire(final List<String> keys, final String storeId, final long expiration) {
-    return null;
+  public void init(final Connection connection, final String s, final String s1, final String s2, final boolean b, final int i) throws SQLException {
   }
 
   @Override
-  public boolean release(final List<String> keys, final String token, final String storeId) {
-    return true;
+  public void fire(final Connection connection, final Object[] objects, final Object[] objects1) throws SQLException {
+    log.info("Inserting new lock table entry: {}", Arrays.toString(objects1));
+  }
+
+  @Override
+  public void close() throws SQLException {
+  }
+
+  @Override
+  public void remove() throws SQLException {
   }
 }

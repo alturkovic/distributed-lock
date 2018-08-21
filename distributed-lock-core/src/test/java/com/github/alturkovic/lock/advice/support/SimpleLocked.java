@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package com.github.alturkovic.lock.advice.dummy;
+package com.github.alturkovic.lock.advice.support;
 
 import com.github.alturkovic.lock.Interval;
 import com.github.alturkovic.lock.Locked;
@@ -35,27 +35,27 @@ import org.springframework.core.annotation.AliasFor;
 
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@Locked(type = CustomLock.class)
-public @interface CustomLocked {
+@Locked(type = SimpleLock.class)
+public @interface SimpleLocked {
 
   @AliasFor(annotation = Locked.class)
   boolean manuallyReleased() default false;
 
   @AliasFor(annotation = Locked.class)
-  String prefix() default "lock:";
+  String storeId() default "lock";
+
+  @AliasFor(annotation = Locked.class)
+  String prefix() default "";
 
   @AliasFor(annotation = Locked.class)
   String expression() default "#executionPath";
 
   @AliasFor(annotation = Locked.class)
-  String parameter() default "p";
+  Interval expiration() default @Interval(value = "10", unit = TimeUnit.SECONDS);
 
   @AliasFor(annotation = Locked.class)
-  Interval expiration() default @Interval("10");
+  Interval timeout() default @Interval(value = "1", unit = TimeUnit.SECONDS);
 
   @AliasFor(annotation = Locked.class)
-  Interval timeout() default @Interval("1");
-
-  @AliasFor(annotation = Locked.class)
-  Interval retry() default @Interval(value = "50", unit = TimeUnit.MILLISECONDS);
+  Interval retry() default @Interval(value = "50");
 }

@@ -22,23 +22,14 @@
  * SOFTWARE.
  */
 
-package com.github.alturkovic.lock;
+package com.github.alturkovic.lock.example;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.util.concurrent.TimeUnit;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Interval {
-
-  /**
-   * Interval period.
-   * By default, can be specified as 'property placeholder', e.g. {@code ${locked.interval}}.
-   */
-  String value();
-
-  /**
-   * Interval {@link TimeUnit} represented by {@link #value()}.
-   */
-  TimeUnit unit() default TimeUnit.MILLISECONDS;
+@SpringBootApplication
+public class DistributedLockExampleApplication {
+  public static void main(final String[] args) {
+    SpringApplication.run(DistributedLockExampleApplication.class, args);
+  }
 }

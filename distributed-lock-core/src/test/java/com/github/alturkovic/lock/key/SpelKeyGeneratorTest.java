@@ -25,133 +25,101 @@
 package com.github.alturkovic.lock.key;
 
 import com.github.alturkovic.lock.exception.EvaluationConvertException;
+import java.lang.reflect.Method;
 import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import lombok.Getter;
-import org.aspectj.lang.JoinPoint;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.springframework.core.convert.support.DefaultConversionService;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.fail;
 
-@RunWith(MockitoJUnitRunner.class)
 public class SpelKeyGeneratorTest {
+  private final KeyGenerator keyGenerator = new SpelKeyGenerator(new DefaultConversionService());
+  private final MessageService service = new MessageService();
+  private final Method sendMessageMethod;
 
-  @SuppressWarnings("unused") // used in test expression, false IntelliJ warning
-  public static final String CSV_DUMMY = "a,b,c";
-
-  @Getter
-  private final String stringDummy = "contextTest";
-
-  @Getter
-  private final int integerDummy = 15;
-
-  private final SpelKeyGenerator generator = new SpelKeyGenerator();
-
-  @Mock
-  private JoinPoint joinPoint;
-
-  @Test
-  public void shouldGenerateExecutionPath() throws NoSuchMethodException {
-    when(joinPoint.getArgs()).thenReturn(new Object[]{});
-    when(joinPoint.getTarget()).thenReturn(this);
-    when(joinPoint.getSignature()).thenReturn(new TestingMethodSignature(this.getClass().getMethod("shouldGenerateExecutionPath")));
-
-    final String exp = "#executionPath";
-    final List<String> keys = generator.resolveKeys("lock_", exp, "p", joinPoint);
-    assertThat(keys).containsExactly("lock_com.github.alturkovic.lock.key.SpelKeyGeneratorTest.shouldGenerateExecutionPath");
+  public SpelKeyGeneratorTest() throws NoSuchMethodException {
+    sendMessageMethod = MessageService.class.getMethod("sendMessage", String.class);
   }
 
   @Test
-  public void shouldGenerateSingleKeyFromJoinPointContextAndVariables() {
-    when(joinPoint.getArgs()).thenReturn(new Object[]{1});
-    when(joinPoint.getTarget()).thenReturn(this);
-
-    final String exp = "getStringDummy() + 'Example' + #p0";
-    final List<String> keys = generator.resolveKeys("lock_", exp, "p", joinPoint);
-    assertThat(keys).containsExactly("lock_contextTestExample1");
+  public void shouldGenerateExecutionPath() {
+    assertThat(keyGenerator.resolveKeys("lock_", "#executionPath", service, sendMessageMethod, new Object[]{"hello"}))
+      .containsExactly("lock_com.github.alturkovic.lock.key.SpelKeyGeneratorTest.MessageService.sendMessage");
   }
 
   @Test
-  public void shouldGenerateWithDefaultConverter() {
-    when(joinPoint.getArgs()).thenReturn(new Object[]{1});
-    when(joinPoint.getTarget()).thenReturn(this);
+  public void shouldGenerateSingleKeyFromContextAndVariables() {
+    assertThat(keyGenerator.resolveKeys("lock_", "#p0", service, sendMessageMethod, new Object[]{"hello"}))
+      .containsExactly("lock_hello");
 
-    final String exp = "getIntegerDummy()";
-    final List<String> keys = generator.resolveKeys("lock_", exp, "p", joinPoint);
-    assertThat(keys).containsExactly("lock_15");
+    assertThat(keyGenerator.resolveKeys("lock_", "#a0", service, sendMessageMethod, new Object[]{"hello"}))
+      .containsExactly("lock_hello");
+
+    assertThat(keyGenerator.resolveKeys("lock_", "#message", service, sendMessageMethod, new Object[]{"hello"}))
+      .containsExactly("lock_hello");
   }
 
   @Test
-  public void shouldGenerateMultipleKeysFromJoinPointContextAndVariables() {
-    when(joinPoint.getArgs()).thenReturn(new Object[]{"_after"});
-    when(joinPoint.getTarget()).thenReturn(this);
-
-    final String exp = "T(com.github.alturkovic.lock.key.SpelKeyGeneratorTest).generateKeys(CSV_DUMMY, #v0)";
-    final List<String> keys = generator.resolveKeys("pre_", exp, "v", joinPoint);
-    assertThat(keys).containsExactly("pre_a_after", "pre_b_after", "pre_c_after");
+  public void shouldGenerateMultipleKeysFromContextAndVariablesWithList() {
+    final String expression = "T(com.github.alturkovic.lock.key.SpelKeyGeneratorTest).generateKeys(#message)";
+    assertThat(keyGenerator.resolveKeys("lock_", expression, service, sendMessageMethod, new Object[]{"p_"}))
+      .containsExactly("lock_p_first", "lock_p_second");
   }
 
   @Test
-  public void shouldGenerateMultipleKeysFromSet() {
-    when(joinPoint.getArgs()).thenReturn(new Object[]{});
-    when(joinPoint.getTarget()).thenReturn(this);
+  public void shouldGenerateMultipleKeysFromContextAndVariablesWithArray() {
+    final String expression = "T(com.github.alturkovic.lock.key.SpelKeyGeneratorTest).generateArrayKeys(#message)";
+    assertThat(keyGenerator.resolveKeys("lock_", expression, service, sendMessageMethod, new Object[]{"p_"}))
+      .containsExactly("lock_p_first", "lock_15");
+  }
 
-    final String exp = "T(com.github.alturkovic.lock.key.SpelKeyGeneratorTest).generateKeySet()";
-    final List<String> keys = generator.resolveKeys("", exp, "", joinPoint);
-    assertThat(keys).containsExactly("a", "b", "c");
+  @Test
+  public void shouldGenerateMultipleKeysFromContextAndVariablesWithMixedTypeValues() {
+    final String expression = "T(com.github.alturkovic.lock.key.SpelKeyGeneratorTest).generateMixedKeys(#message)";
+    assertThat(keyGenerator.resolveKeys("lock_", expression, service, sendMessageMethod, new Object[]{"p_"}))
+      .containsExactly("lock_p_first", "lock_15");
   }
 
   @Test(expected = EvaluationConvertException.class)
   public void shouldFailWithExpressionThatEvaluatesInNull() {
-    when(joinPoint.getArgs()).thenReturn(new Object[]{});
-    when(joinPoint.getTarget()).thenReturn(this);
-
-    final String exp = "null";
-    generator.resolveKeys("", exp, "", joinPoint);
+    keyGenerator.resolveKeys("lock_", "null", service, sendMessageMethod, new Object[]{"hello"});
+    fail("Expected exception with expression that evaluated in null");
   }
 
   @Test(expected = EvaluationConvertException.class)
   public void shouldFailWithExpressionThatEvaluatesInEmptyList() {
-    when(joinPoint.getArgs()).thenReturn(new Object[]{});
-    when(joinPoint.getTarget()).thenReturn(this);
-
-    final String exp = "T(java.util.Collections).emptyList()";
-    generator.resolveKeys("", exp, "", joinPoint);
-  }
-
-  @Test
-  public void shouldConvertUsingRegisteredConverters() {
-    final SpelKeyGenerator spelKeyGenerator = new SpelKeyGenerator();
-    spelKeyGenerator.registerConverter(Date.class, date -> String.valueOf(date.getTime()));
-
-    assertThat(spelKeyGenerator.convertResultToList(new Date(123))).containsExactly("123");
-    assertThat(spelKeyGenerator.convertResultToList(true)).containsExactly("true");
-    assertThat(spelKeyGenerator.convertResultToList(Arrays.asList("a", "b", "c"))).containsExactly("a", "b", "c");
-    assertThat(spelKeyGenerator.convertResultToList(new HashSet<>(Arrays.asList(1, 2, 3)))).containsExactly("1", "2", "3");
+    keyGenerator.resolveKeys("lock_", "T(java.util.Collections).emptyList()", service, sendMessageMethod, new Object[]{"hello"});
+    fail("Expected exception with expression that evaluated in empty list");
   }
 
   @Test(expected = EvaluationConvertException.class)
-  public void shouldNotConvertUnregisteredClasses() {
-    new SpelKeyGenerator().convertResultToList(new HashMap<>());
+  public void shouldFailWithExpressionThatEvaluatesInListWithNullValue() {
+    keyGenerator.resolveKeys("lock_", "T(java.util.Collections).singletonList(null)", service, sendMessageMethod, new Object[]{"hello"});
+    fail("Expected exception with expression that evaluated in a list with a null value");
   }
 
-  // dummy method used in expression to generate a set
-  public static Set<String> generateKeySet() {
-    return new HashSet<>(Arrays.asList("a", "b", "c"));
+  @SuppressWarnings("unused")
+  public static List<String> generateKeys(final String prefix) {
+    return Arrays.asList(prefix + "first", prefix + "second");
   }
 
-  // dummy method used in expression to generate a list from parameters
-  public static List<String> generateKeys(final String csv, final String postfix) {
-    return Stream.of(csv.split(",")).map(s -> s + postfix).collect(Collectors.toList());
+  @SuppressWarnings("unused")
+  public static Object[] generateArrayKeys(final String prefix) {
+    return new Object[] {prefix + "first", 15};
+  }
+
+  @SuppressWarnings("unused")
+  public static Set<Object> generateMixedKeys(final String prefix) {
+    return new HashSet<>(Arrays.asList(prefix + "first", 15));
+  }
+
+  @SuppressWarnings("unused")
+  private static class MessageService {
+    public void sendMessage(String message) {
+    }
   }
 }

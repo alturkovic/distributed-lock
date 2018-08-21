@@ -22,23 +22,20 @@
  * SOFTWARE.
  */
 
-package com.github.alturkovic.lock;
+package com.github.alturkovic.lock.example.configuration;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.util.concurrent.TimeUnit;
+import com.github.alturkovic.lock.example.service.HelloService;
+import com.github.alturkovic.lock.example.service.LockedHelloService;
+import com.github.alturkovic.lock.jdbc.configuration.EnableJdbcDistributedLock;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Interval {
+@Configuration
+@EnableJdbcDistributedLock
+public class ApplicationConfiguration {
 
-  /**
-   * Interval period.
-   * By default, can be specified as 'property placeholder', e.g. {@code ${locked.interval}}.
-   */
-  String value();
-
-  /**
-   * Interval {@link TimeUnit} represented by {@link #value()}.
-   */
-  TimeUnit unit() default TimeUnit.MILLISECONDS;
+  @Bean
+  public HelloService helloService() {
+    return new LockedHelloService();
+  }
 }

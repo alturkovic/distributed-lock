@@ -14,7 +14,7 @@ These options are customizable per annotation.
 The project contains several configurations and annotations to help you enable locking and customize it.
 
 To enable locking you must first include `@EnableDistributedLock`.
-This will import the configuration that will scan all provided `Lock` beans and configure the `LockAdvice`.
+This will import the configuration that will autoconfigure the `BeanPostProcessor` required for locking.
 
 Project provides the following out-of-the-box lock implementations:
 
@@ -124,8 +124,11 @@ public class LockConfiguration {
 |1.1.6 and lower
 |1.5.6.RELEASE
 
-|1.1.7 and higher
+|1.1.7
 |2.0.3.RELEASE
+
+|1.1.8
+|2.0.4.RELEASE
 |===
 
 === Maven
@@ -160,7 +163,7 @@ To add the Redis dependency for an example, add the following under your `<depen
 
 To lock your methods you need to first enable locking as described in the previous section.
 
-AOP advice works around the `@Locked` annotation. The `type` field describes which implementation of the lock to use.
+Spring `BeanPostProcessor` will handle all `@Locked` methods including their aliases. The `type` field describes which implementation of the lock to use.
 To prevent repeating yourself if you plan on using the same implementation (as most people usually will), I've added alias support.
 They wrap the `@Locked` annotation and define the type used.
 
@@ -222,7 +225,7 @@ Locking a method with the name _aliased_ in the document called _lock_ in MongoD
 
 [source,java]
 ----
-@MongoLocked(expression = "'aliased'", typeSpecificStoreId = "lock")
+@MongoLocked(expression = "'aliased'", storeId = "lock")
 public void runLockedWithMongo() {
     // locked code
 }
@@ -252,18 +255,22 @@ public void runLockedWithMyCustomLock() {
 
 == SpEL key generator
 
-This is the default key generator the advice uses. If you wish to use your own, don't use any of the provided configurations,
-simply write your own and specify your own `KeyGenerator` implementation and pass it to `LockAdvice`.
+This is the default key generator the advice uses. If you wish to use your own, simply write your own and define it as a `@Bean`.
 
 The default key generator has access to the currently executing context, meaning you can access your fields and methods from SpEL.
-By default, parameters of the method are accessible from SpEL with #p prefix followed by the parameter index, ie: `#p1` is the second parameter.
+It uses the `DefaultParameterNameDiscoverer` to discover parameter names, so you can access your parameters in several different ways:
+
+1. using `p#` syntax, where `#` is the position of the parameter, for an example: `p0` for the first parameter
+2. using `a#` syntax, where `#` is the position of the parameter, for an example: `a2` for the third parameter
+3. using the parameter name, for an example, `#message` -- *REQUIRES `-parameters` compiler flag*
 
 A special variable named `executionPath` is used to define the method called. This is the default `expression` used to describe the annotated method.  
 
-You can register your own converters to convert your classes to strings that will be used as lock names
-using `com.github.alturkovic.lock.key.SpelKeyGenerator.registerConverter` method.
+All validated expressions that result in an `Iterable` or an array will be converted to `List<String>` and all other values will be wrapped with `Collections.toSingletonList`.
+Elements of `Iterable` or array will also be converted to Strings using the `ConversionService`. Custom converters can be registered.
+More about the `ConversionService` https://docs.spring.io/spring/docs/current/spring-framework-reference/core.html#core-convert[here].
 
-Examples provided in `com.github.alturkovic.lock.key.SpelKeyGeneratorTest`.
+For more examples, take a look at `com.github.alturkovic.lock.key.SpelKeyGeneratorTest`.
 
 == Customization
 

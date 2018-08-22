@@ -86,6 +86,11 @@ public class LockConfiguration {
 }
 ----
 
+[NOTE]
+====
+Make sure you create TTL index in your `@Locked#storeId()` collection on `expireAt` field to enable lock expiration.
+====
+
 === Redis locks
 
 Redis locks are provided in the `distributed-lock-redis` project.

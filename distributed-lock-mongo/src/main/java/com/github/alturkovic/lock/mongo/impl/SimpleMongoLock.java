@@ -26,21 +26,22 @@ package com.github.alturkovic.lock.mongo.impl;
 
 import com.github.alturkovic.lock.Lock;
 import com.github.alturkovic.lock.mongo.model.LockDocument;
-import com.mongodb.WriteResult;
 import com.mongodb.client.result.DeleteResult;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Supplier;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.joda.time.DateTime;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 @Data
 @Slf4j
@@ -61,10 +62,14 @@ public class SimpleMongoLock implements Lock {
     final String key = keys.get(0);
     final String token = tokenSupplier.get();
 
+    if (StringUtils.isEmpty(token)) {
+      throw new IllegalStateException("Cannot lock with empty token");
+    }
+
     final Query query = Query.query(Criteria.where("_id").is(key));
     final Update update = new Update()
         .setOnInsert("_id", key)
-        .setOnInsert("expireAt", DateTime.now().plus(expiration))
+        .setOnInsert("expireAt", LocalDateTime.now().plus(expiration, ChronoUnit.MILLIS))
         .setOnInsert("token", token);
     final FindAndModifyOptions options = new FindAndModifyOptions().upsert(true).returnNew(true);
 

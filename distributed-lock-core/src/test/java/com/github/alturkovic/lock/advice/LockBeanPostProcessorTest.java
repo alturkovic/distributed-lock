@@ -112,18 +112,26 @@ public class LockBeanPostProcessorTest {
   }
 
   private interface LockedInterface {
+
     @Locked(prefix = "lock:", expression = "#s", type = SimpleLock.class)
     void doLocked(int num, String s);
+
     @SimpleLocked(expression = "#s")
     void doLockedWithAlias(int num, String s);
+
     @Locked(prefix = "lock:", expression = "#s", type = SimpleLock.class)
     void doLockedOverriden(int num, String s);
+
     @SimpleLocked(expression = "#s")
     void doLockedOverridenWithAlias(int num, String s);
+
     void doLockedFromImplementation(int num, String s);
+
     void doLockedFromImplementationWithAlias(int num, String s);
+
     @Locked(prefix = "lock:", expression = "getStaticValue()", type = SimpleLock.class)
     void doLockedWithImplementationDetail(int num, String s);
+
     void doLockedFromImplementationWithImplementationDetail(int num, String s);
   }
 

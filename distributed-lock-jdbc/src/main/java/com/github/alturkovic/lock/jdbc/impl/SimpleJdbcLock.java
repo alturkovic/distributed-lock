@@ -32,15 +32,12 @@ import java.util.function.Supplier;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 @Data
 @Slf4j
 @AllArgsConstructor
-@Transactional(isolation = Isolation.READ_COMMITTED, propagation = Propagation.REQUIRES_NEW)
 public class SimpleJdbcLock implements Lock {
 
   private final JdbcLockSingleKeyService lockSingleKeyService;
@@ -56,6 +53,10 @@ public class SimpleJdbcLock implements Lock {
 
     final String key = keys.get(0);
     final String token = tokenSupplier.get();
+
+    if (StringUtils.isEmpty(token)) {
+      throw new IllegalStateException("Cannot lock with empty token");
+    }
 
     return lockSingleKeyService.acquire(key, token, storeId, expiration);
   }

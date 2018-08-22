@@ -26,8 +26,8 @@ package com.github.alturkovic.lock.mongo.impl;
 
 import com.github.alturkovic.lock.Lock;
 import com.github.alturkovic.lock.mongo.model.LockDocument;
+import java.time.LocalDateTime;
 import java.util.Collections;
-import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -73,7 +73,7 @@ public class SimpleMongoLockTest implements InitializingBean {
 
   @Test
   public void shouldNotLock() {
-    mongoTemplate.insert(new LockDocument("1", DateTime.now().plusMinutes(1), "def"), "locks");
+    mongoTemplate.insert(new LockDocument("1", LocalDateTime.now().plusMinutes(1), "def"), "locks");
     final String token = lock.acquire(Collections.singletonList("1"), "locks", 1000);
     assertThat(token).isNull();
     assertThat(mongoTemplate.findById("1", LockDocument.class, "locks").getToken()).isEqualTo("def");
@@ -81,7 +81,7 @@ public class SimpleMongoLockTest implements InitializingBean {
 
   @Test
   public void shouldRelease() {
-    mongoTemplate.insert(new LockDocument("1", DateTime.now().plusMinutes(1), "abc"), "locks");
+    mongoTemplate.insert(new LockDocument("1", LocalDateTime.now().plusMinutes(1), "abc"), "locks");
     final boolean released = lock.release(Collections.singletonList("1"), "abc", "locks");
     assertThat(released).isTrue();
     assertThat(mongoTemplate.findById("1", LockDocument.class, "locks")).isNull();
@@ -89,7 +89,7 @@ public class SimpleMongoLockTest implements InitializingBean {
 
   @Test
   public void shouldNotRelease() {
-    mongoTemplate.insert(new LockDocument("1", DateTime.now().plusMinutes(1), "def"), "locks");
+    mongoTemplate.insert(new LockDocument("1", LocalDateTime.now().plusMinutes(1), "def"), "locks");
     final boolean released = lock.release(Collections.singletonList("1"), "abc", "locks");
     assertThat(released).isFalse();
     assertThat(mongoTemplate.findById("1", LockDocument.class, "locks").getToken()).isEqualTo("def");

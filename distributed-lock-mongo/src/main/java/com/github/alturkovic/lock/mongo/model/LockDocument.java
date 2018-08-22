@@ -25,10 +25,10 @@
 package com.github.alturkovic.lock.mongo.model;
 
 import com.github.alturkovic.lock.Locked;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.joda.time.DateTime;
 import org.springframework.data.annotation.Id;
 
 /**
@@ -41,6 +41,6 @@ import org.springframework.data.annotation.Id;
 public class LockDocument {
   @Id
   private String id;
-  private DateTime expireAt;
+  private LocalDateTime expireAt;
   private String token;
 }

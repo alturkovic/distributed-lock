@@ -39,48 +39,12 @@ import org.springframework.scripting.support.ResourceScriptSource;
 public class RedisDistributedLockConfiguration {
 
   @Bean
-  public Lock simpleRedisLock(final StringRedisTemplate stringRedisTemplate,
-                              final RedisScript<Boolean> lockScript,
-                              final RedisScript<Boolean> lockReleaseScript) {
-    return new SimpleRedisLock(stringRedisTemplate, lockScript, lockReleaseScript);
+  public Lock simpleRedisLock(final StringRedisTemplate stringRedisTemplate) {
+    return new SimpleRedisLock(stringRedisTemplate);
   }
 
   @Bean
-  public Lock multiRedisLock(final StringRedisTemplate stringRedisTemplate,
-                             final RedisScript<Boolean> multiLockScript,
-                             final RedisScript<Boolean> multiLockReleaseScript) {
-    return new MultiRedisLock(stringRedisTemplate, multiLockScript, multiLockReleaseScript);
-  }
-
-  @Bean
-  public RedisScript<Boolean> lockScript() {
-    final DefaultRedisScript<Boolean> redisScript = new DefaultRedisScript<>();
-    redisScript.setScriptSource(new ResourceScriptSource(new ClassPathResource("scripts/lock.lua")));
-    redisScript.setResultType(Boolean.class);
-    return redisScript;
-  }
-
-  @Bean
-  public RedisScript<Boolean> multiLockScript() {
-    final DefaultRedisScript<Boolean> redisScript = new DefaultRedisScript<>();
-    redisScript.setScriptSource(new ResourceScriptSource(new ClassPathResource("scripts/multilock.lua")));
-    redisScript.setResultType(Boolean.class);
-    return redisScript;
-  }
-
-  @Bean
-  public RedisScript<Boolean> lockReleaseScript() {
-    final DefaultRedisScript<Boolean> redisScript = new DefaultRedisScript<>();
-    redisScript.setScriptSource(new ResourceScriptSource(new ClassPathResource("scripts/release-lock.lua")));
-    redisScript.setResultType(Boolean.class);
-    return redisScript;
-  }
-
-  @Bean
-  public RedisScript<Boolean> multiLockReleaseScript() {
-    final DefaultRedisScript<Boolean> redisScript = new DefaultRedisScript<>();
-    redisScript.setScriptSource(new ResourceScriptSource(new ClassPathResource("scripts/release-multilock.lua")));
-    redisScript.setResultType(Boolean.class);
-    return redisScript;
+  public Lock multiRedisLock(final StringRedisTemplate stringRedisTemplate) {
+    return new MultiRedisLock(stringRedisTemplate);
   }
 }

@@ -33,8 +33,10 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 /**
  * Works the same way as {@link MultiRedisLock} but is optimized better to work with a single key.
@@ -43,14 +45,17 @@ import org.springframework.util.Assert;
 @Slf4j
 @AllArgsConstructor
 public class SimpleRedisLock implements Lock {
+  private static final String LOCK_SCRIPT = "return redis.call('SET', KEYS[1], ARGV[1], 'PX', tonumber(ARGV[2]), 'NX') and true or false";
+  private static final String LOCK_RELEASE_SCRIPT = "return redis.call('GET', KEYS[1]) == ARGV[1] and (redis.call('DEL', KEYS[1]) == 1) or false";
+
+  private final RedisScript<Boolean> lockScript = new DefaultRedisScript<>(LOCK_SCRIPT, Boolean.class);
+  private final RedisScript<Boolean> lockReleaseScript = new DefaultRedisScript<>(LOCK_RELEASE_SCRIPT, Boolean.class);
 
   private final StringRedisTemplate stringRedisTemplate;
-  private final RedisScript<Boolean> lockScript;
-  private final RedisScript<Boolean> lockReleaseScript;
   private final Supplier<String> tokenSupplier;
 
-  public SimpleRedisLock(final StringRedisTemplate stringRedisTemplate, final RedisScript<Boolean> lockScript, final RedisScript<Boolean> lockReleaseScript) {
-    this(stringRedisTemplate, lockScript, lockReleaseScript, () -> UUID.randomUUID().toString());
+  public SimpleRedisLock(final StringRedisTemplate stringRedisTemplate) {
+    this(stringRedisTemplate, () -> UUID.randomUUID().toString());
   }
 
   @Override
@@ -60,6 +65,10 @@ public class SimpleRedisLock implements Lock {
     final String key = keys.get(0);
     final List<String> singletonKeyList = Collections.singletonList(storeId + ":" + key);
     final String token = tokenSupplier.get();
+
+    if (StringUtils.isEmpty(token)) {
+      throw new IllegalStateException("Cannot lock with empty token");
+    }
 
     final boolean locked = stringRedisTemplate.execute(lockScript, singletonKeyList, token, String.valueOf(expiration));
     log.debug("Tried to acquire lock for key {} with token {} in store {}. Locked: {}", key, token, storeId, locked);

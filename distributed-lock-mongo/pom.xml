@@ -19,10 +19,6 @@
       <optional>true</optional>
     </dependency>
     <dependency>
-      <groupId>joda-time</groupId>
-      <artifactId>joda-time</artifactId>
-    </dependency>
-    <dependency>
       <groupId>com.github.alturkovic</groupId>
       <artifactId>distributed-lock-core</artifactId>
     </dependency>

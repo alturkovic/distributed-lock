@@ -36,11 +36,8 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.script.DefaultRedisScript;
-import org.springframework.scripting.support.ResourceScriptSource;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -59,15 +56,7 @@ public class SimpleRedisLockTest implements InitializingBean {
 
   @Override
   public void afterPropertiesSet() {
-    final DefaultRedisScript<Boolean> lockScript = new DefaultRedisScript<>();
-    lockScript.setScriptSource(new ResourceScriptSource(new ClassPathResource("scripts/lock.lua")));
-    lockScript.setResultType(Boolean.class);
-
-    final DefaultRedisScript<Boolean> lockReleaseScript = new DefaultRedisScript<>();
-    lockReleaseScript.setScriptSource(new ResourceScriptSource(new ClassPathResource("scripts/release-lock.lua")));
-    lockReleaseScript.setResultType(Boolean.class);
-
-    lock = new SimpleRedisLock(redisTemplate, lockScript, lockReleaseScript, () -> "abc");
+    lock = new SimpleRedisLock(redisTemplate, () -> "abc");
   }
 
   @Before

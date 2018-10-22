@@ -137,6 +137,9 @@ public class LockConfiguration {
 
 |1.1.9
 |2.0.4.RELEASE
+
+|1.1.10
+|2.0.4.RELEASE
 |===
 
 === Maven

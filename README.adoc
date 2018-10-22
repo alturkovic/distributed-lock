@@ -56,7 +56,7 @@ Example how to create table:
 ----
 create table lock (
     id int not null auto_increment primary key,
-    key varchar(255) unique,
+    lock_key varchar(255) unique,
     token varchar(255),
     expireAt timestamp,
 );

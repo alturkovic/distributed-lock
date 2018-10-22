@@ -38,9 +38,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(isolation = Isolation.READ_COMMITTED, propagation = Propagation.REQUIRES_NEW)
 public class SimpleJdbcLockSingleKeyService implements JdbcLockSingleKeyService {
 
-  private static final String ACQUIRE_FORMATTED_QUERY = "INSERT INTO %s (`key`, `token`, `expireAt`) VALUES (?, ?, ?);";
-  private static final String RELEASE_FORMATTED_QUERY = "DELETE FROM %s WHERE `key` = ? AND `token` = ?;";
-  private static final String DELETE_EXPIRED_FORMATTED_QUERY = "DELETE FROM %s WHERE `expireAt` < ?;";
+  private static final String ACQUIRE_FORMATTED_QUERY = "INSERT INTO %s (lock_key, token, expireAt) VALUES (?, ?, ?);";
+  private static final String RELEASE_FORMATTED_QUERY = "DELETE FROM %s WHERE lock_key = ? AND token = ?;";
+  private static final String DELETE_EXPIRED_FORMATTED_QUERY = "DELETE FROM %s WHERE expireAt < ?;";
 
   private final JdbcTemplate jdbcTemplate;
 

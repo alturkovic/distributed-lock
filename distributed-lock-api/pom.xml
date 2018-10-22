@@ -7,7 +7,7 @@
   <parent>
     <groupId>com.github.alturkovic</groupId>
     <artifactId>distributed-lock</artifactId>
-    <version>1.1.9</version>
+    <version>1.1.10</version>
   </parent>
 
   <artifactId>distributed-lock-api</artifactId>

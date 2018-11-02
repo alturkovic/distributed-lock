@@ -119,7 +119,7 @@ public class SimpleJdbcLockTest implements InitializingBean {
 
   private static Map<String, Object> values(final String key, final String token) {
     final Map<String, Object> values = new HashMap<>();
-    values.put("key", key);
+    values.put("lock_key", key);
     values.put("token", token);
     return values;
   }

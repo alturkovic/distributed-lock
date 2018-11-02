@@ -106,6 +106,12 @@ public class LockBeanPostProcessorTest {
   }
 
   @Test
+  public void shouldLockWithExecutionPath() {
+    lockedInterface.doLockedWithExecutionPath();
+    assertThat(lock.getLockMap()).containsExactly(new SimpleEntry<>("lock", Collections.singletonList("com.github.alturkovic.lock.advice.LockBeanPostProcessorTest.LockedInterfaceImpl.doLockedWithExecutionPath")));
+  }
+
+  @Test
   public void shouldLockFromImplementationWithImplementationDetail() {
     lockedInterface.doLockedFromImplementationWithImplementationDetail(1, "hello");
     assertThat(lock.getLockMap()).containsExactly(new SimpleEntry<>("lock", Collections.singletonList("lock:4")));
@@ -133,6 +139,9 @@ public class LockBeanPostProcessorTest {
     void doLockedWithImplementationDetail(int num, String s);
 
     void doLockedFromImplementationWithImplementationDetail(int num, String s);
+
+    @SimpleLocked
+    void doLockedWithExecutionPath();
   }
 
   private class LockedInterfaceImpl implements LockedInterface {
@@ -172,6 +181,10 @@ public class LockBeanPostProcessorTest {
     @Override
     @Locked(prefix = "lock:", expression = "getStaticValue()", type = SimpleLock.class)
     public void doLockedFromImplementationWithImplementationDetail(final int num, final String s) {
+    }
+
+    @Override
+    public void doLockedWithExecutionPath() {
     }
 
     public int getStaticValue() {

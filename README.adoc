@@ -56,7 +56,7 @@ Example how to create table:
 ----
 create table lock (
     id int not null auto_increment primary key,
-    key varchar(255) unique,
+    lock_key varchar(255) unique,
     token varchar(255),
     expireAt timestamp,
 );
@@ -147,6 +147,12 @@ Started tracking the changes since 1.2.0 so no changelogs available for earlier 
 
 |1.1.9
 |2.0.4.RELEASE
+
+|1.1.10
+|2.0.4.RELEASE
+
+|1.2.0
+|2.1.0.RELEASE
 |===
 
 === Maven

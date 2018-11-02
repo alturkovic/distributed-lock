@@ -99,7 +99,7 @@ public class SimpleJdbcLockTest implements InitializingBean {
         .usingGeneratedKeyColumns("id")
         .executeAndReturnKey(values("1", "abc"));
 
-    final boolean released = lock.release(Collections.singletonList("1"), "abc", "locks");
+    final boolean released = lock.release(Collections.singletonList("1"), "locks", "abc");
     assertThat(released).isTrue();
     assertThat(jdbcTemplate.queryForList("SELECT * FROM locks")).isNullOrEmpty();
   }
@@ -111,7 +111,7 @@ public class SimpleJdbcLockTest implements InitializingBean {
         .usingGeneratedKeyColumns("id")
         .executeAndReturnKey(values("1", "def"));
 
-    lock.release(Collections.singletonList("1"), "abc", "locks");
+    lock.release(Collections.singletonList("1"), "locks", "abc");
 
     final Map<String, Object> acquiredLockMap = jdbcTemplate.queryForObject("SELECT * FROM locks WHERE id = 1", new ColumnMapRowMapper());
     assertThat(acquiredLockMap).containsAllEntriesOf(values("1", "def"));

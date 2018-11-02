@@ -86,14 +86,14 @@ public class SimpleRedisLockTest implements InitializingBean {
   @Test
   public void shouldRelease() {
     redisTemplate.opsForValue().set("locks:1", "abc");
-    lock.release(Collections.singletonList("1"), "abc", "locks");
+    lock.release(Collections.singletonList("1"), "locks", "abc");
     assertThat(redisTemplate.opsForValue().get("locks:1")).isNull();
   }
 
   @Test
   public void shouldNotRelease() {
     redisTemplate.opsForValue().set("locks:1", "def");
-    lock.release(Collections.singletonList("1"), "abc", "locks");
+    lock.release(Collections.singletonList("1"), "locks", "abc");
     assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("def");
   }
 

@@ -58,12 +58,12 @@ public class SimpleJdbcLock implements Lock {
       throw new IllegalStateException("Cannot lock with empty token");
     }
 
-    return lockSingleKeyService.acquire(key, token, storeId, expiration);
+    return lockSingleKeyService.acquire(key, storeId, token, expiration);
   }
 
   @Override
-  public boolean release(final List<String> keys, final String token, final String storeId) {
+  public boolean release(final List<String> keys, final String storeId, final String token) {
     Assert.isTrue(keys.size() == 1, "Cannot release lock for multiple keys with this lock: " + keys);
-    return lockSingleKeyService.release(keys.get(0), token, storeId);
+    return lockSingleKeyService.release(keys.get(0), storeId, token);
   }
 }

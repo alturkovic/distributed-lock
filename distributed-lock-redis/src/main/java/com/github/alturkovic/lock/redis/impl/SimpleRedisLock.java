@@ -76,7 +76,7 @@ public class SimpleRedisLock implements Lock {
   }
 
   @Override
-  public boolean release(final List<String> keys, final String token, final String storeId) {
+  public boolean release(final List<String> keys, final String storeId, final String token) {
     Assert.isTrue(keys.size() == 1, "Cannot release lock for multiple keys with this lock: " + keys);
     final String key = keys.get(0);
 

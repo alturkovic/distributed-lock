@@ -24,7 +24,7 @@
 
 package com.github.alturkovic.lock.exception;
 
-public class LockNotAvailableException extends RuntimeException {
+public class LockNotAvailableException extends DistributedLockException {
   public LockNotAvailableException(final String msg) {
     super(msg);
   }

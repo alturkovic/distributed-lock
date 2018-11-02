@@ -108,7 +108,7 @@ public class MultiRedisLockTest implements InitializingBean {
   @Test
   public void shouldReleaseSingleKey() {
     redisTemplate.opsForValue().set("locks:1", "abc");
-    lock.release(Collections.singletonList("1"), "abc", "locks");
+    lock.release(Collections.singletonList("1"), "locks", "abc");
     assertThat(redisTemplate.opsForValue().get("locks:1")).isNull();
   }
 
@@ -116,7 +116,7 @@ public class MultiRedisLockTest implements InitializingBean {
   public void shouldReleaseMultipleKeys() {
     redisTemplate.opsForValue().set("locks:1", "abc");
     redisTemplate.opsForValue().set("locks:2", "abc");
-    lock.release(Arrays.asList("1", "2"), "abc", "locks");
+    lock.release(Arrays.asList("1", "2"), "locks", "abc");
     assertThat(redisTemplate.opsForValue().get("locks:1")).isNull();
     assertThat(redisTemplate.opsForValue().get("locks:2")).isNull();
   }
@@ -125,7 +125,7 @@ public class MultiRedisLockTest implements InitializingBean {
   public void shouldNotReleaseWhenTokenDoesNotFullyMatch() {
     redisTemplate.opsForValue().set("locks:1", "def");
     redisTemplate.opsForValue().set("locks:2", "ghi");
-    lock.release(Arrays.asList("1", "2"), "abc", "locks");
+    lock.release(Arrays.asList("1", "2"), "locks", "abc");
     assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("def");
     assertThat(redisTemplate.opsForValue().get("locks:2")).isEqualTo("ghi");
   }
@@ -133,7 +133,7 @@ public class MultiRedisLockTest implements InitializingBean {
   @Test
   public void shouldNotReleaseWhenTokenDoesNotPartiallyMatch() {
     redisTemplate.opsForValue().set("locks:1", "def");
-    lock.release(Arrays.asList("1", "2"), "abc", "locks");
+    lock.release(Arrays.asList("1", "2"), "locks", "abc");
     assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("def");
     assertThat(redisTemplate.opsForValue().get("locks:2")).isNull();
   }

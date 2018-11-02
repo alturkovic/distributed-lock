@@ -99,7 +99,7 @@ public class LockMethodInterceptor implements MethodInterceptor {
       return invocation.proceed();
     } finally {
       if (token != null && !locked.manuallyReleased()) {
-        final boolean released = lock.release(keys, token, locked.storeId());
+        final boolean released = lock.release(keys, locked.storeId(), token);
         if (released) {
           log.debug("Released lock for keys {} with token {} in store {}", keys, token, locked.storeId());
         } else {

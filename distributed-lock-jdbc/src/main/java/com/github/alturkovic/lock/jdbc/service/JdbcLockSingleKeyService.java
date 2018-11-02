@@ -25,6 +25,6 @@
 package com.github.alturkovic.lock.jdbc.service;
 
 public interface JdbcLockSingleKeyService {
-  String acquire(String key, String token, String storeId, long expiration);
-  boolean release(String key, String token, String storeId);
+  String acquire(String key, String storeId, String token, long expiration);
+  boolean release(String key, String storeId, String token);
 }

@@ -38,10 +38,12 @@ public interface Lock {
   String acquire(List<String> keys, String storeId, long expiration);
 
   /**
+   * Try to release the lock if token held by the lock has not changed.
+   *
    * @param keys    keys to try to unlock
-   * @param token   token used to check if lock is still held by this lock
    * @param storeId lock store id to save keys in (table, collection, ...)
+   * @param token   token used to check if lock is still held by this lock
    * @return {@code true} if lock was successfully released, {@code false} otherwise
    */
-  boolean release(List<String> keys, String token, String storeId);
+  boolean release(List<String> keys, String storeId, String token);
 }

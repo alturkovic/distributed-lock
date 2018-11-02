@@ -89,7 +89,7 @@ public class MultiRedisLock implements Lock {
   }
 
   @Override
-  public boolean release(final List<String> keys, final String token, final String storeId) {
+  public boolean release(final List<String> keys, final String storeId, final String token) {
     final List<String> keysWithStoreIdPrefix = keys.stream().map(key -> storeId + ":" + key).collect(Collectors.toList());
 
     final boolean released = stringRedisTemplate.execute(lockReleaseScript, keysWithStoreIdPrefix, token);

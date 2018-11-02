@@ -119,6 +119,16 @@ public class LockConfiguration {
 }
 ----
 
+== Changelog
+
+Started tracking the changes since 1.2.0 so no changelogs available for earlier versions.
+
+==== 1.2.0
+- Added a JavaDoc description to `com.github.alturkovic.lock.Lock.release()` method
+- Rearranged the parameters of the `com.github.alturkovic.lock.Lock.release()` method to be more consistent
+- Rearranged the parameters of the `com.github.alturkovic.lock.jdbc.service.JdbcLockSingleKeyService` methods to be more consistent
+- `EvaluationConvertException` and `LockNotAvailableException` now extend the `DistributedLockException`
+
 == Importing into your project
 
 === Compatibility

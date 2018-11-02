@@ -82,7 +82,7 @@ public class SimpleMongoLockTest implements InitializingBean {
   @Test
   public void shouldRelease() {
     mongoTemplate.insert(new LockDocument("1", LocalDateTime.now().plusMinutes(1), "abc"), "locks");
-    final boolean released = lock.release(Collections.singletonList("1"), "abc", "locks");
+    final boolean released = lock.release(Collections.singletonList("1"), "locks", "abc");
     assertThat(released).isTrue();
     assertThat(mongoTemplate.findById("1", LockDocument.class, "locks")).isNull();
   }
@@ -90,7 +90,7 @@ public class SimpleMongoLockTest implements InitializingBean {
   @Test
   public void shouldNotRelease() {
     mongoTemplate.insert(new LockDocument("1", LocalDateTime.now().plusMinutes(1), "def"), "locks");
-    final boolean released = lock.release(Collections.singletonList("1"), "abc", "locks");
+    final boolean released = lock.release(Collections.singletonList("1"), "locks", "abc");
     assertThat(released).isFalse();
     assertThat(mongoTemplate.findById("1", LockDocument.class, "locks").getToken()).isEqualTo("def");
   }

@@ -45,14 +45,14 @@ public class SimpleJdbcLockSingleKeyService implements JdbcLockSingleKeyService 
   private final JdbcTemplate jdbcTemplate;
 
   @Override
-  public String acquire(final String key, final String token, final String storeId, final long expiration) {
+  public String acquire(final String key, final String storeId, final String token, final long expiration) {
     final Date now = new Date();
-    final Date expireAt = new Date(now.getTime() + expiration);
 
     final int expired = jdbcTemplate.update(String.format(DELETE_EXPIRED_FORMATTED_QUERY, storeId), now);
     log.debug("Expired {} locks", expired);
 
     try {
+      final Date expireAt = new Date(now.getTime() + expiration);
       final int created = jdbcTemplate.update(String.format(ACQUIRE_FORMATTED_QUERY, storeId), key, token, expireAt);
       return created == 1 ? token : null;
     } catch (final DuplicateKeyException e) {
@@ -61,7 +61,7 @@ public class SimpleJdbcLockSingleKeyService implements JdbcLockSingleKeyService 
   }
 
   @Override
-  public boolean release(final String key, final String token, final String storeId) {
+  public boolean release(final String key, final String storeId, final String token) {
     final int deleted = jdbcTemplate.update(String.format(RELEASE_FORMATTED_QUERY, storeId), key, token);
 
     final boolean released = deleted == 1;

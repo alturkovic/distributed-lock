@@ -46,10 +46,18 @@ import org.springframework.util.StringUtils;
 @AllArgsConstructor
 public class SimpleRedisLock implements Lock {
   private static final String LOCK_SCRIPT = "return redis.call('SET', KEYS[1], ARGV[1], 'PX', tonumber(ARGV[2]), 'NX') and true or false";
+
   private static final String LOCK_RELEASE_SCRIPT = "return redis.call('GET', KEYS[1]) == ARGV[1] and (redis.call('DEL', KEYS[1]) == 1) or false";
+
+  private static final String LOCK_REFRESH_SCRIPT = "if redis.call('GET', KEYS[1]) == ARGV[1] then\n" +
+    "    redis.call('PEXPIRE', KEYS[1], tonumber(ARGV[2]))\n" +
+    "    return true\n" +
+    "end\n" +
+    "return false";
 
   private final RedisScript<Boolean> lockScript = new DefaultRedisScript<>(LOCK_SCRIPT, Boolean.class);
   private final RedisScript<Boolean> lockReleaseScript = new DefaultRedisScript<>(LOCK_RELEASE_SCRIPT, Boolean.class);
+  private final RedisScript<Boolean> lockRefreshScript = new DefaultRedisScript<>(LOCK_REFRESH_SCRIPT, Boolean.class);
 
   private final StringRedisTemplate stringRedisTemplate;
   private final Supplier<String> tokenSupplier;
@@ -61,9 +69,9 @@ public class SimpleRedisLock implements Lock {
   @Override
   public String acquire(final List<String> keys, final String storeId, final long expiration) {
     Assert.isTrue(keys.size() == 1, "Cannot acquire lock for multiple keys with this lock: " + keys);
-
     final String key = keys.get(0);
     final List<String> singletonKeyList = Collections.singletonList(storeId + ":" + key);
+
     final String token = tokenSupplier.get();
 
     if (StringUtils.isEmpty(token)) {
@@ -79,7 +87,6 @@ public class SimpleRedisLock implements Lock {
   public boolean release(final List<String> keys, final String storeId, final String token) {
     Assert.isTrue(keys.size() == 1, "Cannot release lock for multiple keys with this lock: " + keys);
     final String key = keys.get(0);
-
     final List<String> singletonKeyList = Collections.singletonList(storeId + ":" + key);
 
     final boolean released = stringRedisTemplate.execute(lockReleaseScript, singletonKeyList, token);
@@ -89,5 +96,20 @@ public class SimpleRedisLock implements Lock {
       log.error("Release script failed for key {} with token {} in store {}", key, token, storeId);
     }
     return released;
+  }
+
+  @Override
+  public boolean refresh(final List<String> keys, final String storeId, final String token, final long expiration) {
+    Assert.isTrue(keys.size() == 1, "Cannot refresh lock for multiple keys with this lock: " + keys);
+    final String key = keys.get(0);
+    final List<String> singletonKeyList = Collections.singletonList(storeId + ":" + key);
+
+    final boolean refreshed = stringRedisTemplate.execute(lockRefreshScript, singletonKeyList, token, String.valueOf(expiration));
+    if (refreshed) {
+      log.debug("Refresh script updated the expiration for key {} with token {} in store {} to {}", key, token, storeId, expiration);
+    } else {
+      log.debug("Refresh script failed to update expiration for key {} with token {} in store {} with expiration: {}", key, token, storeId, expiration);
+    }
+    return refreshed;
   }
 }

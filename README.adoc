@@ -14,7 +14,8 @@ These options are customizable per annotation.
 The project contains several configurations and annotations to help you enable locking and customize it.
 
 To enable locking you must first include `@EnableDistributedLock`.
-This will import the configuration that will autoconfigure the `https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/beans/factory/config/BeanPostProcessor.html[BeanPostProcessor]` required for locking.
+This will import the configuration that will autoconfigure the
+`https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/beans/factory/config/BeanPostProcessor.html[BeanPostProcessor]` required for locking.
 
 Project provides the following out-of-the-box lock implementations:
 
@@ -123,11 +124,16 @@ public class LockConfiguration {
 
 Started tracking the changes since 1.2.0 so no changelogs available for earlier versions.
 
+==== 1.2.1
+- FEATURE: Lock refreshing has been added. Check the 'Lock refresh' chapter for more details
+- BUGFIX: `@RedisMultiLocked` was using `#executionPath` as prefix instead of an expression
+- BUGFIX: `@RedisMultiLocked` was using `expiration` and `timeout` in milliseconds instead of seconds
+
 ==== 1.2.0
-- Added a JavaDoc description to `com.github.alturkovic.lock.Lock.release()` method
-- Rearranged the parameters of the `com.github.alturkovic.lock.Lock.release()` method to be more consistent
-- Rearranged the parameters of the `com.github.alturkovic.lock.jdbc.service.JdbcLockSingleKeyService` methods to be more consistent
-- `EvaluationConvertException` and `LockNotAvailableException` now extend the `DistributedLockException`
+- FEATURE: Added a JavaDoc description to `com.github.alturkovic.lock.Lock.release()` method
+- CHANGE: Rearranged the parameters of the `com.github.alturkovic.lock.Lock.release()` method to be more consistent
+- CHANGE: Rearranged the parameters of the `com.github.alturkovic.lock.jdbc.service.JdbcLockSingleKeyService` methods to be more consistent
+- CHANGE: `EvaluationConvertException` and `LockNotAvailableException` now extend the `DistributedLockException`
 
 == Importing into your project
 
@@ -152,6 +158,9 @@ Started tracking the changes since 1.2.0 so no changelogs available for earlier 
 |2.0.4.RELEASE
 
 |1.2.0
+|2.1.0.RELEASE
+
+|1.2.1
 |2.1.0.RELEASE
 |===
 
@@ -187,12 +196,20 @@ To add the Redis dependency for an example, add the following under your `<depen
 
 To lock your methods you need to first enable locking as described in the previous section.
 
-Spring `https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/beans/factory/config/BeanPostProcessor.html[BeanPostProcessor]` will handle all `@Locked` methods including their aliases. The `type` field describes which implementation of the lock to use.
+Spring `https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/beans/factory/config/BeanPostProcessor.html[BeanPostProcessor]` will handle all `@Locked` methods including
+their aliases. The `type` field describes which implementation of the lock to use.
 To prevent repeating yourself if you plan on using the same implementation (as most people usually will), I've added alias support.
 They wrap the `@Locked` annotation and define the type used.
 
 Each lock needs to define a https://docs.spring.io/spring/docs/current/spring-framework-reference/html/expressions.html[SpEL] expression used to acquire the lock.
 To learn more about Spring aliases visit https://github.com/spring-projects/spring-framework/wiki/Spring-Annotation-Programming-Model[this] link.
+
+=== Lock refresh
+
+Locks can be refreshed automatically on a regular interval. This allows methods that occasionally need to run longer than their expiration.
+Refreshing the lock periodically prolongs the expiration of its key(s). This means that the lock cannot be acquired by another resource as long as the resource using the lock does not
+end successfully. In case the resource holding the lock fails unexpectedly without releasing the lock, the lock will expire according to the last expiration that was written (that the last refresh
+has set).
 
 === Manually controlled locks
 
@@ -202,7 +219,7 @@ To acquire a lock that doesn't get released automatically set `manuallyReleased`
 
 For more grained control (e.g., locking in the middle of the method and releasing later in the code), inject the lock in your service and acquire the lock manually.
 
-=== Example
+==== Example
 
 [source,java]
 ----
@@ -282,7 +299,8 @@ public void runLockedWithMyCustomLock() {
 This is the default key generator the advice uses. If you wish to use your own, simply write your own and define it as a `@Bean`.
 
 The default key generator has access to the currently executing context, meaning you can access your fields and methods from SpEL.
-It uses the `https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/core/DefaultParameterNameDiscoverer.html[DefaultParameterNameDiscoverer]` to discover parameter names, so you can access your parameters in several different ways:
+It uses the `https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/core/DefaultParameterNameDiscoverer.html[DefaultParameterNameDiscoverer]` to discover parameter names, so you
+can access your parameters in several different ways:
 
 1. using `p#` syntax, where `#` is the position of the parameter, for an example: `p0` for the first parameter
 2. using `a#` syntax, where `#` is the position of the parameter, for an example: `a2` for the third parameter
@@ -291,7 +309,8 @@ It uses the `https://docs.spring.io/spring/docs/current/javadoc-api/org/springfr
 A special variable named `executionPath` is used to define the method called. This is the default `expression` used to describe the annotated method.  
 
 All validated expressions that result in an `Iterable` or an array will be converted to `List<String>` and all other values will be wrapped with `Collections.toSingletonList`.
-Elements of `Iterable` or array will also be converted to Strings using the `https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/core/convert/ConversionService.html[ConversionService]`. Custom converters can be registered.
+Elements of `Iterable` or array will also be converted to Strings using the
+`https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/core/convert/ConversionService.html[ConversionService]`. Custom converters can be registered.
 More about Spring conversion can be found https://docs.spring.io/spring/docs/current/spring-framework-reference/core.html#core-convert[here].
 
 For more examples, take a look at `com.github.alturkovic.lock.key.SpelKeyGeneratorTest`.

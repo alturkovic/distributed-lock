@@ -64,8 +64,20 @@ public class MultiRedisLock implements Lock {
     "redis.call('DEL', unpack(KEYS))\n" +
     "return true\n";
 
+  private static final String LOCK_REFRESH_SCRIPT = "for _, key in pairs(KEYS) do\n" +
+    "    local value = redis.call('GET', key)\n" +
+    "    if (value == nil or value ~= ARGV[1]) then\n" +
+    "        return false\n" +
+    "    end\n" +
+    "end\n" +
+    "for _, key in pairs(KEYS) do\n" +
+    "    redis.call('PEXPIRE', key, ARGV[2])\n" +
+    "end\n" +
+    "return true";
+
   private final RedisScript<Boolean> lockScript = new DefaultRedisScript<>(LOCK_SCRIPT, Boolean.class);
   private final RedisScript<Boolean> lockReleaseScript = new DefaultRedisScript<>(LOCK_RELEASE_SCRIPT, Boolean.class);
+  private final RedisScript<Boolean> lockRefreshScript = new DefaultRedisScript<>(LOCK_REFRESH_SCRIPT, Boolean.class);
 
   private final StringRedisTemplate stringRedisTemplate;
   private final Supplier<String> tokenSupplier;
@@ -84,7 +96,7 @@ public class MultiRedisLock implements Lock {
     }
 
     final Boolean locked = stringRedisTemplate.execute(lockScript, keysWithStoreIdPrefix, token, String.valueOf(expiration));
-    log.debug("Tried to acquire lock for keys '{}' in store '{}' with safety token '{}'. Locked: {}", keys, storeId, token, locked);
+    log.debug("Tried to acquire lock for keys {} in store {} with token {}. Locked: {}", keys, storeId, token, locked);
     return locked ? token : null;
   }
 
@@ -99,5 +111,18 @@ public class MultiRedisLock implements Lock {
       log.error("Release script failed for keys {} with token {} in store {}", keys, token, storeId);
     }
     return released;
+  }
+
+  @Override
+  public boolean refresh(final List<String> keys, final String storeId, final String token, final long expiration) {
+    final List<String> keysWithStoreIdPrefix = keys.stream().map(key -> storeId + ":" + key).collect(Collectors.toList());
+
+    final boolean refreshed = stringRedisTemplate.execute(lockRefreshScript, keysWithStoreIdPrefix, token, String.valueOf(expiration));
+    if (refreshed) {
+      log.debug("Refresh script refreshed the expiration for keys {} with token {} in store {}", keys, token, storeId);
+    } else {
+      log.debug("Refresh script failed to update expiration for keys {} with token {} in store {}", keys, token, storeId);
+    }
+    return refreshed;
   }
 }

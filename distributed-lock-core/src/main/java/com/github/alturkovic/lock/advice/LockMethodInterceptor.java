@@ -33,6 +33,7 @@ import com.github.alturkovic.lock.key.KeyGenerator;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ScheduledFuture;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aopalliance.intercept.MethodInterceptor;
@@ -46,6 +47,7 @@ import org.springframework.retry.policy.CompositeRetryPolicy;
 import org.springframework.retry.policy.SimpleRetryPolicy;
 import org.springframework.retry.policy.TimeoutRetryPolicy;
 import org.springframework.retry.support.RetryTemplate;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
@@ -55,6 +57,7 @@ public class LockMethodInterceptor implements MethodInterceptor {
   private final KeyGenerator keyGenerator;
   private final LockTypeResolver lockTypeResolver;
   private final IntervalConverter intervalConverter;
+  private final TaskScheduler taskScheduler;
 
   @Override
   public Object invoke(final MethodInvocation invocation) throws Throwable {
@@ -79,11 +82,13 @@ public class LockMethodInterceptor implements MethodInterceptor {
       throw new DistributedLockException("Cannot resolve keys to lock from expression: " + locked.expression(), e);
     }
 
+    final long expiration = intervalConverter.toMillis(locked.expiration());
     String token = null;
+    ScheduledFuture<?> scheduledFuture = null;
     try {
       try {
         token = constructRetryTemplate(locked).execute(context -> {
-          final String attemptedToken = lock.acquire(keys, locked.storeId(), intervalConverter.toMillis(locked.expiration()));
+          final String attemptedToken = lock.acquire(keys, locked.storeId(), expiration);
 
           if (StringUtils.isEmpty(attemptedToken)) {
             throw new LockNotAvailableException(String.format("Lock not available for keys: %s in store %s", keys, locked.storeId()));
@@ -96,8 +101,19 @@ public class LockMethodInterceptor implements MethodInterceptor {
       }
 
       log.debug("Acquired lock for keys {} with token {} in store {}", keys, token, locked.storeId());
+
+      final long refresh = intervalConverter.toMillis(locked.refresh());
+      if (refresh > 0) {
+        final LockRefreshRunnable lockRefreshRunnable = new LockRefreshRunnable(lock, keys, locked.storeId(), token, expiration);
+        scheduledFuture = taskScheduler.scheduleAtFixedRate(lockRefreshRunnable, refresh);
+      }
+
       return invocation.proceed();
     } finally {
+      if (scheduledFuture != null && !scheduledFuture.isCancelled() && !scheduledFuture.isDone()) {
+        scheduledFuture.cancel(true);
+      }
+
       if (token != null && !locked.manuallyReleased()) {
         final boolean released = lock.release(keys, locked.storeId(), token);
         if (released) {

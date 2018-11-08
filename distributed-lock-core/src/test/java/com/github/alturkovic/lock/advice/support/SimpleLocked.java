@@ -58,4 +58,7 @@ public @interface SimpleLocked {
 
   @AliasFor(annotation = Locked.class)
   Interval retry() default @Interval(value = "50");
+
+  @AliasFor(annotation = Locked.class)
+  Interval refresh() default @Interval(value = "0");
 }

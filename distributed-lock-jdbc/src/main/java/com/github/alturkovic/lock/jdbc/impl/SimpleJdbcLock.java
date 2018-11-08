@@ -66,4 +66,10 @@ public class SimpleJdbcLock implements Lock {
     Assert.isTrue(keys.size() == 1, "Cannot release lock for multiple keys with this lock: " + keys);
     return lockSingleKeyService.release(keys.get(0), storeId, token);
   }
+
+  @Override
+  public boolean refresh(final List<String> keys, final String storeId, final String token, final long expiration) {
+    Assert.isTrue(keys.size() == 1, "Cannot refresh lock for multiple keys with this lock: " + keys);
+    return lockSingleKeyService.refresh(keys.get(0), storeId, token, expiration);
+  }
 }

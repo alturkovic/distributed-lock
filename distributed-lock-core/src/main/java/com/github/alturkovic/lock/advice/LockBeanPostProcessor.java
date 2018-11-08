@@ -32,6 +32,7 @@ import org.springframework.aop.framework.AbstractAdvisingBeanPostProcessor;
 import org.springframework.aop.support.DefaultPointcutAdvisor;
 import org.springframework.aop.support.annotation.AnnotationMatchingPointcut;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.scheduling.TaskScheduler;
 
 /**
  * {@link org.springframework.beans.factory.config.BeanPostProcessor} for beans with {@link Locked} methods.
@@ -41,11 +42,12 @@ public class LockBeanPostProcessor extends AbstractAdvisingBeanPostProcessor imp
   private final IntervalConverter intervalConverter;
   private final LockTypeResolver lockTypeResolver;
   private final KeyGenerator keyGenerator;
+  private final TaskScheduler taskScheduler;
 
   @Override
   public void afterPropertiesSet() {
     final AnnotationMatchingPointcut pointcut = new AnnotationMatchingPointcut(null, Locked.class, true);
-    final LockMethodInterceptor interceptor = new LockMethodInterceptor(keyGenerator, lockTypeResolver, intervalConverter);
+    final LockMethodInterceptor interceptor = new LockMethodInterceptor(keyGenerator, lockTypeResolver, intervalConverter, taskScheduler);
 
     this.advisor = new DefaultPointcutAdvisor(pointcut, interceptor);
   }

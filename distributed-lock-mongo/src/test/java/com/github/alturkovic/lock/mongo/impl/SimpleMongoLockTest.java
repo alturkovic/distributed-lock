@@ -27,7 +27,9 @@ package com.github.alturkovic.lock.mongo.impl;
 import com.github.alturkovic.lock.Lock;
 import com.github.alturkovic.lock.mongo.model.LockDocument;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
+import org.assertj.core.data.TemporalUnitWithinOffset;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -64,9 +66,13 @@ public class SimpleMongoLockTest implements InitializingBean {
 
   @Test
   public void shouldLock() {
+    final LocalDateTime expectedExpiration = LocalDateTime.now().plus(1000, ChronoUnit.MILLIS);
+
     final String token = lock.acquire(Collections.singletonList("1"), "locks", 1000);
     assertThat(token).isEqualTo("abc");
-    assertThat(mongoTemplate.findById("1", LockDocument.class, "locks").getToken()).isEqualTo("abc");
+    final LockDocument document = mongoTemplate.findById("1", LockDocument.class, "locks");
+    assertThat(document.getToken()).isEqualTo("abc");
+    assertThat(document.getExpireAt()).isCloseTo(expectedExpiration, new TemporalUnitWithinOffset(100, ChronoUnit.MILLIS));
   }
 
   @Test
@@ -91,6 +97,35 @@ public class SimpleMongoLockTest implements InitializingBean {
     final boolean released = lock.release(Collections.singletonList("1"), "locks", "abc");
     assertThat(released).isFalse();
     assertThat(mongoTemplate.findById("1", LockDocument.class, "locks").getToken()).isEqualTo("def");
+  }
+
+  @Test
+  public void shouldRefresh() throws InterruptedException {
+    LocalDateTime expectedExpiration = LocalDateTime.now().plus(1000, ChronoUnit.MILLIS);
+
+    final String token = lock.acquire(Collections.singletonList("1"), "locks", 1000);
+    assertThat(mongoTemplate.findById("1", LockDocument.class, "locks").getExpireAt()).isCloseTo(expectedExpiration, new TemporalUnitWithinOffset(100, ChronoUnit.MILLIS));
+    Thread.sleep(500);
+    assertThat(mongoTemplate.findById("1", LockDocument.class, "locks").getExpireAt()).isCloseTo(expectedExpiration, new TemporalUnitWithinOffset(100, ChronoUnit.MILLIS));
+    expectedExpiration = LocalDateTime.now().plus(1000, ChronoUnit.MILLIS);
+    assertThat(lock.refresh(Collections.singletonList("1"), "locks", token, 1000)).isTrue();
+    assertThat(mongoTemplate.findById("1", LockDocument.class, "locks").getExpireAt()).isCloseTo(expectedExpiration, new TemporalUnitWithinOffset(100, ChronoUnit.MILLIS));
+  }
+
+  @Test
+  public void shouldNotRefreshBecauseTokenDoesNotMatch() {
+    LocalDateTime expectedExpiration = LocalDateTime.now().plus(1000, ChronoUnit.MILLIS);
+
+    lock.acquire(Collections.singletonList("1"), "locks", 1000);
+    assertThat(mongoTemplate.findById("1", LockDocument.class, "locks").getExpireAt()).isCloseTo(expectedExpiration, new TemporalUnitWithinOffset(100, ChronoUnit.MILLIS));
+    assertThat(lock.refresh(Collections.singletonList("1"), "locks", "wrong-token", 1000)).isFalse();
+    assertThat(mongoTemplate.findById("1", LockDocument.class, "locks").getExpireAt()).isCloseTo(expectedExpiration, new TemporalUnitWithinOffset(100, ChronoUnit.MILLIS));
+  }
+
+  @Test
+  public void shouldNotRefreshBecauseKeyExpired() {
+    assertThat(lock.refresh(Collections.singletonList("1"), "locks", "abc", 1000)).isFalse();
+    assertThat(mongoTemplate.findAll(LockDocument.class)).isNullOrEmpty();
   }
 
   @SpringBootApplication

@@ -24,19 +24,22 @@
 
 package com.github.alturkovic.lock.advice;
 
+import com.github.alturkovic.lock.Interval;
 import com.github.alturkovic.lock.Locked;
+import com.github.alturkovic.lock.advice.support.SimpleLock;
+import com.github.alturkovic.lock.advice.support.SimpleLock.LockedKey;
+import com.github.alturkovic.lock.advice.support.SimpleLocked;
 import com.github.alturkovic.lock.converter.BeanFactoryAwareIntervalConverter;
 import com.github.alturkovic.lock.key.SpelKeyGenerator;
-import com.github.alturkovic.lock.advice.support.SimpleLock;
-import com.github.alturkovic.lock.advice.support.SimpleLocked;
-import java.util.AbstractMap.SimpleEntry;
-import java.util.Collections;
+import java.util.concurrent.TimeUnit;
+import org.assertj.core.data.Offset;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.core.convert.support.DefaultConversionService;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
@@ -53,8 +56,12 @@ public class LockBeanPostProcessorTest {
     final LockTypeResolver lockTypeResolver = Mockito.mock(LockTypeResolver.class);
     when(lockTypeResolver.get(SimpleLock.class)).thenReturn(lock);
 
+    final ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
+    scheduler.afterPropertiesSet();
+
+
     final SpelKeyGenerator keyGenerator = new SpelKeyGenerator(new DefaultConversionService());
-    final LockBeanPostProcessor processor = new LockBeanPostProcessor(new BeanFactoryAwareIntervalConverter(beanFactory), lockTypeResolver, keyGenerator);
+    final LockBeanPostProcessor processor = new LockBeanPostProcessor(new BeanFactoryAwareIntervalConverter(beanFactory), lockTypeResolver, keyGenerator, scheduler);
     processor.afterPropertiesSet();
 
     beanFactory.addBeanPostProcessor(processor);
@@ -63,58 +70,76 @@ public class LockBeanPostProcessorTest {
     beanFactory.preInstantiateSingletons();
   }
 
+  @Before
+  public void cleanLockState() {
+    lock.getLockMap().clear();
+  }
+
   @Test
   public void shouldLockInheritedFromInterface() {
     lockedInterface.doLocked(1, "hello");
-    assertThat(lock.getLockMap()).containsExactly(new SimpleEntry<>("lock", Collections.singletonList("lock:hello")));
+    assertThat(lock.getLockedKeys("lock")).containsExactly("lock:hello");
   }
 
   @Test
   public void shouldLockInheritedFromInterfaceWithAlias() {
     lockedInterface.doLockedWithAlias(1, "hello");
-    assertThat(lock.getLockMap()).containsExactly(new SimpleEntry<>("lock", Collections.singletonList("hello"))); // @SimpleLock does not add prefix
+    assertThat(lock.getLockedKeys("lock")).containsExactly("hello"); // @SimpleLock does not add prefix
   }
 
   @Test
   public void shouldLockOverridenFromInterface() {
     lockedInterface.doLockedOverriden(1, "hello");
-    assertThat(lock.getLockMap()).containsExactly(new SimpleEntry<>("lock", Collections.singletonList("lock:1")));
+    assertThat(lock.getLockedKeys("lock")).containsExactly("lock:1");
   }
 
   @Test
   public void shouldLockOverridenFromInterfaceWithAlias() {
     lockedInterface.doLockedOverridenWithAlias(1, "hello");
-    assertThat(lock.getLockMap()).containsExactly(new SimpleEntry<>("lock", Collections.singletonList("1"))); // @SimpleLock does not add prefix
+    assertThat(lock.getLockedKeys("lock")).containsExactly("1"); // @SimpleLock does not add prefix
   }
 
   @Test
   public void shouldLockFromImplementation() {
     lockedInterface.doLockedFromImplementation(1, "hello");
-    assertThat(lock.getLockMap()).containsExactly(new SimpleEntry<>("lock", Collections.singletonList("lock:hello")));
+    assertThat(lock.getLockedKeys("lock")).containsExactly("lock:hello");
   }
 
   @Test
   public void shouldLockFromImplementationWithAlias() {
     lockedInterface.doLockedFromImplementationWithAlias(1, "hello");
-    assertThat(lock.getLockMap()).containsExactly(new SimpleEntry<>("lock", Collections.singletonList("hello"))); // @SimpleLock does not add prefix
+    assertThat(lock.getLockedKeys("lock")).containsExactly("hello"); // @SimpleLock does not add prefix
   }
 
   @Test
   public void shouldLockWithImplementationDetail() {
     lockedInterface.doLockedWithImplementationDetail(1, "hello");
-    assertThat(lock.getLockMap()).containsExactly(new SimpleEntry<>("lock", Collections.singletonList("lock:4")));
+    assertThat(lock.getLockedKeys("lock")).containsExactly("lock:4");
   }
 
   @Test
   public void shouldLockWithExecutionPath() {
     lockedInterface.doLockedWithExecutionPath();
-    assertThat(lock.getLockMap()).containsExactly(new SimpleEntry<>("lock", Collections.singletonList("com.github.alturkovic.lock.advice.LockBeanPostProcessorTest.LockedInterfaceImpl.doLockedWithExecutionPath")));
+    assertThat(lock.getLockedKeys("lock")).containsExactly("com.github.alturkovic.lock.advice.LockBeanPostProcessorTest.LockedInterfaceImpl.doLockedWithExecutionPath");
   }
 
   @Test
   public void shouldLockFromImplementationWithImplementationDetail() {
     lockedInterface.doLockedFromImplementationWithImplementationDetail(1, "hello");
-    assertThat(lock.getLockMap()).containsExactly(new SimpleEntry<>("lock", Collections.singletonList("lock:4")));
+    assertThat(lock.getLockedKeys("lock")).containsExactly("lock:4");
+  }
+
+  @Test
+  public void shouldRefreshLock() throws InterruptedException {
+    lockedInterface.sleep();
+    final LockedKey lockedKey = this.lock.getLockMap().get("lock").get(0);
+    assertThat(lockedKey.getUpdatedAt()).withFailMessage(lockedKey.toString()).isCloseTo(System.currentTimeMillis(), Offset.offset(200L));
+    assertThat(lockedKey.getKey()).isEqualTo("com.github.alturkovic.lock.advice.LockBeanPostProcessorTest.LockedInterfaceImpl.sleep");
+
+    // sleep method sleeps for 1 seconds and lock is refreshed every 100ms for a total of 10 refreshes
+    // sometimes the refresh will execute slightly before releasing the lock so additional refresh will be fired, but lock will be released immediately after it is refreshed
+    assertThat(lockedKey.getUpdateCounter()).isIn(10L, 11L);
+    lock.getLockMap().clear();
   }
 
   private interface LockedInterface {
@@ -142,6 +167,9 @@ public class LockBeanPostProcessorTest {
 
     @SimpleLocked
     void doLockedWithExecutionPath();
+
+    @SimpleLocked(refresh = @Interval("100"), expiration = @Interval("200"))
+    void sleep() throws InterruptedException;
   }
 
   private class LockedInterfaceImpl implements LockedInterface {
@@ -185,6 +213,11 @@ public class LockBeanPostProcessorTest {
 
     @Override
     public void doLockedWithExecutionPath() {
+    }
+
+    @Override
+    public void sleep() throws InterruptedException {
+      TimeUnit.SECONDS.sleep(1);
     }
 
     public int getStaticValue() {

@@ -28,6 +28,7 @@ import com.github.alturkovic.lock.Lock;
 import com.github.alturkovic.lock.redis.embedded.EmbeddedRedis;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.assertj.core.data.Offset;
 import org.junit.Before;
@@ -135,6 +136,61 @@ public class MultiRedisLockTest implements InitializingBean {
     redisTemplate.opsForValue().set("locks:1", "def");
     lock.release(Arrays.asList("1", "2"), "locks", "abc");
     assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("def");
+    assertThat(redisTemplate.opsForValue().get("locks:2")).isNull();
+  }
+
+  @Test
+  public void shouldRefresh() throws InterruptedException {
+    final List<String> keys = Arrays.asList("1", "2");
+
+    final String token = lock.acquire(keys, "locks", 1000);
+    assertThat(redisTemplate.getExpire("locks:1", TimeUnit.MILLISECONDS)).isCloseTo(1000, Offset.offset(100L));
+    assertThat(redisTemplate.getExpire("locks:2", TimeUnit.MILLISECONDS)).isCloseTo(1000, Offset.offset(100L));
+    Thread.sleep(500);
+    assertThat(redisTemplate.getExpire("locks:1", TimeUnit.MILLISECONDS)).isCloseTo(500, Offset.offset(100L));
+    assertThat(redisTemplate.getExpire("locks:2", TimeUnit.MILLISECONDS)).isCloseTo(500, Offset.offset(100L));
+    assertThat(lock.refresh(keys, "locks", token, 1000)).isTrue();
+    assertThat(redisTemplate.getExpire("locks:1", TimeUnit.MILLISECONDS)).isCloseTo(1000, Offset.offset(100L));
+    assertThat(redisTemplate.getExpire("locks:2", TimeUnit.MILLISECONDS)).isCloseTo(1000, Offset.offset(100L));
+  }
+
+  @Test
+  public void shouldNotRefreshBecauseOneKeyExpired() {
+    final List<String> keys = Arrays.asList("1", "2");
+
+    final String token = lock.acquire(keys, "locks", 1000);
+    assertThat(redisTemplate.getExpire("locks:1", TimeUnit.MILLISECONDS)).isCloseTo(1000, Offset.offset(100L));
+    assertThat(redisTemplate.getExpire("locks:2", TimeUnit.MILLISECONDS)).isCloseTo(1000, Offset.offset(100L));
+
+    redisTemplate.delete("locks:2");
+
+    assertThat(lock.refresh(keys, "locks", token, 1000)).isFalse();
+    assertThat(redisTemplate.getExpire("locks:1", TimeUnit.MILLISECONDS)).isCloseTo(1000, Offset.offset(100L));
+    assertThat(redisTemplate.opsForValue().get("locks:2")).isNull();
+  }
+
+  @Test
+  public void shouldNotRefreshBecauseTokenForOneKeyDoesNotMatch() {
+    final List<String> keys = Arrays.asList("1", "2");
+
+    final String token = lock.acquire(keys, "locks", 1000);
+    assertThat(redisTemplate.getExpire("locks:1", TimeUnit.MILLISECONDS)).isCloseTo(1000, Offset.offset(100L));
+    assertThat(redisTemplate.getExpire("locks:2", TimeUnit.MILLISECONDS)).isCloseTo(1000, Offset.offset(100L));
+
+    redisTemplate.opsForValue().set("locks:1", "wrong-token");
+
+    assertThat(lock.refresh(keys, "locks", token, 1000)).isFalse();
+    assertThat(redisTemplate.getExpire("locks:1", TimeUnit.MILLISECONDS)).isEqualTo(-1L); // expiration was removed on manual update in this test
+    assertThat(redisTemplate.getExpire("locks:2", TimeUnit.MILLISECONDS)).isCloseTo(1000, Offset.offset(100L));
+    assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("wrong-token");
+    assertThat(redisTemplate.opsForValue().get("locks:2")).isEqualTo(token);
+  }
+
+  @Test
+  public void shouldExpire() throws InterruptedException {
+    lock.acquire(Arrays.asList("1", "2"), "locks", 100);
+    Thread.sleep(100);
+    assertThat(redisTemplate.opsForValue().get("locks:1")).isNull();
     assertThat(redisTemplate.opsForValue().get("locks:2")).isNull();
   }
 

@@ -97,6 +97,40 @@ public class SimpleRedisLockTest implements InitializingBean {
     assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("def");
   }
 
+  @Test
+  public void shouldRefresh() throws InterruptedException {
+    final String token = lock.acquire(Collections.singletonList("1"), "locks", 1000);
+    assertThat(redisTemplate.getExpire("locks:1", TimeUnit.MILLISECONDS)).isCloseTo(1000, Offset.offset(100L));
+    Thread.sleep(500);
+    assertThat(redisTemplate.getExpire("locks:1", TimeUnit.MILLISECONDS)).isCloseTo(500, Offset.offset(100L));
+    assertThat(lock.refresh(Collections.singletonList("1"), "locks", token, 1000)).isTrue();
+    assertThat(redisTemplate.getExpire("locks:1", TimeUnit.MILLISECONDS)).isCloseTo(1000, Offset.offset(100L));
+  }
+
+  @Test
+  public void shouldNotRefreshBecauseKeyExpired() {
+    assertThat(lock.refresh(Collections.singletonList("1"), "locks", "abc", 1000)).isFalse();
+    assertThat(redisTemplate.keys("*")).isNullOrEmpty();
+  }
+
+  @Test
+  public void shouldNotRefreshBecauseTokenDoesNotMatch() throws InterruptedException {
+    lock.acquire(Collections.singletonList("1"), "locks", 1000);
+    assertThat(redisTemplate.getExpire("locks:1", TimeUnit.MILLISECONDS)).isCloseTo(1000, Offset.offset(100L));
+    Thread.sleep(500);
+    assertThat(redisTemplate.getExpire("locks:1", TimeUnit.MILLISECONDS)).isCloseTo(500, Offset.offset(100L));
+    assertThat(lock.refresh(Collections.singletonList("1"), "locks", "wrong-token", 1000)).isFalse();
+    Thread.sleep(500);
+    assertThat(redisTemplate.opsForValue().get("locks:1")).isNull();
+  }
+
+  @Test
+  public void shouldExpire() throws InterruptedException {
+    lock.acquire(Collections.singletonList("1"), "locks", 100);
+    Thread.sleep(100);
+    assertThat(redisTemplate.opsForValue().get("locks:1")).isNull();
+  }
+
   @SpringBootApplication(scanBasePackageClasses = EmbeddedRedis.class)
   static class TestApplication {
   }

@@ -22,10 +22,22 @@
  * SOFTWARE.
  */
 
-package com.github.alturkovic.lock.jdbc.service;
+package com.github.alturkovic.lock.advice;
 
-public interface JdbcLockSingleKeyService {
-  String acquire(String key, String storeId, String token, long expiration);
-  boolean release(String key, String storeId, String token);
-  boolean refresh(String key, String storeId, String token, long expiration);
+import com.github.alturkovic.lock.Lock;
+import java.util.List;
+import lombok.AllArgsConstructor;
+
+@AllArgsConstructor
+public class LockRefreshRunnable implements Runnable {
+  private final Lock lock;
+  private final List<String> keys;
+  private final String storeId;
+  private final String token;
+  private final long expiration;
+
+  @Override
+  public void run() {
+    lock.refresh(keys, storeId, token, expiration);
+  }
 }

@@ -27,6 +27,7 @@ package com.github.alturkovic.lock.mongo.impl;
 import com.github.alturkovic.lock.Lock;
 import com.github.alturkovic.lock.mongo.model.LockDocument;
 import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.UpdateResult;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -68,9 +69,9 @@ public class SimpleMongoLock implements Lock {
 
     final Query query = Query.query(Criteria.where("_id").is(key));
     final Update update = new Update()
-        .setOnInsert("_id", key)
-        .setOnInsert("expireAt", LocalDateTime.now().plus(expiration, ChronoUnit.MILLIS))
-        .setOnInsert("token", token);
+      .setOnInsert("_id", key)
+      .setOnInsert("expireAt", LocalDateTime.now().plus(expiration, ChronoUnit.MILLIS))
+      .setOnInsert("token", token);
     final FindAndModifyOptions options = new FindAndModifyOptions().upsert(true).returnNew(true);
 
     final LockDocument doc = mongoTemplate.findAndModify(query, update, options, LockDocument.class, storeId);
@@ -98,5 +99,28 @@ public class SimpleMongoLock implements Lock {
     }
 
     return released;
+  }
+
+  @Override
+  public boolean refresh(final List<String> keys, final String storeId, final String token, final long expiration) {
+    Assert.isTrue(keys.size() == 1, "Cannot release lock for multiple keys with this lock: " + keys);
+
+    final String key = keys.get(0);
+
+    final UpdateResult updated = mongoTemplate.updateFirst(Query.query(Criteria.where("_id").is(key).and("token").is(token)),
+      Update.update("expireAt", LocalDateTime.now().plus(expiration, ChronoUnit.MILLIS)),
+      storeId);
+
+    final boolean refreshed = updated.getModifiedCount() == 1;
+    if (refreshed) {
+      log.debug("Refresh query successfully affected 1 record for key {} with token {} in store {}", key, token, storeId);
+    } else if (updated.getModifiedCount() > 0) {
+      log.error("Unexpected result from refresh for key {} with token {} in store {}, released {}", key, token, storeId, updated);
+    } else {
+      log.warn("Refresh query did not affect any records for key {} with token {} in store {}. This is possible when refresh interval fires for the final time after the lock has been released",
+        key, token, storeId);
+    }
+
+    return refreshed;
   }
 }

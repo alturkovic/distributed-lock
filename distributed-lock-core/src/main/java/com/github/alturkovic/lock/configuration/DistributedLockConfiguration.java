@@ -29,20 +29,25 @@ import com.github.alturkovic.lock.advice.LockTypeResolver;
 import com.github.alturkovic.lock.converter.BeanFactoryAwareIntervalConverter;
 import com.github.alturkovic.lock.key.KeyGenerator;
 import com.github.alturkovic.lock.key.SpelKeyGenerator;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.support.DefaultConversionService;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 @Configuration
 public class DistributedLockConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  public LockBeanPostProcessor lockBeanPostProcessor(final ConfigurableBeanFactory configurableBeanFactory, final KeyGenerator keyGenerator) {
-    return new LockBeanPostProcessor(new BeanFactoryAwareIntervalConverter(configurableBeanFactory), configurableBeanFactory::getBean, keyGenerator);
+  public LockBeanPostProcessor lockBeanPostProcessor(final ConfigurableBeanFactory configurableBeanFactory, final KeyGenerator keyGenerator,
+                                                     @Autowired(required = false) final TaskScheduler taskScheduler) {
+    return new LockBeanPostProcessor(new BeanFactoryAwareIntervalConverter(configurableBeanFactory), configurableBeanFactory::getBean, keyGenerator, taskScheduler);
   }
 
   @Bean
@@ -61,5 +66,12 @@ public class DistributedLockConfiguration {
   @ConditionalOnMissingBean
   public ConversionService conversionService() {
     return new DefaultConversionService();
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
+  @ConditionalOnProperty(prefix = "com.github.alturkovic.lock.task-scheduler.default", name = "enabled", havingValue = "true", matchIfMissing = true)
+  public TaskScheduler taskScheduler() {
+    return new ThreadPoolTaskScheduler();
   }
 }

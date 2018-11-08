@@ -46,17 +46,20 @@ public @interface RedisMultiLocked {
   String storeId() default "lock";
 
   @AliasFor(annotation = Locked.class)
-  String prefix() default "#executionPath";
+  String prefix() default "";
 
   @AliasFor(annotation = Locked.class)
-  String expression() default "";
+  String expression() default "#executionPath";
 
   @AliasFor(annotation = Locked.class)
-  Interval expiration() default @Interval("10");
+  Interval expiration() default @Interval(value = "10", unit = TimeUnit.SECONDS);
 
   @AliasFor(annotation = Locked.class)
-  Interval timeout() default @Interval("1");
+  Interval timeout() default @Interval(value = "1", unit = TimeUnit.SECONDS);
 
   @AliasFor(annotation = Locked.class)
-  Interval retry() default @Interval(value = "50", unit = TimeUnit.MILLISECONDS);
+  Interval retry() default @Interval(value = "50");
+
+  @AliasFor(annotation = Locked.class)
+  Interval refresh() default @Interval(value = "0");
 }

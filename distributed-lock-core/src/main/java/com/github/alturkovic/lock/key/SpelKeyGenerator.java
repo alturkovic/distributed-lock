@@ -35,12 +35,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.springframework.aop.support.AopUtils;
 import org.springframework.context.expression.AnnotatedElementKey;
 import org.springframework.context.expression.CachedExpressionEvaluator;
 import org.springframework.context.expression.MethodBasedEvaluationContext;
-import org.springframework.core.DefaultParameterNameDiscoverer;
-import org.springframework.core.ParameterNameDiscoverer;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.expression.EvaluationContext;
@@ -52,18 +49,15 @@ import org.springframework.util.StringUtils;
 @EqualsAndHashCode(callSuper = false)
 public class SpelKeyGenerator extends CachedExpressionEvaluator implements KeyGenerator {
   private final ConversionService conversionService;
-  private final ParameterNameDiscoverer parameterNameDiscoverer = new DefaultParameterNameDiscoverer();
   private final Map<ExpressionKey, Expression> conditionCache = new ConcurrentHashMap<>();
   private final Map<AnnotatedElementKey, Method> targetMethodCache = new ConcurrentHashMap<>();
 
   @Override
   public List<String> resolveKeys(final String lockKeyPrefix, final String expression, final Object object, final Method method, final Object[] args) {
-    final AnnotatedElementKey annotatedElementKey = new AnnotatedElementKey(method, object.getClass());
-    final Method targetMethod = this.targetMethodCache.computeIfAbsent(annotatedElementKey, key -> AopUtils.getMostSpecificMethod(method, object.getClass()));
-    final EvaluationContext context = new MethodBasedEvaluationContext(object, targetMethod, args, this.parameterNameDiscoverer);
+    final EvaluationContext context = new MethodBasedEvaluationContext(object, method, args, super.getParameterNameDiscoverer());
     context.setVariable("executionPath", object.getClass().getCanonicalName() + "." + method.getName());
 
-    final List<String> keys = convertResultToList(getExpression(this.conditionCache, annotatedElementKey, expression).getValue(context));
+    final List<String> keys = convertResultToList(getExpression(this.conditionCache, new AnnotatedElementKey(method, object.getClass()), expression).getValue(context));
 
     if (keys.stream().anyMatch(Objects::isNull)) {
       throw new EvaluationConvertException("null keys are not supported: " + keys);

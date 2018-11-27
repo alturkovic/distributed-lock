@@ -124,6 +124,10 @@ public class LockConfiguration {
 
 Started tracking the changes since 1.2.0 so no changelogs available for earlier versions.
 
+==== 1.2.2
+- CHANGE: Removed explicit `ParameterNameDiscoverer` from `SpelKeyGenerator` which now uses the one provided by the `CachedExpressionEvaluator`
+- CHANGE: Used `AopUtils` once and passed the evaluated method to `SpelKeyGenerator` so it doesn't have to evaluate the same thing as `LockMethodInterceptor`
+
 ==== 1.2.1
 - FEATURE: Lock refreshing has been added. Check the 'Lock refresh' chapter for more details
 - BUGFIX: `@RedisMultiLocked` was using `#executionPath` as prefix instead of an expression
@@ -161,6 +165,9 @@ Started tracking the changes since 1.2.0 so no changelogs available for earlier 
 |2.1.0.RELEASE
 
 |1.2.1
+|2.1.0.RELEASE
+
+|1.2.2
 |2.1.0.RELEASE
 |===
 

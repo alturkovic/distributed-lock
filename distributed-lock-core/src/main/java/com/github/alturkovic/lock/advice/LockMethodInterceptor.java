@@ -39,7 +39,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 import org.springframework.aop.support.AopUtils;
-import org.springframework.core.BridgeMethodResolver;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.retry.RetryPolicy;
 import org.springframework.retry.backoff.FixedBackOffPolicy;
@@ -48,7 +47,6 @@ import org.springframework.retry.policy.SimpleRetryPolicy;
 import org.springframework.retry.policy.TimeoutRetryPolicy;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.scheduling.TaskScheduler;
-import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
 @Slf4j
@@ -61,8 +59,7 @@ public class LockMethodInterceptor implements MethodInterceptor {
 
   @Override
   public Object invoke(final MethodInvocation invocation) throws Throwable {
-    // not really sure if all of these util calls are necessary, but they should all return sensible values in case they are not needed
-    final Method method = BridgeMethodResolver.findBridgedMethod(ClassUtils.getMostSpecificMethod(invocation.getMethod(), AopUtils.getTargetClass(invocation.getThis())));
+    final Method method = AopUtils.getMostSpecificMethod(invocation.getMethod(), invocation.getThis().getClass());
     final Locked locked = AnnotatedElementUtils.findMergedAnnotation(method, Locked.class);
 
     final Lock lock = lockTypeResolver.get(locked.type());
@@ -77,7 +74,7 @@ public class LockMethodInterceptor implements MethodInterceptor {
 
     final List<String> keys;
     try {
-      keys = keyGenerator.resolveKeys(locked.prefix(), locked.expression(), invocation.getThis(), invocation.getMethod(), invocation.getArguments());
+      keys = keyGenerator.resolveKeys(locked.prefix(), locked.expression(), invocation.getThis(), method, invocation.getArguments());
     } catch (final RuntimeException e) {
       throw new DistributedLockException("Cannot resolve keys to lock from expression: " + locked.expression(), e);
     }

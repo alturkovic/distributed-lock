@@ -39,6 +39,8 @@ import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+import lombok.val;
+
 
 @Configuration
 public class DistributedLockConfiguration {
@@ -47,7 +49,9 @@ public class DistributedLockConfiguration {
   @ConditionalOnMissingBean
   public LockBeanPostProcessor lockBeanPostProcessor(final ConfigurableBeanFactory configurableBeanFactory, final KeyGenerator keyGenerator,
                                                      @Autowired(required = false) final TaskScheduler taskScheduler) {
-    return new LockBeanPostProcessor(new BeanFactoryAwareIntervalConverter(configurableBeanFactory), configurableBeanFactory::getBean, keyGenerator, taskScheduler);
+    val lockBeanPostProcessor = new LockBeanPostProcessor(new BeanFactoryAwareIntervalConverter(configurableBeanFactory), configurableBeanFactory::getBean, keyGenerator, taskScheduler);
+    lockBeanPostProcessor.setBeforeExistingAdvisors(true);
+    return lockBeanPostProcessor;
   }
 
   @Bean

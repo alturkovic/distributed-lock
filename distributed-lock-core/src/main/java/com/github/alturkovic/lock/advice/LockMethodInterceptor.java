@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2018 Alen Turkovic
+ * Copyright (c) 2020 Alen Turkovic
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,26 +26,20 @@ package com.github.alturkovic.lock.advice;
 
 import com.github.alturkovic.lock.Lock;
 import com.github.alturkovic.lock.Locked;
-import com.github.alturkovic.lock.converter.IntervalConverter;
 import com.github.alturkovic.lock.exception.DistributedLockException;
-import com.github.alturkovic.lock.exception.LockNotAvailableException;
+import com.github.alturkovic.lock.interval.IntervalConverter;
 import com.github.alturkovic.lock.key.KeyGenerator;
+import com.github.alturkovic.lock.retry.RetriableLockFactory;
 import java.lang.reflect.Method;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.core.annotation.AnnotatedElementUtils;
-import org.springframework.retry.RetryPolicy;
-import org.springframework.retry.backoff.FixedBackOffPolicy;
-import org.springframework.retry.policy.CompositeRetryPolicy;
-import org.springframework.retry.policy.SimpleRetryPolicy;
-import org.springframework.retry.policy.TimeoutRetryPolicy;
-import org.springframework.retry.support.RetryTemplate;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.util.StringUtils;
 
@@ -55,96 +49,97 @@ public class LockMethodInterceptor implements MethodInterceptor {
   private final KeyGenerator keyGenerator;
   private final LockTypeResolver lockTypeResolver;
   private final IntervalConverter intervalConverter;
+  private final RetriableLockFactory retriableLockFactory;
   private final TaskScheduler taskScheduler;
 
   @Override
   public Object invoke(final MethodInvocation invocation) throws Throwable {
-    final Method method = AopUtils.getMostSpecificMethod(invocation.getMethod(), invocation.getThis().getClass());
-    final Locked locked = AnnotatedElementUtils.findMergedAnnotation(method, Locked.class);
-
-    final Lock lock = lockTypeResolver.get(locked.type());
-
-    if (lock == null) {
-      throw new DistributedLockException(String.format("Lock type %s not configured", locked.type().getName()));
-    }
-
-    if (StringUtils.isEmpty(locked.expression())) {
-      throw new DistributedLockException("Missing expression: " + locked);
-    }
-
-    final List<String> keys;
+    final var context = new LockContext(invocation);
     try {
-      keys = keyGenerator.resolveKeys(locked.prefix(), locked.expression(), invocation.getThis(), method, invocation.getArguments());
-    } catch (final RuntimeException e) {
-      throw new DistributedLockException("Cannot resolve keys to lock from expression: " + locked.expression(), e);
-    }
-
-    final long expiration = intervalConverter.toMillis(locked.expiration());
-    String token = null;
-    ScheduledFuture<?> scheduledFuture = null;
-    try {
-      try {
-        token = constructRetryTemplate(locked).execute(context -> {
-          final String attemptedToken = lock.acquire(keys, locked.storeId(), expiration);
-
-          if (StringUtils.isEmpty(attemptedToken)) {
-            throw new LockNotAvailableException(String.format("Lock not available for keys: %s in store %s", keys, locked.storeId()));
-          }
-
-          return attemptedToken;
-        });
-      } catch (final Exception e) {
-        throw new DistributedLockException("Unable to acquire lock with expression: " + locked.expression(), e);
-      }
-
-      log.debug("Acquired lock for keys {} with token {} in store {}", keys, token, locked.storeId());
-
-      final long refresh = intervalConverter.toMillis(locked.refresh());
-      if (refresh > 0) {
-        final LockRefreshRunnable lockRefreshRunnable = new LockRefreshRunnable(lock, keys, locked.storeId(), token, expiration);
-        scheduledFuture = taskScheduler.scheduleAtFixedRate(lockRefreshRunnable, refresh);
-      }
-
-      return invocation.proceed();
+      return executeLockedMethod(invocation, context);
     } finally {
-      if (scheduledFuture != null && !scheduledFuture.isCancelled() && !scheduledFuture.isDone()) {
-        scheduledFuture.cancel(true);
-      }
+      cleanAfterExecution(context);
+    }
+  }
 
-      if (token != null && !locked.manuallyReleased()) {
-        final boolean released = lock.release(keys, locked.storeId(), token);
-        if (released) {
-          log.debug("Released lock for keys {} with token {} in store {}", keys, token, locked.storeId());
-        } else {
-          // this could indicate that locks are released before method execution is finished and that locks expire too soon
-          // this could also indicate a problem with the store where locks are held, connectivity issues or query problems
-          log.error("Couldn't release lock for keys {} with token {} in store {}", keys, token, locked.storeId());
-        }
+  private Object executeLockedMethod(final MethodInvocation invocation, final LockContext context) throws Throwable {
+    final var expiration = intervalConverter.toMillis(context.getLocked().expiration());
+    try {
+      context.setToken(retriableLockFactory.generate(context.getLock(), context.getLocked()).acquire(context.getKeys(), context.getLocked().storeId(), expiration));
+    } catch (final Exception e) {
+      throw new DistributedLockException(String.format("Unable to acquire lock with expression: %s", context.getLocked().expression()), e);
+    }
+
+    log.debug("Acquired lock for keys {} with token {} in store {}", context.getKeys(), context.getToken(), context.getLocked().storeId());
+
+    scheduleLockRefresh(context, expiration);
+    return invocation.proceed();
+  }
+
+  private void scheduleLockRefresh(final LockContext context, final long expiration) {
+    final var refresh = intervalConverter.toMillis(context.getLocked().refresh());
+    if (refresh > 0) {
+      context.setScheduledFuture(taskScheduler.scheduleAtFixedRate(constructRefreshRunnable(context, expiration), refresh));
+    }
+  }
+
+  private Runnable constructRefreshRunnable(final LockContext context, final long expiration) {
+    return () -> context.getLock().refresh(context.getKeys(), context.getLocked().storeId(), context.getToken(), expiration);
+  }
+
+  private void cleanAfterExecution(final LockContext context) {
+    final var scheduledFuture = context.getScheduledFuture();
+    if (scheduledFuture != null && !scheduledFuture.isCancelled() && !scheduledFuture.isDone()) {
+      scheduledFuture.cancel(true);
+    }
+
+    if (StringUtils.hasText(context.getToken()) && !context.getLocked().manuallyReleased()) {
+      final var released = context.getLock().release(context.getKeys(), context.getLocked().storeId(), context.getToken());
+      if (released) {
+        log.debug("Released lock for keys {} with token {} in store {}", context.getKeys(), context.getToken(), context.getLocked().storeId());
+      } else {
+        // this could indicate that locks are released before method execution is finished and that locks expire too soon
+        // this could also indicate a problem with the store where locks are held, connectivity issues or query problems
+        log.error("Couldn't release lock for keys {} with token {} in store {}", context.getKeys(), context.getToken(), context.getLocked().storeId());
       }
     }
   }
 
-  private RetryTemplate constructRetryTemplate(final Locked locked) {
-    // how long to sleep between retries
-    final FixedBackOffPolicy fixedBackOffPolicy = new FixedBackOffPolicy();
-    fixedBackOffPolicy.setBackOffPeriod(intervalConverter.toMillis(locked.retry()));
+  @Data
+  private class LockContext {
+    private final Method method;
+    private final Locked locked;
+    private final Lock lock;
+    private final List<String> keys;
 
-    // when to timeout the whole operation
-    final TimeoutRetryPolicy timeoutRetryPolicy = new TimeoutRetryPolicy();
-    timeoutRetryPolicy.setTimeout(intervalConverter.toMillis(locked.timeout()));
+    private String token;
+    private ScheduledFuture<?> scheduledFuture;
 
-    // what exceptions to retry; only LockNotAvailableException, all other exceptions are unexpected and locking should fail
-    final SimpleRetryPolicy simpleRetryPolicy = new SimpleRetryPolicy(Integer.MAX_VALUE, Collections.singletonMap(LockNotAvailableException.class, true));
+    public LockContext(final MethodInvocation invocation) {
+      method = AopUtils.getMostSpecificMethod(invocation.getMethod(), invocation.getThis().getClass());
+      locked = AnnotatedElementUtils.findMergedAnnotation(method, Locked.class);
+      lock = lockTypeResolver.get(locked.type());
+      keys = resolveKeys(invocation, method, locked);
 
-    // combine policies
-    final CompositeRetryPolicy compositeRetryPolicy = new CompositeRetryPolicy();
-    compositeRetryPolicy.setPolicies(new RetryPolicy[]{timeoutRetryPolicy, simpleRetryPolicy});
+      validateConstructedContext();
+    }
 
-    // construct the template
-    final RetryTemplate retryTemplate = new RetryTemplate();
-    retryTemplate.setRetryPolicy(compositeRetryPolicy);
-    retryTemplate.setBackOffPolicy(fixedBackOffPolicy);
+    private List<String> resolveKeys(final MethodInvocation invocation, final Method method, final Locked locked) {
+      try {
+        return keyGenerator.resolveKeys(locked.prefix(), locked.expression(), invocation.getThis(), method, invocation.getArguments());
+      } catch (final RuntimeException e) {
+        throw new DistributedLockException(String.format("Cannot resolve keys to lock: %s on method %s", locked, method), e);
+      }
+    }
 
-    return retryTemplate;
+    private void validateConstructedContext() {
+      if (StringUtils.isEmpty(locked.expression())) {
+        throw new DistributedLockException(String.format("Missing expression: %s on method %s", locked, method));
+      }
+
+      if (lock == null) {
+        throw new DistributedLockException(String.format("Lock type %s not configured", locked.type().getName()));
+      }
+    }
   }
 }

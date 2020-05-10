@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2018 Alen Turkovic
+ * Copyright (c) 2020 Alen Turkovic
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,6 +28,7 @@ import com.github.alturkovic.lock.Lock;
 import com.github.alturkovic.lock.jdbc.impl.SimpleJdbcLock;
 import com.github.alturkovic.lock.jdbc.service.JdbcLockSingleKeyService;
 import com.github.alturkovic.lock.jdbc.service.SimpleJdbcLockSingleKeyService;
+import java.util.UUID;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -37,7 +38,7 @@ public class JdbcDistributedLockConfiguration {
 
   @Bean
   public Lock simpleJdbcLock(final JdbcLockSingleKeyService jdbcLockSingleKeyService) {
-    return new SimpleJdbcLock(jdbcLockSingleKeyService);
+    return new SimpleJdbcLock(() -> UUID.randomUUID().toString(), jdbcLockSingleKeyService);
   }
 
   @Bean

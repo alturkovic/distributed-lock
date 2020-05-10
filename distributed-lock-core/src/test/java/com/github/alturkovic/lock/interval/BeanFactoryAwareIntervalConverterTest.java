@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2018 Alen Turkovic
+ * Copyright (c) 2020 Alen Turkovic
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package com.github.alturkovic.lock.converter;
+package com.github.alturkovic.lock.interval;
 
 import com.github.alturkovic.lock.Interval;
 import org.junit.Test;
@@ -48,15 +48,15 @@ public class BeanFactoryAwareIntervalConverterTest {
   @Test
   @Interval(value = "10")
   public void shouldResolveStatic() {
-    final long millis = intervalConverter.toMillis(new Object() {}.getClass().getEnclosingMethod().getAnnotation(Interval.class));
-    assertThat(millis).isEqualTo(10);
+    assertThat(intervalConverter.toMillis(new Object() {}.getClass().getEnclosingMethod().getAnnotation(Interval.class)))
+      .isEqualTo(10);
   }
 
   @Test
   @Interval(value = "${locked.interval}")
   public void shouldResolveProperty() {
-    final long millis = intervalConverter.toMillis(new Object() {}.getClass().getEnclosingMethod().getAnnotation(Interval.class));
-    assertThat(millis).isEqualTo(10);
+    assertThat(intervalConverter.toMillis(new Object() {}.getClass().getEnclosingMethod().getAnnotation(Interval.class)))
+      .isEqualTo(10);
   }
 
   @SpringBootApplication

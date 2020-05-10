@@ -22,23 +22,21 @@
  * SOFTWARE.
  */
 
-package com.github.alturkovic.lock;
+package com.github.alturkovic.lock.interval;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.util.concurrent.TimeUnit;
+import com.github.alturkovic.lock.Interval;
 
-@Retention(RetentionPolicy.RUNTIME)
-public @interface Interval {
-
-  /**
-   * Interval period.
-   * By default, can be specified as 'property placeholder', e.g. {@code ${locked.interval}}.
-   */
-  String value();
+/**
+ * Converter which converts {@link Interval} to milliseconds.
+ */
+@FunctionalInterface
+public interface IntervalConverter {
 
   /**
-   * Interval {@link TimeUnit} represented by {@link #value()}.
+   * Convert {@link Interval} to milliseconds.
+   *
+   * @param interval interval to convert
+   * @return milliseconds represented by the given {@code interval}
    */
-  TimeUnit unit() default TimeUnit.MILLISECONDS;
+  long toMillis(Interval interval);
 }

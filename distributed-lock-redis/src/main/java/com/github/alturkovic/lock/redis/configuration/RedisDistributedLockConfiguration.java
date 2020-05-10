@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2018 Alen Turkovic
+ * Copyright (c) 2020 Alen Turkovic
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,20 +27,17 @@ package com.github.alturkovic.lock.redis.configuration;
 import com.github.alturkovic.lock.Lock;
 import com.github.alturkovic.lock.redis.impl.MultiRedisLock;
 import com.github.alturkovic.lock.redis.impl.SimpleRedisLock;
+import java.util.UUID;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.script.DefaultRedisScript;
-import org.springframework.data.redis.core.script.RedisScript;
-import org.springframework.scripting.support.ResourceScriptSource;
 
 @Configuration
 public class RedisDistributedLockConfiguration {
 
   @Bean
   public Lock simpleRedisLock(final StringRedisTemplate stringRedisTemplate) {
-    return new SimpleRedisLock(stringRedisTemplate);
+    return new SimpleRedisLock(() -> UUID.randomUUID().toString(), stringRedisTemplate);
   }
 
   @Bean

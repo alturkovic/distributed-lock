@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2018 Alen Turkovic
+ * Copyright (c) 2020 Alen Turkovic
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,72 +24,47 @@
 
 package com.github.alturkovic.lock.mongo.impl;
 
-import com.github.alturkovic.lock.Lock;
+import com.github.alturkovic.lock.AbstractSimpleLock;
 import com.github.alturkovic.lock.mongo.model.LockDocument;
-import com.mongodb.client.result.DeleteResult;
-import com.mongodb.client.result.UpdateResult;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.UUID;
 import java.util.function.Supplier;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
-import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
 
-@Data
 @Slf4j
-@AllArgsConstructor
-public class SimpleMongoLock implements Lock {
-
+public class SimpleMongoLock extends AbstractSimpleLock {
   private final MongoTemplate mongoTemplate;
-  private final Supplier<String> tokenSupplier;
 
-  public SimpleMongoLock(final MongoTemplate mongoTemplate) {
-    this(mongoTemplate, () -> UUID.randomUUID().toString());
+  public SimpleMongoLock(final Supplier<String> tokenSupplier, final MongoTemplate mongoTemplate) {
+    super(tokenSupplier);
+    this.mongoTemplate = mongoTemplate;
   }
 
   @Override
-  public String acquire(final List<String> keys, final String storeId, final long expiration) {
-    Assert.isTrue(keys.size() == 1, "Cannot acquire lock for multiple keys with this lock: " + keys);
-
-    final String key = keys.get(0);
-    final String token = tokenSupplier.get();
-
-    if (StringUtils.isEmpty(token)) {
-      throw new IllegalStateException("Cannot lock with empty token");
-    }
-
-    final Query query = Query.query(Criteria.where("_id").is(key));
-    final Update update = new Update()
+  protected String acquire(final String key, final String storeId, final String token, final long expiration) {
+    final var query = Query.query(Criteria.where("_id").is(key));
+    final var update = new Update()
       .setOnInsert("_id", key)
       .setOnInsert("expireAt", LocalDateTime.now().plus(expiration, ChronoUnit.MILLIS))
       .setOnInsert("token", token);
-    final FindAndModifyOptions options = new FindAndModifyOptions().upsert(true).returnNew(true);
 
-    final LockDocument doc = mongoTemplate.findAndModify(query, update, options, LockDocument.class, storeId);
+    final var options = new FindAndModifyOptions().upsert(true).returnNew(true);
+    final var doc = mongoTemplate.findAndModify(query, update, options, LockDocument.class, storeId);
 
-    final boolean locked = doc.getToken().equals(token);
+    final var locked = doc.getToken().equals(token);
     log.debug("Tried to acquire lock for key {} with token {} in store {}. Locked: {}", key, token, storeId, locked);
     return locked ? token : null;
   }
 
   @Override
-  public boolean release(final List<String> keys, final String storeId, final String token) {
-    Assert.isTrue(keys.size() == 1, "Cannot release lock for multiple keys with this lock: " + keys);
-
-    final String key = keys.get(0);
-
-    final DeleteResult deleted = mongoTemplate.remove(Query.query(Criteria.where("_id").is(key).and("token").is(token)), storeId);
-
-    final boolean released = deleted.getDeletedCount() == 1;
+  protected boolean release(final String key, final String storeId, final String token) {
+    final var deleted = mongoTemplate.remove(Query.query(Criteria.where("_id").is(key).and("token").is(token)), storeId);
+    final var released = deleted.getDeletedCount() == 1;
     if (released) {
       log.debug("Remove query successfully affected 1 record for key {} with token {} in store {}", key, token, storeId);
     } else if (deleted.getDeletedCount() > 0) {
@@ -102,16 +77,12 @@ public class SimpleMongoLock implements Lock {
   }
 
   @Override
-  public boolean refresh(final List<String> keys, final String storeId, final String token, final long expiration) {
-    Assert.isTrue(keys.size() == 1, "Cannot release lock for multiple keys with this lock: " + keys);
-
-    final String key = keys.get(0);
-
-    final UpdateResult updated = mongoTemplate.updateFirst(Query.query(Criteria.where("_id").is(key).and("token").is(token)),
+  protected boolean refresh(final String key, final String storeId, final String token, final long expiration) {
+    final var updated = mongoTemplate.updateFirst(Query.query(Criteria.where("_id").is(key).and("token").is(token)),
       Update.update("expireAt", LocalDateTime.now().plus(expiration, ChronoUnit.MILLIS)),
       storeId);
 
-    final boolean refreshed = updated.getModifiedCount() == 1;
+    final var refreshed = updated.getModifiedCount() == 1;
     if (refreshed) {
       log.debug("Refresh query successfully affected 1 record for key {} with token {} in store {}", key, token, storeId);
     } else if (updated.getModifiedCount() > 0) {

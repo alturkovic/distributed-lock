@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2018 Alen Turkovic
+ * Copyright (c) 2020 Alen Turkovic
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,25 +22,18 @@
  * SOFTWARE.
  */
 
-package com.github.alturkovic.lock.converter;
+package com.github.alturkovic.lock.retry;
 
-import com.github.alturkovic.lock.Interval;
-import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.util.StringUtils;
+import com.github.alturkovic.lock.Lock;
+import com.github.alturkovic.lock.Locked;
+import lombok.Data;
 
-/**
- * {@link IntervalConverter} capable of resolving properties.
- */
-@AllArgsConstructor
-public class BeanFactoryAwareIntervalConverter implements IntervalConverter {
-  private final ConfigurableBeanFactory beanFactory;
+@Data
+public class DefaultRetriableLockFactory implements RetriableLockFactory {
+  private final RetryTemplateConverter retryTemplateConverter;
 
-  public long toMillis(final Interval interval) {
-    final String value = beanFactory.resolveEmbeddedValue(interval.value());
-    if (!StringUtils.hasText(value)) {
-      throw new IllegalArgumentException("Cannot convert interval " + interval + " to milliseconds");
-    }
-    return interval.unit().toMillis(Long.valueOf(value));
+  @Override
+  public RetriableLock generate(final Lock lock, final Locked locked) {
+    return new RetriableLock(lock, retryTemplateConverter.construct(locked));
   }
 }

@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2018 Alen Turkovic
+ * Copyright (c) 2020 Alen Turkovic
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -47,14 +47,13 @@ public class SimpleJdbcLockSingleKeyService implements JdbcLockSingleKeyService 
 
   @Override
   public String acquire(final String key, final String storeId, final String token, final long expiration) {
-    final Date now = new Date();
-
-    final int expired = jdbcTemplate.update(String.format(DELETE_EXPIRED_FORMATTED_QUERY, storeId), now);
+    final var now = new Date();
+    final var expired = jdbcTemplate.update(String.format(DELETE_EXPIRED_FORMATTED_QUERY, storeId), now);
     log.debug("Expired {} locks", expired);
 
     try {
-      final Date expireAt = new Date(now.getTime() + expiration);
-      final int created = jdbcTemplate.update(String.format(ACQUIRE_FORMATTED_QUERY, storeId), key, token, expireAt);
+      final var expireAt = new Date(now.getTime() + expiration);
+      final var created = jdbcTemplate.update(String.format(ACQUIRE_FORMATTED_QUERY, storeId), key, token, expireAt);
       return created == 1 ? token : null;
     } catch (final DuplicateKeyException e) {
       return null;
@@ -63,9 +62,9 @@ public class SimpleJdbcLockSingleKeyService implements JdbcLockSingleKeyService 
 
   @Override
   public boolean release(final String key, final String storeId, final String token) {
-    final int deleted = jdbcTemplate.update(String.format(RELEASE_FORMATTED_QUERY, storeId), key, token);
+    final var deleted = jdbcTemplate.update(String.format(RELEASE_FORMATTED_QUERY, storeId), key, token);
 
-    final boolean released = deleted == 1;
+    final var released = deleted == 1;
     if (released) {
       log.debug("Release query successfully affected 1 record for key {} with token {} in store {}", key, token, storeId);
     } else if (deleted > 0) {
@@ -79,11 +78,11 @@ public class SimpleJdbcLockSingleKeyService implements JdbcLockSingleKeyService 
 
   @Override
   public boolean refresh(final String key, final String storeId, final String token, final long expiration) {
-    final Date now = new Date();
-    final Date expireAt = new Date(now.getTime() + expiration);
+    final var now = new Date();
+    final var expireAt = new Date(now.getTime() + expiration);
 
-    final int updated = jdbcTemplate.update(String.format(REFRESH_FORMATTED_QUERY, storeId), expireAt, key, token);
-    final boolean refreshed = updated == 1;
+    final var updated = jdbcTemplate.update(String.format(REFRESH_FORMATTED_QUERY, storeId), expireAt, key, token);
+    final var refreshed = updated == 1;
     if (refreshed) {
       log.debug("Refresh query successfully affected 1 record for key {} with token {} in store {}", key, token, storeId);
     } else if (updated > 0) {

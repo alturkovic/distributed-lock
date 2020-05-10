@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2018 Alen Turkovic
+ * Copyright (c) 2020 Alen Turkovic
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,8 +32,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import org.assertj.core.data.Offset;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -58,7 +58,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class SimpleJdbcLockTest implements InitializingBean {
 
   @Autowired
-  @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection") // false IntelliJ warning
   private JdbcTemplate jdbcTemplate;
 
   private Lock lock;
@@ -66,44 +65,44 @@ public class SimpleJdbcLockTest implements InitializingBean {
   @Override
   public void afterPropertiesSet() {
     // instead of writing a custom test configuration, we can just initialize it after autowiring mongoTemplate with a custom tokenSupplier
-    lock = new SimpleJdbcLock(new SimpleJdbcLockSingleKeyService(jdbcTemplate), () -> "abc");
+    lock = new SimpleJdbcLock(() -> "abc", new SimpleJdbcLockSingleKeyService(jdbcTemplate));
   }
 
   @Test
   public void shouldLock() {
-    final long now = System.currentTimeMillis();
-    final String token = lock.acquire(Collections.singletonList("1"), "locks", 1000);
+    final var now = System.currentTimeMillis();
+    final var token = lock.acquire(Collections.singletonList("1"), "locks", 1000);
     assertThat(token).isEqualTo("abc");
 
-    final Map<String, Object> acquiredLockMap = jdbcTemplate.queryForObject("SELECT * FROM locks WHERE id = 1", new ColumnMapRowMapper());
-
+    final var acquiredLockMap = jdbcTemplate.queryForObject("SELECT * FROM locks WHERE id = 1", new ColumnMapRowMapper());
     assertThat(acquiredLockMap).containsAllEntriesOf(values("1", "abc"));
-    final Object expireAt = acquiredLockMap.get("expireAt");
+
+    final var expireAt = acquiredLockMap.get("expireAt");
     assertThat(((Date) expireAt).getTime()).isCloseTo(now + 1000, Offset.offset(100L));
   }
 
   @Test
   public void shouldNotLock() {
     new SimpleJdbcInsert(jdbcTemplate)
-        .withTableName("locks")
-        .usingGeneratedKeyColumns("id")
-        .executeAndReturnKey(values("1", "def"));
+      .withTableName("locks")
+      .usingGeneratedKeyColumns("id")
+      .executeAndReturnKey(values("1", "def"));
 
-    final String token = lock.acquire(Collections.singletonList("1"), "locks", 1000);
+    final var token = lock.acquire(Collections.singletonList("1"), "locks", 1000);
     assertThat(token).isNull();
 
-    final Map<String, Object> acquiredLockMap = jdbcTemplate.queryForObject("SELECT * FROM locks WHERE id = 1", new ColumnMapRowMapper());
+    final var acquiredLockMap = jdbcTemplate.queryForObject("SELECT * FROM locks WHERE id = 1", new ColumnMapRowMapper());
     assertThat(acquiredLockMap).containsAllEntriesOf(values("1", "def"));
   }
 
   @Test
   public void shouldRelease() {
     new SimpleJdbcInsert(jdbcTemplate)
-        .withTableName("locks")
-        .usingGeneratedKeyColumns("id")
-        .executeAndReturnKey(values("1", "abc"));
+      .withTableName("locks")
+      .usingGeneratedKeyColumns("id")
+      .executeAndReturnKey(values("1", "abc"));
 
-    final boolean released = lock.release(Collections.singletonList("1"), "locks", "abc");
+    final var released = lock.release(Collections.singletonList("1"), "locks", "abc");
     assertThat(released).isTrue();
     assertThat(jdbcTemplate.queryForList("SELECT * FROM locks")).isNullOrEmpty();
   }
@@ -111,56 +110,54 @@ public class SimpleJdbcLockTest implements InitializingBean {
   @Test
   public void shouldNotRelease() {
     new SimpleJdbcInsert(jdbcTemplate)
-        .withTableName("locks")
-        .usingGeneratedKeyColumns("id")
-        .executeAndReturnKey(values("1", "def"));
+      .withTableName("locks")
+      .usingGeneratedKeyColumns("id")
+      .executeAndReturnKey(values("1", "def"));
 
     lock.release(Collections.singletonList("1"), "locks", "abc");
 
-    final Map<String, Object> acquiredLockMap = jdbcTemplate.queryForObject("SELECT * FROM locks WHERE id = 1", new ColumnMapRowMapper());
+    final var acquiredLockMap = jdbcTemplate.queryForObject("SELECT * FROM locks WHERE id = 1", new ColumnMapRowMapper());
     assertThat(acquiredLockMap).containsAllEntriesOf(values("1", "def"));
   }
 
   @Test
   public void shouldRefresh() throws InterruptedException {
-    LocalDateTime expectedExpiration = LocalDateTime.now().plus(1000, ChronoUnit.MILLIS);
+    var expectedExpiration = LocalDateTime.now().plus(1, ChronoUnit.SECONDS);
 
-    final String token = lock.acquire(Collections.singletonList("1"), "locks", 1000);
-    Map<String, Object> acquiredLockMap = jdbcTemplate.queryForObject("SELECT * FROM locks WHERE id = 1", new ColumnMapRowMapper());
-    assertThat((Timestamp) acquiredLockMap.get("expireAt")).isCloseTo(expectedExpiration.toString(), 100);
+    final var token = lock.acquire(Collections.singletonList("1"), "locks", 1000);
+    var acquiredLockMap = jdbcTemplate.queryForObject("SELECT * FROM locks WHERE id = 1", new ColumnMapRowMapper());
+    assertThat((Timestamp) acquiredLockMap.get("expireAt")).isCloseTo(expectedExpiration.toString(), TimeUnit.SECONDS.toMillis(1));
     Thread.sleep(500);
     acquiredLockMap = jdbcTemplate.queryForObject("SELECT * FROM locks WHERE id = 1", new ColumnMapRowMapper());
-    assertThat((Timestamp) acquiredLockMap.get("expireAt")).isCloseTo(expectedExpiration.toString(), 100);
+    assertThat((Timestamp) acquiredLockMap.get("expireAt")).isCloseTo(expectedExpiration.toString(), TimeUnit.SECONDS.toMillis(1));
     expectedExpiration = LocalDateTime.now().plus(1000, ChronoUnit.MILLIS);
     assertThat(lock.refresh(Collections.singletonList("1"), "locks", token, 1000)).isTrue();
     acquiredLockMap = jdbcTemplate.queryForObject("SELECT * FROM locks WHERE id = 1", new ColumnMapRowMapper());
-    assertThat((Timestamp) acquiredLockMap.get("expireAt")).isCloseTo(expectedExpiration.toString(), 100);
+    assertThat((Timestamp) acquiredLockMap.get("expireAt")).isCloseTo(expectedExpiration.toString(), TimeUnit.SECONDS.toMillis(1));
   }
 
   @Test
   public void shouldNotRefreshBecauseTokenDoesNotMatch() {
-    final List<String> keys = Collections.singletonList("1");
+    final var keys = Collections.singletonList("1");
 
-    final String token = lock.acquire(keys, "locks", 1000);
-    final Map<String, Object> acquiredLockMap = jdbcTemplate.queryForObject("SELECT * FROM locks WHERE id = 1", new ColumnMapRowMapper());
+    final var token = lock.acquire(keys, "locks", 1000);
+    final var acquiredLockMap = jdbcTemplate.queryForObject("SELECT * FROM locks WHERE id = 1", new ColumnMapRowMapper());
+
     assertThat(acquiredLockMap).containsAllEntriesOf(values("1", token));
-
     assertThat(lock.refresh(keys, "locks", "wrong-token", 1000)).isFalse();
-
     assertThat(jdbcTemplate.queryForList("SELECT * FROM locks")).hasSize(1);
   }
 
   @Test
   public void shouldNotRefreshBecauseKeyExpired() {
-    final List<String> keys = Collections.singletonList("1");
+    final var keys = Collections.singletonList("1");
 
     assertThat(lock.refresh(keys, "locks", "abc", 1000)).isFalse();
-
     assertThat(jdbcTemplate.queryForList("SELECT * FROM locks")).isNullOrEmpty();
   }
 
   private static Map<String, Object> values(final String key, final String token) {
-    final Map<String, Object> values = new HashMap<>();
+    final var values = new HashMap<String, Object>();
     values.put("lock_key", key);
     values.put("token", token);
     return values;

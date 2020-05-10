@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2018 Alen Turkovic
+ * Copyright (c) 2020 Alen Turkovic
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -59,9 +59,9 @@ public @interface Locked {
   String expression() default "#executionPath";
 
   /**
-   * Lock expiration interval. This indicates how long the lock should be considered and when it should be invalidated. If {@link #refresh()}
-   * is positive, lock expiration will periodically be refreshed. This is useful for tasks that can occasionally hang for longer than their
-   * expiration. This enables long-running task to keep the lock for a long time, but release it relatively quickly in case they fail.
+   * Lock expiration interval. This indicates how long the lock should be considered locked after acquiring and when it should be invalidated.
+   * If {@link #refresh() is positive, lock expiration will periodically be refreshed. This is useful for tasks that can occasionally hang for
+   * longer than their expiration. This enables long-running task to keep the lock for a long time, but release it relatively quickly in case they fail.
    */
   Interval expiration() default @Interval(value = "10", unit = TimeUnit.SECONDS);
 
@@ -77,8 +77,8 @@ public @interface Locked {
   Interval retry() default @Interval(value = "50");
 
   /**
-   * Lock refresh interval. How often should the lock be refreshed during method execution. If it is non-positive, lock will not be refreshed
-   * during the execution and maximum time the lock can be held is defined by the {@link #expiration()} in this case.
+   * Lock refresh interval indicated how often should the lock be refreshed during method execution. If it is non-positive, lock will not
+   * be refreshed during the execution and maximum time the lock can be held is defined by the {@link #expiration()} in this case.
    */
   Interval refresh() default @Interval(value = "0");
 

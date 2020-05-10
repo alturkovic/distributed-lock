@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2018 Alen Turkovic
+ * Copyright (c) 2020 Alen Turkovic
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,52 +24,30 @@
 
 package com.github.alturkovic.lock.jdbc.impl;
 
-import com.github.alturkovic.lock.Lock;
+import com.github.alturkovic.lock.AbstractSimpleLock;
 import com.github.alturkovic.lock.jdbc.service.JdbcLockSingleKeyService;
-import java.util.List;
-import java.util.UUID;
 import java.util.function.Supplier;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
 
-@Data
-@Slf4j
-@AllArgsConstructor
-public class SimpleJdbcLock implements Lock {
-
+public class SimpleJdbcLock extends AbstractSimpleLock {
   private final JdbcLockSingleKeyService lockSingleKeyService;
-  private final Supplier<String> tokenSupplier;
 
-  public SimpleJdbcLock(final JdbcLockSingleKeyService lockSingleKeyService) {
-    this(lockSingleKeyService, () -> UUID.randomUUID().toString());
+  public SimpleJdbcLock(final Supplier<String> tokenSupplier, final JdbcLockSingleKeyService lockSingleKeyService) {
+    super(tokenSupplier);
+    this.lockSingleKeyService = lockSingleKeyService;
   }
 
   @Override
-  public String acquire(final List<String> keys, final String storeId, final long expiration) {
-    Assert.isTrue(keys.size() == 1, "Cannot acquire lock for multiple keys with this lock: " + keys);
-
-    final String key = keys.get(0);
-    final String token = tokenSupplier.get();
-
-    if (StringUtils.isEmpty(token)) {
-      throw new IllegalStateException("Cannot lock with empty token");
-    }
-
+  protected String acquire(final String key, final String storeId, final String token, final long expiration) {
     return lockSingleKeyService.acquire(key, storeId, token, expiration);
   }
 
   @Override
-  public boolean release(final List<String> keys, final String storeId, final String token) {
-    Assert.isTrue(keys.size() == 1, "Cannot release lock for multiple keys with this lock: " + keys);
-    return lockSingleKeyService.release(keys.get(0), storeId, token);
+  protected boolean release(final String key, final String storeId, final String token) {
+    return lockSingleKeyService.release(key, storeId, token);
   }
 
   @Override
-  public boolean refresh(final List<String> keys, final String storeId, final String token, final long expiration) {
-    Assert.isTrue(keys.size() == 1, "Cannot refresh lock for multiple keys with this lock: " + keys);
-    return lockSingleKeyService.refresh(keys.get(0), storeId, token, expiration);
+  protected boolean refresh(final String key, final String storeId, final String token, final long expiration) {
+    return lockSingleKeyService.refresh(key, storeId, token, expiration);
   }
 }

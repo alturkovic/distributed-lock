@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2018 Alen Turkovic
+ * Copyright (c) 2020 Alen Turkovic
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,8 +25,9 @@
 package com.github.alturkovic.lock.advice;
 
 import com.github.alturkovic.lock.Locked;
-import com.github.alturkovic.lock.converter.IntervalConverter;
+import com.github.alturkovic.lock.interval.IntervalConverter;
 import com.github.alturkovic.lock.key.KeyGenerator;
+import com.github.alturkovic.lock.retry.RetriableLockFactory;
 import lombok.AllArgsConstructor;
 import org.springframework.aop.framework.AbstractAdvisingBeanPostProcessor;
 import org.springframework.aop.support.DefaultPointcutAdvisor;
@@ -39,15 +40,16 @@ import org.springframework.scheduling.TaskScheduler;
  */
 @AllArgsConstructor
 public class LockBeanPostProcessor extends AbstractAdvisingBeanPostProcessor implements InitializingBean {
-  private final IntervalConverter intervalConverter;
-  private final LockTypeResolver lockTypeResolver;
   private final KeyGenerator keyGenerator;
+  private final LockTypeResolver lockTypeResolver;
+  private final IntervalConverter intervalConverter;
+  private final RetriableLockFactory retriableLockFactory;
   private final TaskScheduler taskScheduler;
 
   @Override
   public void afterPropertiesSet() {
-    final AnnotationMatchingPointcut pointcut = new AnnotationMatchingPointcut(null, Locked.class, true);
-    final LockMethodInterceptor interceptor = new LockMethodInterceptor(keyGenerator, lockTypeResolver, intervalConverter, taskScheduler);
+    final var pointcut = new AnnotationMatchingPointcut(null, Locked.class, true);
+    final var interceptor = new LockMethodInterceptor(keyGenerator, lockTypeResolver, intervalConverter, retriableLockFactory, taskScheduler);
 
     this.advisor = new DefaultPointcutAdvisor(pointcut, interceptor);
   }

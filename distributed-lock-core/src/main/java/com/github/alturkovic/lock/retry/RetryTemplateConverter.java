@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2018 Alen Turkovic
+ * Copyright (c) 2020 Alen Turkovic
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,22 +22,22 @@
  * SOFTWARE.
  */
 
-package com.github.alturkovic.lock.advice;
+package com.github.alturkovic.lock.retry;
 
-import com.github.alturkovic.lock.Lock;
-import java.util.List;
-import lombok.AllArgsConstructor;
+import com.github.alturkovic.lock.Locked;
+import org.springframework.retry.support.RetryTemplate;
 
-@AllArgsConstructor
-public class LockRefreshRunnable implements Runnable {
-  private final Lock lock;
-  private final List<String> keys;
-  private final String storeId;
-  private final String token;
-  private final long expiration;
+/**
+ * Converter which constructs {@link RetryTemplate} based on properties defined in {@link Locked} annotations.
+ */
+@FunctionalInterface
+public interface RetryTemplateConverter {
 
-  @Override
-  public void run() {
-    lock.refresh(keys, storeId, token, expiration);
-  }
+  /**
+   * Construct a {@link RetryTemplate} which retries executions as defined by properties of the {@link Locked} annotation.
+   *
+   * @param locked locked method annotation
+   * @return constructed {@link RetryTemplate}
+   */
+  RetryTemplate construct(Locked locked);
 }

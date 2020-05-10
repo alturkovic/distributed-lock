@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2018 Alen Turkovic
+ * Copyright (c) 2020 Alen Turkovic
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -56,7 +56,7 @@ public class SimpleRedisLockTest implements InitializingBean {
 
   @Override
   public void afterPropertiesSet() {
-    lock = new SimpleRedisLock(redisTemplate, () -> "abc");
+    lock = new SimpleRedisLock(() -> "abc", redisTemplate);
   }
 
   @Before

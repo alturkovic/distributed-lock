@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2018 Alen Turkovic
+ * Copyright (c) 2020 Alen Turkovic
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,9 +26,13 @@ package com.github.alturkovic.lock.configuration;
 
 import com.github.alturkovic.lock.advice.LockBeanPostProcessor;
 import com.github.alturkovic.lock.advice.LockTypeResolver;
-import com.github.alturkovic.lock.converter.BeanFactoryAwareIntervalConverter;
+import com.github.alturkovic.lock.interval.BeanFactoryAwareIntervalConverter;
+import com.github.alturkovic.lock.interval.IntervalConverter;
 import com.github.alturkovic.lock.key.KeyGenerator;
 import com.github.alturkovic.lock.key.SpelKeyGenerator;
+import com.github.alturkovic.lock.retry.DefaultRetriableLockFactory;
+import com.github.alturkovic.lock.retry.DefaultRetryTemplateConverter;
+import com.github.alturkovic.lock.retry.RetriableLockFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -45,9 +49,26 @@ public class DistributedLockConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  public LockBeanPostProcessor lockBeanPostProcessor(final ConfigurableBeanFactory configurableBeanFactory, final KeyGenerator keyGenerator,
+  public LockBeanPostProcessor lockBeanPostProcessor(final KeyGenerator keyGenerator,
+                                                     final ConfigurableBeanFactory configurableBeanFactory,
+                                                     final IntervalConverter intervalConverter,
+                                                     final RetriableLockFactory retriableLockFactory,
                                                      @Autowired(required = false) final TaskScheduler taskScheduler) {
-    return new LockBeanPostProcessor(new BeanFactoryAwareIntervalConverter(configurableBeanFactory), configurableBeanFactory::getBean, keyGenerator, taskScheduler);
+    final var processor = new LockBeanPostProcessor(keyGenerator, configurableBeanFactory::getBean, intervalConverter, retriableLockFactory, taskScheduler);
+    processor.setBeforeExistingAdvisors(true);
+    return processor;
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
+  public IntervalConverter intervalConverter(final ConfigurableBeanFactory configurableBeanFactory) {
+    return new BeanFactoryAwareIntervalConverter(configurableBeanFactory);
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
+  public RetriableLockFactory retriableLockFactory(final IntervalConverter intervalConverter) {
+    return new DefaultRetriableLockFactory(new DefaultRetryTemplateConverter(intervalConverter));
   }
 
   @Bean

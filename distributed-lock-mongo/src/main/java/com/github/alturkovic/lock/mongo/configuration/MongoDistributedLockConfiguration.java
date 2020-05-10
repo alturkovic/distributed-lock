@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2018 Alen Turkovic
+ * Copyright (c) 2020 Alen Turkovic
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +26,7 @@ package com.github.alturkovic.lock.mongo.configuration;
 
 import com.github.alturkovic.lock.Lock;
 import com.github.alturkovic.lock.mongo.impl.SimpleMongoLock;
+import java.util.UUID;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -35,6 +36,6 @@ public class MongoDistributedLockConfiguration {
 
   @Bean
   public Lock simpleMongoLock(final MongoTemplate mongoTemplate) {
-    return new SimpleMongoLock(mongoTemplate);
+    return new SimpleMongoLock(() -> UUID.randomUUID().toString(), mongoTemplate);
   }
 }

@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2018 Alen Turkovic
+ * Copyright (c) 2020 Alen Turkovic
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,21 +22,22 @@
  * SOFTWARE.
  */
 
-package com.github.alturkovic.lock.converter;
+package com.github.alturkovic.lock.retry;
 
-import com.github.alturkovic.lock.Interval;
+import com.github.alturkovic.lock.Lock;
+import com.github.alturkovic.lock.Locked;
 
 /**
- * Converter which converts {@link Interval} to milliseconds.
+ * Factory for producing {@link RetriableLock} instances.
  */
-@FunctionalInterface
-public interface IntervalConverter {
+public interface RetriableLockFactory {
 
   /**
-   * Convert {@link Interval} to milliseconds.
+   * Generates a {@link RetriableLock} that will retry {@code lock} token acquisition logic as specified by {@code locked}.
    *
-   * @param interval interval to convert
-   * @return milliseconds represented by the given {@code interval}
+   * @param lock   lock which {@link Lock#acquire} logic should be retried
+   * @param locked annotation describing how to retry
+   * @return a retriable lock version of {@code lock}
    */
-  long toMillis(Interval interval);
+  RetriableLock generate(Lock lock, Locked locked);
 }

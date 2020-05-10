@@ -124,12 +124,22 @@ public class LockConfiguration {
 
 Started tracking the changes since 1.2.0 so no changelogs available for earlier versions.
 
+==== 1.3.0
+
+- CHANGE: Updated Java from 1.8 to 11
+- CHANGE: Refactored lots of coupled code
+- CHANGE: Extracted lots of reusable components such as retriable locks for easier manual control of locks
+- BUGFIX: `LockBeanPostProcessor` will now fire after existing advisors to support transactional advisors
+
 ==== 1.2.2
+
 - CHANGE: Removed explicit `ParameterNameDiscoverer` from `SpelKeyGenerator` which now uses the one provided by the `CachedExpressionEvaluator`
 - CHANGE: Used `AopUtils` once and passed the evaluated method to `SpelKeyGenerator` so it doesn't have to evaluate the same thing as `LockMethodInterceptor`
 
 ==== 1.2.1
-- FEATURE: Lock refreshing has been added. Check the 'Lock refresh' chapter for more details
+
+- FEATURE: Lock refreshing has been added.
+Check the 'Lock refresh' chapter for more details
 - BUGFIX: `@RedisMultiLocked` was using `#executionPath` as prefix instead of an expression
 - BUGFIX: `@RedisMultiLocked` was using `expiration` and `timeout` in milliseconds instead of seconds
 
@@ -169,6 +179,9 @@ Started tracking the changes since 1.2.0 so no changelogs available for earlier 
 
 |1.2.2
 |2.1.0.RELEASE
+
+|1.3.0
+|2.2.7.RELEASE
 |===
 
 === Maven

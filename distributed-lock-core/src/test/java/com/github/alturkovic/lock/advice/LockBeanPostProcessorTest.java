@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2018 Alen Turkovic
+ * Copyright (c) 2020 Alen Turkovic
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,10 +27,11 @@ package com.github.alturkovic.lock.advice;
 import com.github.alturkovic.lock.Interval;
 import com.github.alturkovic.lock.Locked;
 import com.github.alturkovic.lock.advice.support.SimpleLock;
-import com.github.alturkovic.lock.advice.support.SimpleLock.LockedKey;
 import com.github.alturkovic.lock.advice.support.SimpleLocked;
-import com.github.alturkovic.lock.converter.BeanFactoryAwareIntervalConverter;
+import com.github.alturkovic.lock.interval.BeanFactoryAwareIntervalConverter;
 import com.github.alturkovic.lock.key.SpelKeyGenerator;
+import com.github.alturkovic.lock.retry.DefaultRetriableLockFactory;
+import com.github.alturkovic.lock.retry.DefaultRetryTemplateConverter;
 import java.util.concurrent.TimeUnit;
 import org.assertj.core.data.Offset;
 import org.junit.Before;
@@ -50,18 +51,20 @@ public class LockBeanPostProcessorTest {
 
   @Before
   public void setUp() {
-    final DefaultListableBeanFactory beanFactory = new DefaultListableBeanFactory();
+    final var beanFactory = new DefaultListableBeanFactory();
     lock = new SimpleLock();
 
-    final LockTypeResolver lockTypeResolver = Mockito.mock(LockTypeResolver.class);
+    final var lockTypeResolver = Mockito.mock(LockTypeResolver.class);
     when(lockTypeResolver.get(SimpleLock.class)).thenReturn(lock);
 
-    final ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
+    final var scheduler = new ThreadPoolTaskScheduler();
     scheduler.afterPropertiesSet();
 
+    final var keyGenerator = new SpelKeyGenerator(new DefaultConversionService());
+    final var intervalConverter = new BeanFactoryAwareIntervalConverter(beanFactory);
+    final var retriableLockFactory = new DefaultRetriableLockFactory(new DefaultRetryTemplateConverter(intervalConverter));
 
-    final SpelKeyGenerator keyGenerator = new SpelKeyGenerator(new DefaultConversionService());
-    final LockBeanPostProcessor processor = new LockBeanPostProcessor(new BeanFactoryAwareIntervalConverter(beanFactory), lockTypeResolver, keyGenerator, scheduler);
+    final var processor = new LockBeanPostProcessor(keyGenerator, lockTypeResolver, intervalConverter, retriableLockFactory, scheduler);
     processor.afterPropertiesSet();
 
     beanFactory.addBeanPostProcessor(processor);
@@ -132,7 +135,7 @@ public class LockBeanPostProcessorTest {
   @Test
   public void shouldRefreshLock() throws InterruptedException {
     lockedInterface.sleep();
-    final LockedKey lockedKey = this.lock.getLockMap().get("lock").get(0);
+    final var lockedKey = this.lock.getLockMap().get("lock").get(0);
     assertThat(lockedKey.getUpdatedAt()).withFailMessage(lockedKey.toString()).isCloseTo(System.currentTimeMillis(), Offset.offset(200L));
     assertThat(lockedKey.getKey()).isEqualTo("com.github.alturkovic.lock.advice.LockBeanPostProcessorTest.LockedInterfaceImpl.sleep");
 

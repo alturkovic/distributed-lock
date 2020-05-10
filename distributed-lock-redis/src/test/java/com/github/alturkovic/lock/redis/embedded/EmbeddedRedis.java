@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2018 Alen Turkovic
+ * Copyright (c) 2020 Alen Turkovic
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +29,6 @@ import java.net.ServerSocket;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
-import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.stereotype.Component;
 import redis.embedded.RedisServer;
@@ -42,14 +41,14 @@ public class EmbeddedRedis {
   @PostConstruct
   public void start() throws IOException {
     // find free port
-    final ServerSocket serverSocket = new ServerSocket(0);
-    final Integer port = serverSocket.getLocalPort();
+    final var serverSocket = new ServerSocket(0);
+    final var port = serverSocket.getLocalPort();
     serverSocket.close();
 
     server = RedisServer.builder().setting("bind 127.0.0.1").port(port).build(); // bind to ignore windows firewall popup each time the server starts
     server.start();
 
-    final LettuceConnectionFactory connectionFactory = new LettuceConnectionFactory(new RedisStandaloneConfiguration("localhost", port));
+    final var connectionFactory = new LettuceConnectionFactory(new RedisStandaloneConfiguration("localhost", port));
     connectionFactory.setDatabase(0);
     connectionFactory.afterPropertiesSet();
 

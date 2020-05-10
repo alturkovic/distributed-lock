@@ -22,25 +22,38 @@
  * SOFTWARE.
  */
 
-package com.github.alturkovic.lock.mongo.model;
+package com.github.alturkovic.lock.interval;
 
-import com.github.alturkovic.lock.Locked;
-import java.time.LocalDateTime;
+import com.github.alturkovic.lock.Interval;
 import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.Id;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.util.StringUtils;
 
 /**
- * Make sure you create a TTL index in your {@link Locked#storeId()} collection on {@code expireAt} field to enable lock expiration.
- * You might also want to index the {@code token} field for better search performance.
+ * {@link IntervalConverter} capable of resolving properties.
  */
-@Data
-@NoArgsConstructor
 @AllArgsConstructor
-public class LockDocument {
-  @Id
-  private String id;
-  private LocalDateTime expireAt;
-  private String token;
+public class BeanFactoryAwareIntervalConverter implements IntervalConverter {
+  private final ConfigurableBeanFactory beanFactory;
+
+  @Override
+  public long toMillis(final Interval interval) {
+    return convertToMilliseconds(interval, resolveMilliseconds(interval));
+  }
+
+  private String resolveMilliseconds(final Interval interval) {
+    final var value = beanFactory.resolveEmbeddedValue(interval.value());
+    if (!StringUtils.hasText(value)) {
+      throw new IllegalArgumentException("Cannot convert interval " + interval + " to milliseconds");
+    }
+    return value;
+  }
+
+  private long convertToMilliseconds(final Interval interval, final String value) {
+    try {
+      return interval.unit().toMillis(Long.parseLong(value));
+    } catch (final NumberFormatException e) {
+      throw new IllegalArgumentException("Cannot convert interval " + interval + " to milliseconds", e);
+    }
+  }
 }

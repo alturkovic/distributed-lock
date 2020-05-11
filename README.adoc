@@ -320,18 +320,19 @@ public void runLockedWithMyCustomLock() {
 This is the default key generator the advice uses. If you wish to use your own, simply write your own and define it as a `@Bean`.
 
 The default key generator has access to the currently executing context, meaning you can access your fields and methods from SpEL.
-It uses the `https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/core/DefaultParameterNameDiscoverer.html[DefaultParameterNameDiscoverer]` to discover parameter names, so you
-can access your parameters in several different ways:
+It uses the `https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/core/DefaultParameterNameDiscoverer.html[DefaultParameterNameDiscoverer]` to discover parameter names, so you can access your parameters in several different ways:
 
 1. using `p#` syntax, where `#` is the position of the parameter, for an example: `p0` for the first parameter
 2. using `a#` syntax, where `#` is the position of the parameter, for an example: `a2` for the third parameter
 3. using the parameter name, for an example, `#message` -- *REQUIRES `-parameters` compiler flag*
 
-A special variable named `executionPath` is used to define the method called. This is the default `expression` used to describe the annotated method.  
+A special variable named `executionPath` is used to define the method called.
+This is the default `expression` used to describe the annotated method.
 
-All validated expressions that result in an `Iterable` or an array will be converted to `List<String>` and all other values will be wrapped with `Collections.toSingletonList`.
+All validated expressions that result in an `Iterable` or an array will be converted to `List<String>` and all other values will be wrapped with `Collections.singletonList`.
 Elements of `Iterable` or array will also be converted to Strings using the
-`https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/core/convert/ConversionService.html[ConversionService]`. Custom converters can be registered.
+`https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/core/convert/ConversionService.html[ConversionService]`.
+Custom converters can be registered.
 More about Spring conversion can be found https://docs.spring.io/spring/docs/current/spring-framework-reference/core.html#core-convert[here].
 
 For more examples, take a look at `com.github.alturkovic.lock.key.SpelKeyGeneratorTest`.

@@ -28,6 +28,7 @@ import com.github.alturkovic.lock.Lock;
 import com.github.alturkovic.lock.redis.embedded.EmbeddedRedis;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.assertj.core.data.Offset;
 import org.junit.Before;
@@ -70,7 +71,7 @@ public class MultiRedisLockTest implements InitializingBean {
 
   @Test
   public void shouldLockSingleKey() {
-    final var token = lock.acquire(Collections.singletonList("1"), "locks", 1000);
+    final String token = lock.acquire(Collections.singletonList("1"), "locks", 1000);
     assertThat(token).isEqualTo("abc");
     assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("abc");
     assertThat(redisTemplate.getExpire("locks:1", TimeUnit.MILLISECONDS)).isCloseTo(1000, Offset.offset(100L));
@@ -78,7 +79,7 @@ public class MultiRedisLockTest implements InitializingBean {
 
   @Test
   public void shouldLockMultipleKeys() {
-    final var token = lock.acquire(Arrays.asList("1", "2"), "locks", 1000);
+    final String token = lock.acquire(Arrays.asList("1", "2"), "locks", 1000);
     assertThat(token).isEqualTo("abc");
     assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("abc");
     assertThat(redisTemplate.opsForValue().get("locks:2")).isEqualTo("abc");
@@ -91,7 +92,7 @@ public class MultiRedisLockTest implements InitializingBean {
     redisTemplate.opsForValue().set("locks:1", "def");
     redisTemplate.opsForValue().set("locks:2", "ghi");
 
-    final var token = lock.acquire(Arrays.asList("1", "2"), "locks", 1000);
+    final String token = lock.acquire(Arrays.asList("1", "2"), "locks", 1000);
     assertThat(token).isNull();
     assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("def");
     assertThat(redisTemplate.opsForValue().get("locks:2")).isEqualTo("ghi");
@@ -101,7 +102,7 @@ public class MultiRedisLockTest implements InitializingBean {
   public void shouldNotLockWhenLockIsPartiallyTaken() {
     redisTemplate.opsForValue().set("locks:1", "def");
 
-    final var token = lock.acquire(Arrays.asList("1", "2"), "locks", 1000);
+    final String token = lock.acquire(Arrays.asList("1", "2"), "locks", 1000);
     assertThat(token).isNull();
     assertThat(redisTemplate.opsForValue().get("locks:1")).isEqualTo("def");
     assertThat(redisTemplate.opsForValue().get("locks:2")).isNull();
@@ -142,9 +143,9 @@ public class MultiRedisLockTest implements InitializingBean {
 
   @Test
   public void shouldRefresh() throws InterruptedException {
-    final var keys = Arrays.asList("1", "2");
+    final List<String> keys = Arrays.asList("1", "2");
 
-    final var token = lock.acquire(keys, "locks", 1000);
+    final String token = lock.acquire(keys, "locks", 1000);
     assertThat(redisTemplate.getExpire("locks:1", TimeUnit.MILLISECONDS)).isCloseTo(1000, Offset.offset(100L));
     assertThat(redisTemplate.getExpire("locks:2", TimeUnit.MILLISECONDS)).isCloseTo(1000, Offset.offset(100L));
     Thread.sleep(500);
@@ -157,9 +158,9 @@ public class MultiRedisLockTest implements InitializingBean {
 
   @Test
   public void shouldNotRefreshBecauseOneKeyExpired() {
-    final var keys = Arrays.asList("1", "2");
+    final List<String> keys = Arrays.asList("1", "2");
 
-    final var token = lock.acquire(keys, "locks", 1000);
+    final String token = lock.acquire(keys, "locks", 1000);
     assertThat(redisTemplate.getExpire("locks:1", TimeUnit.MILLISECONDS)).isCloseTo(1000, Offset.offset(100L));
     assertThat(redisTemplate.getExpire("locks:2", TimeUnit.MILLISECONDS)).isCloseTo(1000, Offset.offset(100L));
 
@@ -172,9 +173,9 @@ public class MultiRedisLockTest implements InitializingBean {
 
   @Test
   public void shouldNotRefreshBecauseTokenForOneKeyDoesNotMatch() {
-    final var keys = Arrays.asList("1", "2");
+    final List<String> keys = Arrays.asList("1", "2");
 
-    final var token = lock.acquire(keys, "locks", 1000);
+    final String token = lock.acquire(keys, "locks", 1000);
     assertThat(redisTemplate.getExpire("locks:1", TimeUnit.MILLISECONDS)).isCloseTo(1000, Offset.offset(100L));
     assertThat(redisTemplate.getExpire("locks:2", TimeUnit.MILLISECONDS)).isCloseTo(1000, Offset.offset(100L));
 

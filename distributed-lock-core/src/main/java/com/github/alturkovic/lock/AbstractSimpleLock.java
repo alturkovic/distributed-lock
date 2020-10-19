@@ -41,7 +41,7 @@ public abstract class AbstractSimpleLock implements Lock {
   public String acquire(final List<String> keys, final String storeId, final long expiration) {
     Assert.isTrue(keys.size() == 1, "Cannot acquire lock for multiple keys with this lock");
 
-    final var token = tokenSupplier.get();
+    final String token = tokenSupplier.get();
     if (StringUtils.isEmpty(token)) {
       throw new IllegalStateException("Cannot lock with empty token");
     }

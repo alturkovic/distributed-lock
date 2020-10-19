@@ -3,7 +3,7 @@
 Distributed lock ensures your method cannot be run in parallel from multiple JVMs (cluster of servers, microservices, ...).
 It uses a common store to keep track of used locks and your method needs to acquire one or more locks to run.
 
-By default, locks follow methods lifecycle. They are obtained at the start of the method and released at the end of the method.
+By default, locks follow methods lifecycle.They are obtained at the start of the method and released at the end of the method.
 Manual controlling is supported and explained later in this document.
 
 All locks acquired by lock implementations in this project will expire after 10 seconds, timeout after 1 second if unable to acquire lock and sleep for 50 ms between retries.
@@ -19,9 +19,9 @@ This will import the configuration that will autoconfigure the
 
 Project provides the following out-of-the-box lock implementations:
 
- * JDBC
- * Mongo
- * Redis
+* JDBC
+* Mongo
+* Redis
 
 === JDBC locks
 
@@ -123,6 +123,10 @@ public class LockConfiguration {
 == Changelog
 
 Started tracking the changes since 1.2.0 so no changelogs available for earlier versions.
+
+==== 1.4.0
+
+- CHANGE: Switched back to Java 1.8 from 11 since most projects don't yet use 11
 
 ==== 1.3.0
 

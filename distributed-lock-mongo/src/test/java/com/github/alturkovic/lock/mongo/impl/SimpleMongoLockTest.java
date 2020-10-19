@@ -66,12 +66,12 @@ public class SimpleMongoLockTest implements InitializingBean {
 
   @Test
   public void shouldLock() {
-    final var expectedExpiration = LocalDateTime.now().plus(1000, ChronoUnit.MILLIS);
+    final LocalDateTime expectedExpiration = LocalDateTime.now().plus(1000, ChronoUnit.MILLIS);
 
-    final var token = lock.acquire(Collections.singletonList("1"), "locks", 1000);
+    final String token = lock.acquire(Collections.singletonList("1"), "locks", 1000);
     assertThat(token).isEqualTo("abc");
 
-    final var document = mongoTemplate.findById("1", LockDocument.class, "locks");
+    final LockDocument document = mongoTemplate.findById("1", LockDocument.class, "locks");
     assertThat(document.getToken()).isEqualTo("abc");
     assertThat(document.getExpireAt()).isCloseTo(expectedExpiration, new TemporalUnitWithinOffset(100, ChronoUnit.MILLIS));
   }
@@ -80,7 +80,7 @@ public class SimpleMongoLockTest implements InitializingBean {
   public void shouldNotLock() {
     mongoTemplate.insert(new LockDocument("1", LocalDateTime.now().plusMinutes(1), "def"), "locks");
 
-    final var token = lock.acquire(Collections.singletonList("1"), "locks", 1000);
+    final String token = lock.acquire(Collections.singletonList("1"), "locks", 1000);
     assertThat(token).isNull();
     assertThat(mongoTemplate.findById("1", LockDocument.class, "locks").getToken()).isEqualTo("def");
   }
@@ -89,7 +89,7 @@ public class SimpleMongoLockTest implements InitializingBean {
   public void shouldRelease() {
     mongoTemplate.insert(new LockDocument("1", LocalDateTime.now().plusMinutes(1), "abc"), "locks");
 
-    final var released = lock.release(Collections.singletonList("1"), "locks", "abc");
+    final boolean released = lock.release(Collections.singletonList("1"), "locks", "abc");
     assertThat(released).isTrue();
     assertThat(mongoTemplate.findById("1", LockDocument.class, "locks")).isNull();
   }
@@ -98,16 +98,16 @@ public class SimpleMongoLockTest implements InitializingBean {
   public void shouldNotRelease() {
     mongoTemplate.insert(new LockDocument("1", LocalDateTime.now().plusMinutes(1), "def"), "locks");
 
-    final var released = lock.release(Collections.singletonList("1"), "locks", "abc");
+    final boolean released = lock.release(Collections.singletonList("1"), "locks", "abc");
     assertThat(released).isFalse();
     assertThat(mongoTemplate.findById("1", LockDocument.class, "locks").getToken()).isEqualTo("def");
   }
 
   @Test
   public void shouldRefresh() throws InterruptedException {
-    var expectedExpiration = LocalDateTime.now().plus(1000, ChronoUnit.MILLIS);
+    LocalDateTime expectedExpiration = LocalDateTime.now().plus(1000, ChronoUnit.MILLIS);
 
-    final var token = lock.acquire(Collections.singletonList("1"), "locks", 1000);
+    final String token = lock.acquire(Collections.singletonList("1"), "locks", 1000);
     assertThat(mongoTemplate.findById("1", LockDocument.class, "locks").getExpireAt()).isCloseTo(expectedExpiration, new TemporalUnitWithinOffset(100, ChronoUnit.MILLIS));
     Thread.sleep(500);
     assertThat(mongoTemplate.findById("1", LockDocument.class, "locks").getExpireAt()).isCloseTo(expectedExpiration, new TemporalUnitWithinOffset(100, ChronoUnit.MILLIS));
@@ -118,7 +118,7 @@ public class SimpleMongoLockTest implements InitializingBean {
 
   @Test
   public void shouldNotRefreshBecauseTokenDoesNotMatch() {
-    final var expectedExpiration = LocalDateTime.now().plus(1000, ChronoUnit.MILLIS);
+    final LocalDateTime expectedExpiration = LocalDateTime.now().plus(1000, ChronoUnit.MILLIS);
 
     lock.acquire(Collections.singletonList("1"), "locks", 1000);
     assertThat(mongoTemplate.findById("1", LockDocument.class, "locks").getExpireAt()).isCloseTo(expectedExpiration, new TemporalUnitWithinOffset(100, ChronoUnit.MILLIS));

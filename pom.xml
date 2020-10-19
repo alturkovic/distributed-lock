@@ -6,7 +6,7 @@
 
   <groupId>com.github.alturkovic</groupId>
   <artifactId>distributed-lock</artifactId>
-  <version>1.3.0</version>
+  <version>1.4.0</version>
   <packaging>pom</packaging>
 
   <name>distributed-lock</name>
@@ -43,7 +43,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <java.version>11</java.version>
+    <java.version>1.8</java.version>
   </properties>
 
   <modules>
@@ -90,10 +90,17 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.6.1</version>
+        <configuration>
+          <source>${java.version}</source>
+          <target>${java.version}</target>
+          <encoding>${project.build.sourceEncoding}</encoding>
+        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
+        <version>3.2.1</version>
         <executions>
           <execution>
             <id>attach-sources</id>
@@ -106,11 +113,12 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
+        <version>3.2.0</version>
         <configuration>
           <additionalOptions>
             <additionalOption>-Xdoclint:none</additionalOption>
           </additionalOptions>
-          <javadocExecutable>${java.home}/bin/javadoc</javadocExecutable>
+          <javadocExecutable>${java.home}/..//bin/javadoc</javadocExecutable>
         </configuration>
         <executions>
           <execution>

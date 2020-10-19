@@ -54,7 +54,7 @@ public class LockMethodInterceptor implements MethodInterceptor {
 
   @Override
   public Object invoke(final MethodInvocation invocation) throws Throwable {
-    final var context = new LockContext(invocation);
+    final LockContext context = new LockContext(invocation);
     try {
       return executeLockedMethod(invocation, context);
     } finally {
@@ -63,7 +63,7 @@ public class LockMethodInterceptor implements MethodInterceptor {
   }
 
   private Object executeLockedMethod(final MethodInvocation invocation, final LockContext context) throws Throwable {
-    final var expiration = intervalConverter.toMillis(context.getLocked().expiration());
+    final long expiration = intervalConverter.toMillis(context.getLocked().expiration());
     try {
       context.setToken(retriableLockFactory.generate(context.getLock(), context.getLocked()).acquire(context.getKeys(), context.getLocked().storeId(), expiration));
     } catch (final Exception e) {
@@ -77,7 +77,7 @@ public class LockMethodInterceptor implements MethodInterceptor {
   }
 
   private void scheduleLockRefresh(final LockContext context, final long expiration) {
-    final var refresh = intervalConverter.toMillis(context.getLocked().refresh());
+    final long refresh = intervalConverter.toMillis(context.getLocked().refresh());
     if (refresh > 0) {
       context.setScheduledFuture(taskScheduler.scheduleAtFixedRate(constructRefreshRunnable(context, expiration), refresh));
     }
@@ -88,13 +88,13 @@ public class LockMethodInterceptor implements MethodInterceptor {
   }
 
   private void cleanAfterExecution(final LockContext context) {
-    final var scheduledFuture = context.getScheduledFuture();
+    final ScheduledFuture<?> scheduledFuture = context.getScheduledFuture();
     if (scheduledFuture != null && !scheduledFuture.isCancelled() && !scheduledFuture.isDone()) {
       scheduledFuture.cancel(true);
     }
 
     if (StringUtils.hasText(context.getToken()) && !context.getLocked().manuallyReleased()) {
-      final var released = context.getLock().release(context.getKeys(), context.getLocked().storeId(), context.getToken());
+      final boolean released = context.getLock().release(context.getKeys(), context.getLocked().storeId(), context.getToken());
       if (released) {
         log.debug("Released lock for keys {} with token {} in store {}", context.getKeys(), context.getToken(), context.getLocked().storeId());
       } else {

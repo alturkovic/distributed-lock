@@ -54,7 +54,7 @@ public class DistributedLockConfiguration {
                                                      final IntervalConverter intervalConverter,
                                                      final RetriableLockFactory retriableLockFactory,
                                                      @Autowired(required = false) final TaskScheduler taskScheduler) {
-    final var processor = new LockBeanPostProcessor(keyGenerator, configurableBeanFactory::getBean, intervalConverter, retriableLockFactory, taskScheduler);
+    final LockBeanPostProcessor processor = new LockBeanPostProcessor(keyGenerator, configurableBeanFactory::getBean, intervalConverter, retriableLockFactory, taskScheduler);
     processor.setBeforeExistingAdvisors(true);
     return processor;
   }

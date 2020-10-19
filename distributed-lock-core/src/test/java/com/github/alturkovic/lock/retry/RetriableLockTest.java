@@ -26,7 +26,7 @@ package com.github.alturkovic.lock.retry;
 
 import com.github.alturkovic.lock.Lock;
 import com.github.alturkovic.lock.exception.LockNotAvailableException;
-import java.util.List;
+import java.util.Collections;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -54,11 +54,11 @@ public class RetriableLockTest {
     when(lock.acquire(anyList(), anyString(), anyLong()))
       .thenReturn("abc");
 
-    final var retryTemplate = new RetryTemplate();
+    final RetryTemplate retryTemplate = new RetryTemplate();
     retryTemplate.setRetryPolicy(new NeverRetryPolicy());
 
-    final var retriableLock = new RetriableLock(lock, retryTemplate);
-    final var token = retriableLock.acquire(List.of("key"), "defaultStore", 1000L);
+    final RetriableLock retriableLock = new RetriableLock(lock, retryTemplate);
+    final String token = retriableLock.acquire(Collections.singletonList("key"), "defaultStore", 1000L);
 
     assertThat(token).isEqualTo("abc");
   }
@@ -69,11 +69,11 @@ public class RetriableLockTest {
       .thenReturn(null)
       .thenReturn("abc");
 
-    final var retryTemplate = new RetryTemplate();
+    final RetryTemplate retryTemplate = new RetryTemplate();
     retryTemplate.setRetryPolicy(new SimpleRetryPolicy(2));
 
-    final var retriableLock = new RetriableLock(lock, retryTemplate);
-    final var token = retriableLock.acquire(List.of("key"), "defaultStore", 1000L);
+    final RetriableLock retriableLock = new RetriableLock(lock, retryTemplate);
+    final String token = retriableLock.acquire(Collections.singletonList("key"), "defaultStore", 1000L);
 
     assertThat(token).isEqualTo("abc");
     verify(lock, times(2)).acquire(anyList(), anyString(), anyLong());
@@ -84,11 +84,11 @@ public class RetriableLockTest {
     when(lock.acquire(anyList(), anyString(), anyLong()))
       .thenReturn(null);
 
-    final var retryTemplate = new RetryTemplate();
+    final RetryTemplate retryTemplate = new RetryTemplate();
     retryTemplate.setRetryPolicy(new NeverRetryPolicy());
 
-    final var retriableLock = new RetriableLock(lock, retryTemplate);
-    final var token = retriableLock.acquire(List.of("key"), "defaultStore", 1000L);
+    final RetriableLock retriableLock = new RetriableLock(lock, retryTemplate);
+    final String token = retriableLock.acquire(Collections.singletonList("key"), "defaultStore", 1000L);
 
     assertThat(token).isEqualTo("abc");
   }

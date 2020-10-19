@@ -29,6 +29,7 @@ import com.github.alturkovic.lock.interval.IntervalConverter;
 import com.github.alturkovic.lock.key.KeyGenerator;
 import com.github.alturkovic.lock.retry.RetriableLockFactory;
 import lombok.AllArgsConstructor;
+import org.aopalliance.intercept.Interceptor;
 import org.springframework.aop.framework.AbstractAdvisingBeanPostProcessor;
 import org.springframework.aop.support.DefaultPointcutAdvisor;
 import org.springframework.aop.support.annotation.AnnotationMatchingPointcut;
@@ -48,8 +49,8 @@ public class LockBeanPostProcessor extends AbstractAdvisingBeanPostProcessor imp
 
   @Override
   public void afterPropertiesSet() {
-    final var pointcut = new AnnotationMatchingPointcut(null, Locked.class, true);
-    final var interceptor = new LockMethodInterceptor(keyGenerator, lockTypeResolver, intervalConverter, retriableLockFactory, taskScheduler);
+    final AnnotationMatchingPointcut pointcut = new AnnotationMatchingPointcut(null, Locked.class, true);
+    final Interceptor interceptor = new LockMethodInterceptor(keyGenerator, lockTypeResolver, intervalConverter, retriableLockFactory, taskScheduler);
 
     this.advisor = new DefaultPointcutAdvisor(pointcut, interceptor);
   }

@@ -88,23 +88,23 @@ public class MultiRedisLock implements Lock {
 
   @Override
   public String acquire(final List<String> keys, final String storeId, final long expiration) {
-    final var keysWithStoreIdPrefix = keys.stream().map(key -> storeId + ":" + key).collect(Collectors.toList());
-    final var token = tokenSupplier.get();
+    final List<String> keysWithStoreIdPrefix = keys.stream().map(key -> storeId + ":" + key).collect(Collectors.toList());
+    final String token = tokenSupplier.get();
 
     if (StringUtils.isEmpty(token)) {
       throw new IllegalStateException("Cannot lock with empty token");
     }
 
-    final var locked = stringRedisTemplate.execute(lockScript, keysWithStoreIdPrefix, token, String.valueOf(expiration));
+    final boolean locked = stringRedisTemplate.execute(lockScript, keysWithStoreIdPrefix, token, String.valueOf(expiration));
     log.debug("Tried to acquire lock for keys {} in store {} with token {}. Locked: {}", keys, storeId, token, locked);
     return locked ? token : null;
   }
 
   @Override
   public boolean release(final List<String> keys, final String storeId, final String token) {
-    final var keysWithStoreIdPrefix = keys.stream().map(key -> storeId + ":" + key).collect(Collectors.toList());
+    final List<String> keysWithStoreIdPrefix = keys.stream().map(key -> storeId + ":" + key).collect(Collectors.toList());
 
-    final var released = stringRedisTemplate.execute(lockReleaseScript, keysWithStoreIdPrefix, token);
+    final boolean released = stringRedisTemplate.execute(lockReleaseScript, keysWithStoreIdPrefix, token);
     if (released) {
       log.debug("Release script deleted the record for keys {} with token {} in store {}", keys, token, storeId);
     } else {
@@ -115,9 +115,9 @@ public class MultiRedisLock implements Lock {
 
   @Override
   public boolean refresh(final List<String> keys, final String storeId, final String token, final long expiration) {
-    final var keysWithStoreIdPrefix = keys.stream().map(key -> storeId + ":" + key).collect(Collectors.toList());
+    final List<String> keysWithStoreIdPrefix = keys.stream().map(key -> storeId + ":" + key).collect(Collectors.toList());
 
-    final var refreshed = stringRedisTemplate.execute(lockRefreshScript, keysWithStoreIdPrefix, token, String.valueOf(expiration));
+    final boolean refreshed = stringRedisTemplate.execute(lockRefreshScript, keysWithStoreIdPrefix, token, String.valueOf(expiration));
     if (refreshed) {
       log.debug("Refresh script refreshed the expiration for keys {} with token {} in store {}", keys, token, storeId);
     } else {

@@ -27,7 +27,7 @@ package com.github.alturkovic.lock.retry;
 import com.github.alturkovic.lock.Locked;
 import com.github.alturkovic.lock.exception.LockNotAvailableException;
 import com.github.alturkovic.lock.interval.IntervalConverter;
-import java.util.Map;
+import java.util.Collections;
 import lombok.Data;
 import org.springframework.retry.RetryPolicy;
 import org.springframework.retry.backoff.FixedBackOffPolicy;
@@ -42,34 +42,34 @@ public class DefaultRetryTemplateConverter implements RetryTemplateConverter {
 
   @Override
   public RetryTemplate construct(final Locked locked) {
-    final var retryTemplate = new RetryTemplate();
+    final RetryTemplate retryTemplate = new RetryTemplate();
     retryTemplate.setRetryPolicy(resolveLockRetryPolicy(locked));
     retryTemplate.setBackOffPolicy(resolveBackOffPolicy(locked));
     return retryTemplate;
   }
 
   private CompositeRetryPolicy resolveLockRetryPolicy(final Locked locked) {
-    final var compositeRetryPolicy = new CompositeRetryPolicy();
+    final CompositeRetryPolicy compositeRetryPolicy = new CompositeRetryPolicy();
 
-    final var timeoutRetryPolicy = resolveTimeoutRetryPolicy(locked);
-    final var exceptionTypeRetryPolicy = resolveExceptionTypeRetryPolicy();
+    final RetryPolicy timeoutRetryPolicy = resolveTimeoutRetryPolicy(locked);
+    final RetryPolicy exceptionTypeRetryPolicy = resolveExceptionTypeRetryPolicy();
 
     compositeRetryPolicy.setPolicies(new RetryPolicy[]{timeoutRetryPolicy, exceptionTypeRetryPolicy});
     return compositeRetryPolicy;
   }
 
   private RetryPolicy resolveTimeoutRetryPolicy(final Locked locked) {
-    final var timeoutRetryPolicy = new TimeoutRetryPolicy();
+    final TimeoutRetryPolicy timeoutRetryPolicy = new TimeoutRetryPolicy();
     timeoutRetryPolicy.setTimeout(intervalConverter.toMillis(locked.timeout()));
     return timeoutRetryPolicy;
   }
 
   private RetryPolicy resolveExceptionTypeRetryPolicy() {
-    return new SimpleRetryPolicy(Integer.MAX_VALUE, Map.of(LockNotAvailableException.class, true));
+    return new SimpleRetryPolicy(Integer.MAX_VALUE, Collections.singletonMap(LockNotAvailableException.class, true));
   }
 
   private FixedBackOffPolicy resolveBackOffPolicy(final Locked locked) {
-    final var fixedBackOffPolicy = new FixedBackOffPolicy();
+    final FixedBackOffPolicy fixedBackOffPolicy = new FixedBackOffPolicy();
     fixedBackOffPolicy.setBackOffPeriod(intervalConverter.toMillis(locked.retry()));
     return fixedBackOffPolicy;
   }

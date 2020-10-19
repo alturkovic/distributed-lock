@@ -8,7 +8,7 @@
   <parent>
     <groupId>com.github.alturkovic</groupId>
     <artifactId>distributed-lock</artifactId>
-    <version>1.3.0</version>
+    <version>1.4.0</version>
   </parent>
 
   <artifactId>distributed-lock-jdbc</artifactId>

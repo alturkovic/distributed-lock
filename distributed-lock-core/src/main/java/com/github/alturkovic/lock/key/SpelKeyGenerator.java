@@ -27,6 +27,7 @@ package com.github.alturkovic.lock.key;
 import com.github.alturkovic.lock.exception.EvaluationConvertException;
 import java.lang.reflect.Method;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -47,9 +48,8 @@ import org.springframework.util.StringUtils;
 @Data
 @EqualsAndHashCode(callSuper = false)
 public class SpelKeyGenerator extends CachedExpressionEvaluator implements KeyGenerator {
-  private final ConversionService conversionService;
   private final Map<ExpressionKey, Expression> conditionCache = new ConcurrentHashMap<>();
-  private final Map<AnnotatedElementKey, Method> targetMethodCache = new ConcurrentHashMap<>();
+  private final ConversionService conversionService;
 
   @Override
   public List<String> resolveKeys(final String lockKeyPrefix, final String expression, final Object object, final Method method, final Object[] args) {
@@ -74,7 +74,7 @@ public class SpelKeyGenerator extends CachedExpressionEvaluator implements KeyGe
     } else if (expressionValue.getClass().isArray()) {
       list = arrayToList(expressionValue);
     } else {
-      list = List.of(expressionValue.toString());
+      list = Collections.singletonList(expressionValue.toString());
     }
 
     if (CollectionUtils.isEmpty(list)) {
@@ -99,17 +99,17 @@ public class SpelKeyGenerator extends CachedExpressionEvaluator implements KeyGe
 
   private List<String> iterableToList(final Object expressionValue) {
     final TypeDescriptor genericCollection = TypeDescriptor.collection(Collection.class, TypeDescriptor.valueOf(Object.class));
-    final TypeDescriptor stringList = TypeDescriptor.collection(List.class, TypeDescriptor.valueOf(String.class));
-
-    //noinspection unchecked
-    return (List<String>) conversionService.convert(expressionValue, genericCollection, stringList);
+    return toList(expressionValue, genericCollection);
   }
 
   private List<String> arrayToList(final Object expressionValue) {
     final TypeDescriptor genericArray = TypeDescriptor.array(TypeDescriptor.valueOf(Object.class));
-    final TypeDescriptor stringList = TypeDescriptor.collection(List.class, TypeDescriptor.valueOf(String.class));
+    return toList(expressionValue, genericArray);
+  }
 
+  private List<String> toList(final Object expressionValue, final TypeDescriptor from) {
+    final TypeDescriptor listTypeDescriptor = TypeDescriptor.collection(List.class, TypeDescriptor.valueOf(String.class));
     //noinspection unchecked
-    return (List<String>) conversionService.convert(expressionValue, genericArray, stringList);
+    return (List<String>) conversionService.convert(expressionValue, from, listTypeDescriptor);
   }
 }

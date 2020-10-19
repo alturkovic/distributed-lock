@@ -26,6 +26,7 @@ package com.github.alturkovic.lock.redis.impl;
 
 import com.github.alturkovic.lock.AbstractSimpleLock;
 import java.util.Collections;
+import java.util.List;
 import java.util.function.Supplier;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -60,17 +61,17 @@ public class SimpleRedisLock extends AbstractSimpleLock {
 
   @Override
   protected String acquire(final String key, final String storeId, final String token, final long expiration) {
-    final var singletonKeyList = Collections.singletonList(storeId + ":" + key);
-    final var locked = stringRedisTemplate.execute(lockScript, singletonKeyList, token, String.valueOf(expiration));
+    final List<String> singletonKeyList = Collections.singletonList(storeId + ":" + key);
+    final boolean locked = stringRedisTemplate.execute(lockScript, singletonKeyList, token, String.valueOf(expiration));
     log.debug("Tried to acquire lock for key {} with token {} in store {}. Locked: {}", key, token, storeId, locked);
     return locked ? token : null;
   }
 
   @Override
   protected boolean release(final String key, final String storeId, final String token) {
-    final var singletonKeyList = Collections.singletonList(storeId + ":" + key);
+    final List<String> singletonKeyList = Collections.singletonList(storeId + ":" + key);
 
-    final var released = stringRedisTemplate.execute(lockReleaseScript, singletonKeyList, token);
+    final boolean released = stringRedisTemplate.execute(lockReleaseScript, singletonKeyList, token);
     if (released) {
       log.debug("Release script deleted the record for key {} with token {} in store {}", key, token, storeId);
     } else {
@@ -81,9 +82,9 @@ public class SimpleRedisLock extends AbstractSimpleLock {
 
   @Override
   protected boolean refresh(final String key, final String storeId, final String token, final long expiration) {
-    final var singletonKeyList = Collections.singletonList(storeId + ":" + key);
+    final List<String> singletonKeyList = Collections.singletonList(storeId + ":" + key);
 
-    final var refreshed = stringRedisTemplate.execute(lockRefreshScript, singletonKeyList, token, String.valueOf(expiration));
+    final boolean refreshed = stringRedisTemplate.execute(lockRefreshScript, singletonKeyList, token, String.valueOf(expiration));
     if (refreshed) {
       log.debug("Refresh script updated the expiration for key {} with token {} in store {} to {}", key, token, storeId, expiration);
     } else {

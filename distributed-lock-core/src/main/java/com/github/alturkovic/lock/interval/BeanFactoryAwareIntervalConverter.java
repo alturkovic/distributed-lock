@@ -42,7 +42,7 @@ public class BeanFactoryAwareIntervalConverter implements IntervalConverter {
   }
 
   private String resolveMilliseconds(final Interval interval) {
-    final var value = beanFactory.resolveEmbeddedValue(interval.value());
+    final String value = beanFactory.resolveEmbeddedValue(interval.value());
     if (!StringUtils.hasText(value)) {
       throw new IllegalArgumentException("Cannot convert interval " + interval + " to milliseconds");
     }

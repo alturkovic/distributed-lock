@@ -26,6 +26,8 @@ package com.github.alturkovic.lock.mongo.impl;
 
 import com.github.alturkovic.lock.AbstractSimpleLock;
 import com.github.alturkovic.lock.mongo.model.LockDocument;
+import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.UpdateResult;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.function.Supplier;
@@ -47,24 +49,24 @@ public class SimpleMongoLock extends AbstractSimpleLock {
 
   @Override
   protected String acquire(final String key, final String storeId, final String token, final long expiration) {
-    final var query = Query.query(Criteria.where("_id").is(key));
-    final var update = new Update()
+    final Query query = Query.query(Criteria.where("_id").is(key));
+    final Update update = new Update()
       .setOnInsert("_id", key)
       .setOnInsert("expireAt", LocalDateTime.now().plus(expiration, ChronoUnit.MILLIS))
       .setOnInsert("token", token);
 
-    final var options = new FindAndModifyOptions().upsert(true).returnNew(true);
-    final var doc = mongoTemplate.findAndModify(query, update, options, LockDocument.class, storeId);
+    final FindAndModifyOptions options = new FindAndModifyOptions().upsert(true).returnNew(true);
+    final LockDocument doc = mongoTemplate.findAndModify(query, update, options, LockDocument.class, storeId);
 
-    final var locked = doc.getToken().equals(token);
+    final boolean locked = doc.getToken().equals(token);
     log.debug("Tried to acquire lock for key {} with token {} in store {}. Locked: {}", key, token, storeId, locked);
     return locked ? token : null;
   }
 
   @Override
   protected boolean release(final String key, final String storeId, final String token) {
-    final var deleted = mongoTemplate.remove(Query.query(Criteria.where("_id").is(key).and("token").is(token)), storeId);
-    final var released = deleted.getDeletedCount() == 1;
+    final DeleteResult deleted = mongoTemplate.remove(Query.query(Criteria.where("_id").is(key).and("token").is(token)), storeId);
+    final boolean released = deleted.getDeletedCount() == 1;
     if (released) {
       log.debug("Remove query successfully affected 1 record for key {} with token {} in store {}", key, token, storeId);
     } else if (deleted.getDeletedCount() > 0) {
@@ -78,11 +80,11 @@ public class SimpleMongoLock extends AbstractSimpleLock {
 
   @Override
   protected boolean refresh(final String key, final String storeId, final String token, final long expiration) {
-    final var updated = mongoTemplate.updateFirst(Query.query(Criteria.where("_id").is(key).and("token").is(token)),
+    final UpdateResult updated = mongoTemplate.updateFirst(Query.query(Criteria.where("_id").is(key).and("token").is(token)),
       Update.update("expireAt", LocalDateTime.now().plus(expiration, ChronoUnit.MILLIS)),
       storeId);
 
-    final var refreshed = updated.getModifiedCount() == 1;
+    final boolean refreshed = updated.getModifiedCount() == 1;
     if (refreshed) {
       log.debug("Refresh query successfully affected 1 record for key {} with token {} in store {}", key, token, storeId);
     } else if (updated.getModifiedCount() > 0) {

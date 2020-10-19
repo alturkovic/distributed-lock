@@ -29,6 +29,7 @@ import com.github.alturkovic.lock.Locked;
 import com.github.alturkovic.lock.interval.BeanFactoryAwareIntervalConverter;
 import com.github.alturkovic.lock.interval.IntervalConverter;
 import org.junit.Test;
+import org.springframework.beans.ConfigurablePropertyAccessor;
 import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.retry.RetryPolicy;
@@ -42,14 +43,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class DefaultRetryTemplateConverterTest {
 
-  private IntervalConverter intervalConverter = new BeanFactoryAwareIntervalConverter(new DefaultListableBeanFactory());
+  private final IntervalConverter intervalConverter = new BeanFactoryAwareIntervalConverter(new DefaultListableBeanFactory());
 
   @Test
   @Locked
   public void shouldConstructDefaultRetryTemplate() {
-    final var locked = new Object() {}.getClass().getEnclosingMethod().getAnnotation(Locked.class);
-    final var converter = new DefaultRetryTemplateConverter(intervalConverter);
-    final var retryTemplate = converter.construct(locked);
+    final Locked locked = new Object() {}.getClass().getEnclosingMethod().getAnnotation(Locked.class);
+    final RetryTemplateConverter converter = new DefaultRetryTemplateConverter(intervalConverter);
+    final RetryTemplate retryTemplate = converter.construct(locked);
 
     assertRetryTemplateConstruction(retryTemplate, 1000L, 50L);
   }
@@ -57,23 +58,23 @@ public class DefaultRetryTemplateConverterTest {
   @Test
   @Locked(retry = @Interval("100"), timeout = @Interval("2000"))
   public void shouldConstructCustomizedRetryTemplate() {
-    final var locked = new Object() {}.getClass().getEnclosingMethod().getAnnotation(Locked.class);
-    final var converter = new DefaultRetryTemplateConverter(intervalConverter);
-    final var retryTemplate = converter.construct(locked);
+    final Locked locked = new Object() {}.getClass().getEnclosingMethod().getAnnotation(Locked.class);
+    final RetryTemplateConverter converter = new DefaultRetryTemplateConverter(intervalConverter);
+    final RetryTemplate retryTemplate = converter.construct(locked);
 
     assertRetryTemplateConstruction(retryTemplate, 2000L, 100L);
   }
 
   // is there a better way to test the RetryTemplate construction?
   private void assertRetryTemplateConstruction(final RetryTemplate retryTemplate, final long timeout, final long backOff) {
-    final var wrapper = PropertyAccessorFactory.forDirectFieldAccess(retryTemplate);
+    final ConfigurablePropertyAccessor wrapper = PropertyAccessorFactory.forDirectFieldAccess(retryTemplate);
 
     assertThat(wrapper.getPropertyValue("retryPolicy")).isInstanceOf(CompositeRetryPolicy.class);
     assertThat((RetryPolicy[]) wrapper.getPropertyValue("retryPolicy.policies"))
       .hasSize(2)
       .anyMatch(policy1 -> {
         if (policy1 instanceof TimeoutRetryPolicy) {
-          final var timeoutRetryPolicy = (TimeoutRetryPolicy) policy1;
+          final TimeoutRetryPolicy timeoutRetryPolicy = (TimeoutRetryPolicy) policy1;
           assertThat(timeoutRetryPolicy.getTimeout()).isEqualTo(timeout);
           return true;
         }
@@ -81,7 +82,7 @@ public class DefaultRetryTemplateConverterTest {
       })
       .anyMatch(policy2 -> {
         if (policy2 instanceof SimpleRetryPolicy) {
-          final var simpleRetryPolicy = (SimpleRetryPolicy) policy2;
+          final SimpleRetryPolicy simpleRetryPolicy = (SimpleRetryPolicy) policy2;
           assertThat(simpleRetryPolicy.getMaxAttempts()).isEqualTo(Integer.MAX_VALUE);
           return true;
         }

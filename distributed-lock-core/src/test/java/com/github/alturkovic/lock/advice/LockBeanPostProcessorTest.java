@@ -27,11 +27,14 @@ package com.github.alturkovic.lock.advice;
 import com.github.alturkovic.lock.Interval;
 import com.github.alturkovic.lock.Locked;
 import com.github.alturkovic.lock.advice.support.SimpleLock;
+import com.github.alturkovic.lock.advice.support.SimpleLock.LockedKey;
 import com.github.alturkovic.lock.advice.support.SimpleLocked;
 import com.github.alturkovic.lock.interval.BeanFactoryAwareIntervalConverter;
+import com.github.alturkovic.lock.interval.IntervalConverter;
 import com.github.alturkovic.lock.key.SpelKeyGenerator;
 import com.github.alturkovic.lock.retry.DefaultRetriableLockFactory;
 import com.github.alturkovic.lock.retry.DefaultRetryTemplateConverter;
+import com.github.alturkovic.lock.retry.RetriableLockFactory;
 import java.util.concurrent.TimeUnit;
 import org.assertj.core.data.Offset;
 import org.junit.Before;
@@ -51,20 +54,20 @@ public class LockBeanPostProcessorTest {
 
   @Before
   public void setUp() {
-    final var beanFactory = new DefaultListableBeanFactory();
+    final DefaultListableBeanFactory beanFactory = new DefaultListableBeanFactory();
     lock = new SimpleLock();
 
-    final var lockTypeResolver = Mockito.mock(LockTypeResolver.class);
+    final LockTypeResolver lockTypeResolver = Mockito.mock(LockTypeResolver.class);
     when(lockTypeResolver.get(SimpleLock.class)).thenReturn(lock);
 
-    final var scheduler = new ThreadPoolTaskScheduler();
+    final ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
     scheduler.afterPropertiesSet();
 
-    final var keyGenerator = new SpelKeyGenerator(new DefaultConversionService());
-    final var intervalConverter = new BeanFactoryAwareIntervalConverter(beanFactory);
-    final var retriableLockFactory = new DefaultRetriableLockFactory(new DefaultRetryTemplateConverter(intervalConverter));
+    final SpelKeyGenerator keyGenerator = new SpelKeyGenerator(new DefaultConversionService());
+    final IntervalConverter intervalConverter = new BeanFactoryAwareIntervalConverter(beanFactory);
+    final RetriableLockFactory retriableLockFactory = new DefaultRetriableLockFactory(new DefaultRetryTemplateConverter(intervalConverter));
 
-    final var processor = new LockBeanPostProcessor(keyGenerator, lockTypeResolver, intervalConverter, retriableLockFactory, scheduler);
+    final LockBeanPostProcessor processor = new LockBeanPostProcessor(keyGenerator, lockTypeResolver, intervalConverter, retriableLockFactory, scheduler);
     processor.afterPropertiesSet();
 
     beanFactory.addBeanPostProcessor(processor);
@@ -135,7 +138,7 @@ public class LockBeanPostProcessorTest {
   @Test
   public void shouldRefreshLock() throws InterruptedException {
     lockedInterface.sleep();
-    final var lockedKey = this.lock.getLockMap().get("lock").get(0);
+    final LockedKey lockedKey = this.lock.getLockMap().get("lock").get(0);
     assertThat(lockedKey.getUpdatedAt()).withFailMessage(lockedKey.toString()).isCloseTo(System.currentTimeMillis(), Offset.offset(200L));
     assertThat(lockedKey.getKey()).isEqualTo("com.github.alturkovic.lock.advice.LockBeanPostProcessorTest.LockedInterfaceImpl.sleep");
 

@@ -41,14 +41,14 @@ public class EmbeddedRedis {
   @PostConstruct
   public void start() throws IOException {
     // find free port
-    final var serverSocket = new ServerSocket(0);
-    final var port = serverSocket.getLocalPort();
+    final ServerSocket serverSocket = new ServerSocket(0);
+    final int port = serverSocket.getLocalPort();
     serverSocket.close();
 
     server = RedisServer.builder().setting("bind 127.0.0.1").port(port).build(); // bind to ignore windows firewall popup each time the server starts
     server.start();
 
-    final var connectionFactory = new LettuceConnectionFactory(new RedisStandaloneConfiguration("localhost", port));
+    final LettuceConnectionFactory connectionFactory = new LettuceConnectionFactory(new RedisStandaloneConfiguration("localhost", port));
     connectionFactory.setDatabase(0);
     connectionFactory.afterPropertiesSet();
 

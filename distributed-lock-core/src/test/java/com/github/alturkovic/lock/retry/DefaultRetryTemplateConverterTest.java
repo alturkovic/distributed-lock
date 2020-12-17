@@ -72,17 +72,14 @@ public class DefaultRetryTemplateConverterTest {
     assertThat(wrapper.getPropertyValue("retryPolicy")).isInstanceOf(CompositeRetryPolicy.class);
     assertThat((RetryPolicy[]) wrapper.getPropertyValue("retryPolicy.policies"))
       .hasSize(2)
-      .anyMatch(policy1 -> {
-        if (policy1 instanceof TimeoutRetryPolicy) {
-          final TimeoutRetryPolicy timeoutRetryPolicy = (TimeoutRetryPolicy) policy1;
+      .allMatch(policy -> {
+        if (policy instanceof TimeoutRetryPolicy) {
+          final TimeoutRetryPolicy timeoutRetryPolicy = (TimeoutRetryPolicy) policy;
           assertThat(timeoutRetryPolicy.getTimeout()).isEqualTo(timeout);
           return true;
         }
-        return false;
-      })
-      .anyMatch(policy2 -> {
-        if (policy2 instanceof SimpleRetryPolicy) {
-          final SimpleRetryPolicy simpleRetryPolicy = (SimpleRetryPolicy) policy2;
+        if (policy instanceof SimpleRetryPolicy) {
+          final SimpleRetryPolicy simpleRetryPolicy = (SimpleRetryPolicy) policy;
           assertThat(simpleRetryPolicy.getMaxAttempts()).isEqualTo(Integer.MAX_VALUE);
           return true;
         }

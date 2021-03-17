@@ -36,26 +36,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.assertj.core.data.Offset;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.data.jdbc.DataJdbcTest;
 import org.springframework.jdbc.core.ColumnMapRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.jdbc.Sql;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DirtiesContext
-@RunWith(SpringRunner.class)
+@DataJdbcTest
 @Sql(value = "/locks-table-create.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(value = "/locks-table-drop.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 public class SimpleJdbcLockTest implements InitializingBean {
 
   @Autowired
@@ -165,6 +160,5 @@ public class SimpleJdbcLockTest implements InitializingBean {
   }
 
   @SpringBootApplication
-  static class TestApplication {
-  }
+  static class TestApplication {}
 }

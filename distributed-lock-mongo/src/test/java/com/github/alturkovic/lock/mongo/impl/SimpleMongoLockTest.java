@@ -30,22 +30,17 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import org.assertj.core.data.TemporalUnitWithinOffset;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataMongoTest
-@DirtiesContext
-@RunWith(SpringRunner.class)
 public class SimpleMongoLockTest implements InitializingBean {
 
   @Autowired
@@ -59,7 +54,7 @@ public class SimpleMongoLockTest implements InitializingBean {
     lock = new SimpleMongoLock(() -> "abc", mongoTemplate);
   }
 
-  @Before
+  @BeforeEach
   public void cleanMongoCollection() {
     mongoTemplate.dropCollection("locks");
   }
@@ -133,6 +128,5 @@ public class SimpleMongoLockTest implements InitializingBean {
   }
 
   @SpringBootApplication
-  static class TestApplication {
-  }
+  static class TestApplication {}
 }

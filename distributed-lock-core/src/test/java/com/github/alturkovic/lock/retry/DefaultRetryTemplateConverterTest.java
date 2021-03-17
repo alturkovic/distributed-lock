@@ -28,7 +28,7 @@ import com.github.alturkovic.lock.Interval;
 import com.github.alturkovic.lock.Locked;
 import com.github.alturkovic.lock.interval.BeanFactoryAwareIntervalConverter;
 import com.github.alturkovic.lock.interval.IntervalConverter;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.ConfigurablePropertyAccessor;
 import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;

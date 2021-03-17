@@ -37,8 +37,8 @@ import com.github.alturkovic.lock.retry.DefaultRetryTemplateConverter;
 import com.github.alturkovic.lock.retry.RetriableLockFactory;
 import java.util.concurrent.TimeUnit;
 import org.assertj.core.data.Offset;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.support.RootBeanDefinition;
@@ -52,7 +52,7 @@ public class LockBeanPostProcessorTest {
   private LockedInterface lockedInterface;
   private SimpleLock lock;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     final DefaultListableBeanFactory beanFactory = new DefaultListableBeanFactory();
     lock = new SimpleLock();
@@ -74,11 +74,6 @@ public class LockBeanPostProcessorTest {
     beanFactory.registerBeanDefinition("lockedService", new RootBeanDefinition(LockedInterface.class, LockedInterfaceImpl::new));
     lockedInterface = beanFactory.getBean(LockedInterface.class);
     beanFactory.preInstantiateSingletons();
-  }
-
-  @Before
-  public void cleanLockState() {
-    lock.getLockMap().clear();
   }
 
   @Test

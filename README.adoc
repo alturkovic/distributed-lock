@@ -257,6 +257,9 @@ To add the Redis dependency for an example, add the following under your `<depen
 |===
 |Version |Spring Boot version
 
+|1.4.1
+|2.4.3
+
 |1.4.0
 |2.2.7.RELEASE
 
@@ -319,6 +322,15 @@ You can also create an alias for your lock so you don't have to specify `@Locked
 == Changelog
 
 Started tracking the changes since 1.2.0 so no changelogs available for earlier versions.
+
+==== 1.4.1
+
+- CHANGE: Upgraded Spring Boot version to 2.4.3
+- CHANGE: Migrated test to JUnit 5
+- CHANGE: Migrated Redis tests to use Docker container
+- BUGFIX: Injecting the user-defined `LockTypeResolver` properly
+- BUGFIX: Fixed `BeanPostProcessor` initialization warning messages
+- BUGFIX: Minor javadoc fix
 
 ==== 1.4.0
 

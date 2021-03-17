@@ -60,7 +60,7 @@ public @interface Locked {
 
   /**
    * Lock expiration interval. This indicates how long the lock should be considered locked after acquiring and when it should be invalidated.
-   * If {@link #refresh() is positive, lock expiration will periodically be refreshed. This is useful for tasks that can occasionally hang for
+   * If {@link #refresh()} is positive, lock expiration will periodically be refreshed. This is useful for tasks that can occasionally hang for
    * longer than their expiration. This enables long-running task to keep the lock for a long time, but release it relatively quickly in case they fail.
    */
   Interval expiration() default @Interval(value = "10", unit = TimeUnit.SECONDS);

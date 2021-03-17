@@ -30,11 +30,11 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.core.convert.support.DefaultConversionService;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class SpelKeyGeneratorTest {
   private final KeyGenerator keyGenerator = new SpelKeyGenerator(new DefaultConversionService());
@@ -84,22 +84,22 @@ public class SpelKeyGeneratorTest {
       .containsExactly("lock_p_first", "lock_15");
   }
 
-  @Test(expected = EvaluationConvertException.class)
+  @Test
   public void shouldFailWithExpressionThatEvaluatesInNull() {
-    keyGenerator.resolveKeys("lock_", "null", service, sendMessageMethod, new Object[]{"hello"});
-    fail("Expected exception with expression that evaluated in null");
+    assertThatThrownBy(() -> keyGenerator.resolveKeys("lock_", "null", service, sendMessageMethod, new Object[]{"hello"}))
+      .isInstanceOf(EvaluationConvertException.class);
   }
 
-  @Test(expected = EvaluationConvertException.class)
+  @Test
   public void shouldFailWithExpressionThatEvaluatesInEmptyList() {
-    keyGenerator.resolveKeys("lock_", "T(java.util.Collections).emptyList()", service, sendMessageMethod, new Object[]{"hello"});
-    fail("Expected exception with expression that evaluated in empty list");
+    assertThatThrownBy(() -> keyGenerator.resolveKeys("lock_", "T(java.util.Collections).emptyList()", service, sendMessageMethod, new Object[]{"hello"}))
+      .isInstanceOf(EvaluationConvertException.class);
   }
 
-  @Test(expected = EvaluationConvertException.class)
+  @Test
   public void shouldFailWithExpressionThatEvaluatesInListWithNullValue() {
-    keyGenerator.resolveKeys("lock_", "T(java.util.Collections).singletonList(null)", service, sendMessageMethod, new Object[]{"hello"});
-    fail("Expected exception with expression that evaluated in a list with a null value");
+    assertThatThrownBy(() -> keyGenerator.resolveKeys("lock_", "T(java.util.Collections).singletonList(null)", service, sendMessageMethod, new Object[]{"hello"}))
+      .isInstanceOf(EvaluationConvertException.class);
   }
 
   @SuppressWarnings("unused")

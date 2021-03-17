@@ -25,33 +25,31 @@
 package com.github.alturkovic.lock.redis.impl;
 
 import com.github.alturkovic.lock.Lock;
-import com.github.alturkovic.lock.redis.embedded.EmbeddedRedis;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.assertj.core.data.Offset;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DirtiesContext
-@RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE, properties = {
+  "spring.redis.host=${embedded.redis.host}",
+  "spring.redis.port=${embedded.redis.port}",
+  "spring.redis.user=${embedded.redis.user}",
+  "spring.redis.password=${embedded.redis.password}"
+})
 public class MultiRedisLockTest implements InitializingBean {
 
   @Autowired
-  @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection") // false IntelliJ warning
   private StringRedisTemplate redisTemplate;
 
   private Lock lock;
@@ -61,7 +59,7 @@ public class MultiRedisLockTest implements InitializingBean {
     lock = new MultiRedisLock(redisTemplate, () -> "abc");
   }
 
-  @Before
+  @BeforeEach
   public void cleanRedis() {
     redisTemplate.execute((RedisCallback<?>) connection -> {
       connection.flushDb();
@@ -196,7 +194,6 @@ public class MultiRedisLockTest implements InitializingBean {
     assertThat(redisTemplate.opsForValue().get("locks:2")).isNull();
   }
 
-  @SpringBootApplication(scanBasePackageClasses = EmbeddedRedis.class)
-  static class TestApplication {
-  }
+  @SpringBootApplication
+  static class TestApplication {}
 }

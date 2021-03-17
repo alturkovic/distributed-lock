@@ -8,14 +8,10 @@
   <parent>
     <groupId>com.github.alturkovic</groupId>
     <artifactId>distributed-lock</artifactId>
-    <version>1.4.0</version>
+    <version>1.4.1</version>
   </parent>
 
   <artifactId>distributed-lock-redis</artifactId>
-
-  <properties>
-    <embedded-redis.version>0.11.0</embedded-redis.version>
-  </properties>
 
   <dependencies>
     <dependency>
@@ -33,9 +29,15 @@
     </dependency>
 
     <dependency>
-      <groupId>com.bfjournal</groupId>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-bootstrap</artifactId>
+      <version>3.0.1</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.playtika.testcontainers</groupId>
       <artifactId>embedded-redis</artifactId>
-      <version>${embedded-redis.version}</version>
+      <version>2.0.3</version>
       <scope>test</scope>
     </dependency>
     <dependency>

@@ -39,6 +39,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.scheduling.TaskScheduler;
@@ -49,12 +50,12 @@ public class DistributedLockConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  public LockBeanPostProcessor lockBeanPostProcessor(final KeyGenerator keyGenerator,
-                                                     final ConfigurableBeanFactory configurableBeanFactory,
-                                                     final IntervalConverter intervalConverter,
-                                                     final RetriableLockFactory retriableLockFactory,
-                                                     @Autowired(required = false) final TaskScheduler taskScheduler) {
-    final LockBeanPostProcessor processor = new LockBeanPostProcessor(keyGenerator, configurableBeanFactory::getBean, intervalConverter, retriableLockFactory, taskScheduler);
+  public static LockBeanPostProcessor lockBeanPostProcessor(@Lazy final KeyGenerator keyGenerator,
+                                                            @Lazy final LockTypeResolver lockTypeResolver,
+                                                            @Lazy final IntervalConverter intervalConverter,
+                                                            @Lazy final RetriableLockFactory retriableLockFactory,
+                                                            @Lazy @Autowired(required = false) final TaskScheduler taskScheduler) {
+    final LockBeanPostProcessor processor = new LockBeanPostProcessor(keyGenerator, lockTypeResolver, intervalConverter, retriableLockFactory, taskScheduler);
     processor.setBeforeExistingAdvisors(true);
     return processor;
   }

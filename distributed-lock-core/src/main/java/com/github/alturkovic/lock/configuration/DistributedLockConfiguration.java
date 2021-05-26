@@ -62,32 +62,29 @@ public class DistributedLockConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  public IntervalConverter intervalConverter(final ConfigurableBeanFactory configurableBeanFactory) {
+  public IntervalConverter intervalConverter(@Lazy final ConfigurableBeanFactory configurableBeanFactory) {
     return new BeanFactoryAwareIntervalConverter(configurableBeanFactory);
   }
 
   @Bean
   @ConditionalOnMissingBean
-  public RetriableLockFactory retriableLockFactory(final IntervalConverter intervalConverter) {
+  public RetriableLockFactory retriableLockFactory(@Lazy final IntervalConverter intervalConverter) {
     return new DefaultRetriableLockFactory(new DefaultRetryTemplateConverter(intervalConverter));
   }
 
   @Bean
   @ConditionalOnMissingBean
-  public KeyGenerator spelKeyGenerator(final ConversionService conversionService) {
+  public KeyGenerator spelKeyGenerator(@Lazy @Autowired(required = false) final ConversionService conversionService) {
+    if (conversionService == null) {
+      return new SpelKeyGenerator(DefaultConversionService.getSharedInstance());
+    }
     return new SpelKeyGenerator(conversionService);
   }
 
   @Bean
   @ConditionalOnMissingBean
-  public LockTypeResolver lockTypeResolver(final ConfigurableBeanFactory configurableBeanFactory) {
+  public LockTypeResolver lockTypeResolver(@Lazy final ConfigurableBeanFactory configurableBeanFactory) {
     return configurableBeanFactory::getBean;
-  }
-
-  @Bean
-  @ConditionalOnMissingBean
-  public ConversionService conversionService() {
-    return new DefaultConversionService();
   }
 
   @Bean

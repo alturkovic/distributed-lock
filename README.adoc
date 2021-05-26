@@ -157,11 +157,12 @@ Make sure you create the table and configure the table ID incrementer.
 Example how to create table:
 [source, sql]
 ----
-create table lock (
-    id int not null auto_increment primary key,
-    lock_key varchar(255) unique,
+CREATE TABLE lock (
+    id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    lock_key varchar(255) UNIQUE,
     token varchar(255),
-    expireAt timestamp,
+    expireAt TIMESTAMP,
+    PRIMARY KEY(`id`)
 );
 ----
 
@@ -322,6 +323,10 @@ You can also create an alias for your lock so you don't have to specify `@Locked
 == Changelog
 
 Started tracking the changes since 1.2.0 so no changelogs available for earlier versions.
+
+==== 1.4.2
+
+- CHANGE: `KeyGenerator` will not declare `ConversionService` but reuse the shared instance if missing
 
 ==== 1.4.1
 

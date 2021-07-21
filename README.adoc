@@ -1,4 +1,4 @@
-image:https://img.shields.io/badge/Java-8%2B-ED8B00?style=for-the-badge&labelColor=ED8B00&logo=java&color=808080[Java] image:https://img.shields.io/jitpack/v/github/alturkovic/distributed-lock?style=for-the-badge&logo=Git&labelColor=007ec5&color=808080&logoColor=white[JitPack] image:https://img.shields.io/badge/Spring%20Boot-2.4.3-ED8B00?style=for-the-badge&labelColor=6db33f&logo=Spring%20Boot&color=808080&logoColor=white[Spring Boot] image:https://img.shields.io/github/license/alturkovic/url-utils?style=for-the-badge&color=808080[License]
+image:https://img.shields.io/badge/Java-8%2B-ED8B00?style=for-the-badge&labelColor=ED8B00&logo=java&color=808080[Java] image:https://img.shields.io/jitpack/v/github/alturkovic/distributed-lock?style=for-the-badge&logo=Git&labelColor=007ec5&color=808080&logoColor=white[JitPack] image:https://img.shields.io/badge/Spring%20Boot-2.4.3-ED8B00?style=for-the-badge&labelColor=6db33f&logo=Spring%20Boot&color=808080&logoColor=white[Spring Boot] image:https://img.shields.io/github/license/alturkovic/distributed-lock?style=for-the-badge&color=808080[License]
 
 
 = Distributed Lock

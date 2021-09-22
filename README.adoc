@@ -46,6 +46,7 @@ For more grained control (e.g., locking in the middle of the method and releasin
 @Component
 public class Example {
 
+    @Autowired
     @Qualifier("simpleRedisLock")
     private Lock lock;
 

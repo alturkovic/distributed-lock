@@ -8,7 +8,7 @@
   <parent>
     <groupId>com.github.alturkovic</groupId>
     <artifactId>distributed-lock</artifactId>
-    <version>1.4.2</version>
+    <version>1.4.3</version>
   </parent>
 
   <artifactId>distributed-lock-redis</artifactId>

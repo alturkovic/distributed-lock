@@ -262,22 +262,22 @@ To add the Redis dependency for an example, add the following under your `<depen
 |===
 |Version |Spring Boot version
 
-|1.4.1
+|1.4.1+
 |2.4.3
 
-|1.3.0
+|1.3.0+
 |2.2.7.RELEASE
 
-|1.2.0
+|1.2.0+
 |2.1.0.RELEASE
 
-|1.1.8
+|1.1.8+
 |2.0.4.RELEASE
 
-|1.1.7
+|1.1.7+
 |2.0.3.RELEASE
 
-|1.1.6 and lower
+|1.1.6-
 |1.5.6.RELEASE
 
 |===
@@ -312,6 +312,11 @@ You can also create an alias for your lock so you don't have to specify `@Locked
 == Changelog
 
 Started tracking the changes since 1.2.0 so no changelogs available for earlier versions.
+
+==== 1.4.3
+
+- BUGFIX: Use Spring scheduler if enabled instead of overriding
+- BUGFIX: Escape `lock` keyword in SQL locks since MySQL uses it as a keyword
 
 ==== 1.4.2
 

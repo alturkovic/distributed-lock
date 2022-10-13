@@ -25,10 +25,12 @@
 package com.github.alturkovic.lock.redis.impl;
 
 import com.github.alturkovic.lock.AbstractSimpleLock;
+import io.lettuce.core.RedisCommandInterruptedException;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.RedisSystemException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.data.redis.core.script.RedisScript;

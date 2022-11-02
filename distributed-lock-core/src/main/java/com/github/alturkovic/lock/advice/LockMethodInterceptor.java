@@ -65,7 +65,8 @@ public class LockMethodInterceptor implements MethodInterceptor {
   private Object executeLockedMethod(final MethodInvocation invocation, final LockContext context) throws Throwable {
     final long expiration = intervalConverter.toMillis(context.getLocked().expiration());
     try {
-      context.setToken(retriableLockFactory.generate(context.getLock(), context.getLocked()).acquire(context.getKeys(), context.getLocked().storeId(), expiration));
+      Lock lock = retriableLockFactory.generate(context.getLock(), context.getLocked());
+      context.setToken(lock.acquire(context.getKeys(), context.getLocked().storeId(), expiration));
     } catch (final Exception e) {
       throw new DistributedLockException(String.format("Unable to acquire lock with expression: %s", context.getLocked().expression()), e);
     }

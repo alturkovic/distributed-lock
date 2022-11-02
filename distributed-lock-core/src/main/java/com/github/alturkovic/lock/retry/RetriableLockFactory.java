@@ -35,9 +35,11 @@ public interface RetriableLockFactory {
   /**
    * Generates a {@link RetriableLock} that will retry {@code lock} token acquisition logic as specified by {@code locked}.
    *
+   * If no retry is required, it will return the given {@code lock}.
+   *
    * @param lock   lock which {@link Lock#acquire} logic should be retried
    * @param locked annotation describing how to retry
    * @return a retriable lock version of {@code lock}
    */
-  RetriableLock generate(Lock lock, Locked locked);
+  Lock generate(Lock lock, Locked locked);
 }

@@ -65,6 +65,26 @@ public class DefaultRetryTemplateConverterTest {
     assertRetryTemplateConstruction(retryTemplate, 2000L, 100L);
   }
 
+  @Test
+  @Locked(retry = @Interval("0"))
+  public void shouldConstructNullRetryTemplateWithNoRetry() {
+    final Locked locked = new Object() {}.getClass().getEnclosingMethod().getAnnotation(Locked.class);
+    final RetryTemplateConverter converter = new DefaultRetryTemplateConverter(intervalConverter);
+    final RetryTemplate retryTemplate = converter.construct(locked);
+
+    assertThat(retryTemplate).isNull();
+  }
+
+  @Test
+  @Locked(timeout = @Interval("0"))
+  public void shouldConstructNullRetryTemplateWithNoTimeout() {
+    final Locked locked = new Object() {}.getClass().getEnclosingMethod().getAnnotation(Locked.class);
+    final RetryTemplateConverter converter = new DefaultRetryTemplateConverter(intervalConverter);
+    final RetryTemplate retryTemplate = converter.construct(locked);
+
+    assertThat(retryTemplate).isNull();
+  }
+
   // is there a better way to test the RetryTemplate construction?
   private void assertRetryTemplateConstruction(final RetryTemplate retryTemplate, final long timeout, final long backOff) {
     final ConfigurablePropertyAccessor wrapper = PropertyAccessorFactory.forDirectFieldAccess(retryTemplate);

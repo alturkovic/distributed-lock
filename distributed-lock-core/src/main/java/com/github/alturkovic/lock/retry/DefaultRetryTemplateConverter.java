@@ -30,6 +30,7 @@ import com.github.alturkovic.lock.interval.IntervalConverter;
 import java.util.Collections;
 import lombok.Data;
 import org.springframework.retry.RetryPolicy;
+import org.springframework.retry.backoff.BackOffPolicy;
 import org.springframework.retry.backoff.FixedBackOffPolicy;
 import org.springframework.retry.policy.CompositeRetryPolicy;
 import org.springframework.retry.policy.SimpleRetryPolicy;
@@ -43,24 +44,43 @@ public class DefaultRetryTemplateConverter implements RetryTemplateConverter {
   @Override
   public RetryTemplate construct(final Locked locked) {
     final RetryTemplate retryTemplate = new RetryTemplate();
-    retryTemplate.setRetryPolicy(resolveLockRetryPolicy(locked));
-    retryTemplate.setBackOffPolicy(resolveBackOffPolicy(locked));
+    RetryPolicy retryPolicy = resolveLockRetryPolicy(locked);
+    if (retryPolicy == null) {
+      return null;
+    }
+
+    BackOffPolicy backOffPolicy = resolveBackOffPolicy(locked);
+    if (backOffPolicy == null) {
+      return null;
+    }
+
+    retryTemplate.setRetryPolicy(retryPolicy);
+    retryTemplate.setBackOffPolicy(backOffPolicy);
     return retryTemplate;
   }
 
-  private CompositeRetryPolicy resolveLockRetryPolicy(final Locked locked) {
+  private RetryPolicy resolveLockRetryPolicy(final Locked locked) {
     final CompositeRetryPolicy compositeRetryPolicy = new CompositeRetryPolicy();
 
     final RetryPolicy timeoutRetryPolicy = resolveTimeoutRetryPolicy(locked);
     final RetryPolicy exceptionTypeRetryPolicy = resolveExceptionTypeRetryPolicy();
+
+    if (timeoutRetryPolicy == null) {
+      return null;
+    }
 
     compositeRetryPolicy.setPolicies(new RetryPolicy[]{timeoutRetryPolicy, exceptionTypeRetryPolicy});
     return compositeRetryPolicy;
   }
 
   private RetryPolicy resolveTimeoutRetryPolicy(final Locked locked) {
+    long timeout = intervalConverter.toMillis(locked.timeout());
+    if (timeout <= 0) {
+      return null;
+    }
+
     final TimeoutRetryPolicy timeoutRetryPolicy = new TimeoutRetryPolicy();
-    timeoutRetryPolicy.setTimeout(intervalConverter.toMillis(locked.timeout()));
+    timeoutRetryPolicy.setTimeout(timeout);
     return timeoutRetryPolicy;
   }
 
@@ -68,9 +88,14 @@ public class DefaultRetryTemplateConverter implements RetryTemplateConverter {
     return new SimpleRetryPolicy(Integer.MAX_VALUE, Collections.singletonMap(LockNotAvailableException.class, true));
   }
 
-  private FixedBackOffPolicy resolveBackOffPolicy(final Locked locked) {
+  private BackOffPolicy resolveBackOffPolicy(final Locked locked) {
+    long retry = intervalConverter.toMillis(locked.retry());
+    if (retry <= 0) {
+      return null;
+    }
+
     final FixedBackOffPolicy fixedBackOffPolicy = new FixedBackOffPolicy();
-    fixedBackOffPolicy.setBackOffPeriod(intervalConverter.toMillis(locked.retry()));
+    fixedBackOffPolicy.setBackOffPeriod(retry);
     return fixedBackOffPolicy;
   }
 }

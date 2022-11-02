@@ -27,13 +27,19 @@ package com.github.alturkovic.lock.retry;
 import com.github.alturkovic.lock.Lock;
 import com.github.alturkovic.lock.Locked;
 import lombok.Data;
+import org.springframework.retry.support.RetryTemplate;
 
 @Data
 public class DefaultRetriableLockFactory implements RetriableLockFactory {
   private final RetryTemplateConverter retryTemplateConverter;
 
   @Override
-  public RetriableLock generate(final Lock lock, final Locked locked) {
-    return new RetriableLock(lock, retryTemplateConverter.construct(locked));
+  public Lock generate(final Lock lock, final Locked locked) {
+    RetryTemplate retryTemplate = retryTemplateConverter.construct(locked);
+    if (retryTemplate == null) {
+      return lock;
+    }
+
+    return new RetriableLock(lock, retryTemplate);
   }
 }

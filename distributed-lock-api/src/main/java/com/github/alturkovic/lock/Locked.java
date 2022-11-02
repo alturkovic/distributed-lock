@@ -68,11 +68,15 @@ public @interface Locked {
   /**
    * Lock timeout interval. The maximum time to wait for lock. If lock is not acquired in this interval, lock is considered to be taken and
    * lock cannot be given to the annotated method.
+   *
+   * If it is non-positive, lock will not
+   * be retried during the execution and only one attempt to acquire the lock will be executed in this case.
    */
   Interval timeout() default @Interval(value = "1", unit = TimeUnit.SECONDS);
 
   /**
-   * Lock retry interval. How long to wait before trying to acquire the lock again after it was not acquired.
+   * Lock retry interval. How long to wait before trying to acquire the lock again after it was not acquired. If it is non-positive, lock will not
+   * be retried during the execution and only one attempt to acquire the lock will be executed in this case.
    */
   Interval retry() default @Interval(value = "50");
 

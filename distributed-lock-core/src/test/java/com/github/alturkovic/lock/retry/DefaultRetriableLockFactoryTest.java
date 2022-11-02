@@ -56,9 +56,19 @@ public class DefaultRetriableLockFactoryTest {
     when(retryTemplateConverter.construct(eq(locked))).thenReturn(retryTemplate);
 
     final RetriableLockFactory factory = new DefaultRetriableLockFactory(retryTemplateConverter);
-    final RetriableLock retriableLock = factory.generate(lock, locked);
+    final RetriableLock retriableLock = (RetriableLock) factory.generate(lock, locked);
 
     assertThat(retriableLock.getLock()).isEqualTo(lock);
     assertThat(retriableLock.getRetryTemplate()).isEqualTo(retryTemplate);
+  }
+
+  @Test
+  public void shouldGenerateSameLock() {
+    when(retryTemplateConverter.construct(eq(locked))).thenReturn(null);
+
+    final RetriableLockFactory factory = new DefaultRetriableLockFactory(retryTemplateConverter);
+    final Lock retriableLock = factory.generate(lock, locked);
+
+    assertThat(retriableLock).isSameAs(lock);
   }
 }

@@ -25,10 +25,12 @@
 package com.github.alturkovic.lock.redis.impl;
 
 import com.github.alturkovic.lock.AbstractSimpleLock;
+import io.lettuce.core.RedisCommandInterruptedException;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.RedisSystemException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.data.redis.core.script.RedisScript;
@@ -84,11 +86,20 @@ public class SimpleRedisLock extends AbstractSimpleLock {
   protected boolean refresh(final String key, final String storeId, final String token, final long expiration) {
     final List<String> singletonKeyList = Collections.singletonList(storeId + ":" + key);
 
-    final boolean refreshed = stringRedisTemplate.execute(lockRefreshScript, singletonKeyList, token, String.valueOf(expiration));
-    if (refreshed) {
-      log.debug("Refresh script updated the expiration for key {} with token {} in store {} to {}", key, token, storeId, expiration);
-    } else {
-      log.debug("Refresh script failed to update expiration for key {} with token {} in store {} with expiration: {}", key, token, storeId, expiration);
+    boolean refreshed = false;
+    try {
+      refreshed = stringRedisTemplate.execute(lockRefreshScript, singletonKeyList, token, String.valueOf(expiration));
+      if (refreshed) {
+        log.debug("Refresh script updated the expiration for key {} with token {} in store {} to {}", key, token, storeId, expiration);
+      } else {
+        log.debug("Refresh script failed to update expiration for key {} with token {} in store {} with expiration: {}", key, token, storeId, expiration);
+      }
+    } catch (RedisSystemException e) {
+      if (e.getCause() != null && (e.getCause() instanceof RedisCommandInterruptedException)) {
+        log.debug("Refresh script thread interrupted to update expiration for key {} with token {} in store {} with expiration: {}", key, token, storeId, expiration);
+      } else {
+        throw e;
+      }
     }
     return refreshed;
   }

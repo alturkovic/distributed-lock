@@ -161,12 +161,13 @@ Make sure you create the table and configure the table ID incrementer.
 Example how to create table:
 [source, sql]
 ----
-CREATE TABLE lock (
-    id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    lock_key varchar(255) UNIQUE,
-    token varchar(255),
+CREATE TABLE IF NOT EXISTS `lock` (
+    id       INT NOT NULL AUTO_INCREMENT,
+    lock_key VARCHAR(255),
+    token    VARCHAR(255),
     expireAt TIMESTAMP,
-    PRIMARY KEY(`id`)
+    PRIMARY KEY(`id`),
+    UNIQUE KEY `uk_lock_lock_key` (`lock_key`)
 );
 ----
 

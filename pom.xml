@@ -6,7 +6,7 @@
 
   <groupId>com.github.alturkovic</groupId>
   <artifactId>distributed-lock</artifactId>
-  <version>1.4.3</version>
+  <version>1.4.4</version>
   <packaging>pom</packaging>
 
   <name>distributed-lock</name>

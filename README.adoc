@@ -314,6 +314,12 @@ You can also create an alias for your lock so you don't have to specify `@Locked
 
 Started tracking the changes since 1.2.0 so no changelogs available for earlier versions.
 
+==== 1.4.4
+
+- BUGFIX: No retries will be attempted if `retry` or `timeout` are zero or negative
+- BUGFIX: Handle Redis interruptions in Redis locks better
+- BUGFIX: SQL script updated in README
+
 ==== 1.4.3
 
 - BUGFIX: Use Spring scheduler if enabled instead of overriding

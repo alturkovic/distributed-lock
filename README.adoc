@@ -314,6 +314,10 @@ You can also create an alias for your lock so you don't have to specify `@Locked
 
 Started tracking the changes since 1.2.0 so no changelogs available for earlier versions.
 
+==== 1.5.0
+
+- CHANGE: Changed the default SQL table name from `lock` to `distributed_lock` to avoid issues with reserved database keywords
+
 ==== 1.4.4
 
 - BUGFIX: No retries will be attempted if `retry` or `timeout` are zero or negative
@@ -356,8 +360,7 @@ Started tracking the changes since 1.2.0 so no changelogs available for earlier 
 
 ==== 1.2.1
 
-- FEATURE: Lock refreshing has been added.
-Check the 'Lock refresh' chapter for more details
+- FEATURE: Lock refreshing has been added. Check the 'Lock refresh' chapter for more details
 - BUGFIX: `@RedisMultiLocked` was using `#executionPath` as prefix instead of an expression
 - BUGFIX: `@RedisMultiLocked` was using `expiration` and `timeout` in milliseconds instead of seconds
 

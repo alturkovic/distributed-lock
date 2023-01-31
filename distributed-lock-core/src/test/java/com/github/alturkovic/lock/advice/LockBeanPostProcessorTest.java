@@ -79,61 +79,61 @@ public class LockBeanPostProcessorTest {
   @Test
   public void shouldLockInheritedFromInterface() {
     lockedInterface.doLocked(1, "hello");
-    assertThat(lock.getLockedKeys("lock")).containsExactly("lock:hello");
+    assertThat(lock.getLockedKeys("distributed_lock")).containsExactly("lock:hello");
   }
 
   @Test
   public void shouldLockInheritedFromInterfaceWithAlias() {
     lockedInterface.doLockedWithAlias(1, "hello");
-    assertThat(lock.getLockedKeys("lock")).containsExactly("hello"); // @SimpleLock does not add prefix
+    assertThat(lock.getLockedKeys("distributed_lock")).containsExactly("hello"); // @SimpleLock does not add prefix
   }
 
   @Test
   public void shouldLockOverridenFromInterface() {
     lockedInterface.doLockedOverriden(1, "hello");
-    assertThat(lock.getLockedKeys("lock")).containsExactly("lock:1");
+    assertThat(lock.getLockedKeys("distributed_lock")).containsExactly("lock:1");
   }
 
   @Test
   public void shouldLockOverridenFromInterfaceWithAlias() {
     lockedInterface.doLockedOverridenWithAlias(1, "hello");
-    assertThat(lock.getLockedKeys("lock")).containsExactly("1"); // @SimpleLock does not add prefix
+    assertThat(lock.getLockedKeys("distributed_lock")).containsExactly("1"); // @SimpleLock does not add prefix
   }
 
   @Test
   public void shouldLockFromImplementation() {
     lockedInterface.doLockedFromImplementation(1, "hello");
-    assertThat(lock.getLockedKeys("lock")).containsExactly("lock:hello");
+    assertThat(lock.getLockedKeys("distributed_lock")).containsExactly("lock:hello");
   }
 
   @Test
   public void shouldLockFromImplementationWithAlias() {
     lockedInterface.doLockedFromImplementationWithAlias(1, "hello");
-    assertThat(lock.getLockedKeys("lock")).containsExactly("hello"); // @SimpleLock does not add prefix
+    assertThat(lock.getLockedKeys("distributed_lock")).containsExactly("hello"); // @SimpleLock does not add prefix
   }
 
   @Test
   public void shouldLockWithImplementationDetail() {
     lockedInterface.doLockedWithImplementationDetail(1, "hello");
-    assertThat(lock.getLockedKeys("lock")).containsExactly("lock:4");
+    assertThat(lock.getLockedKeys("distributed_lock")).containsExactly("lock:4");
   }
 
   @Test
   public void shouldLockWithExecutionPath() {
     lockedInterface.doLockedWithExecutionPath();
-    assertThat(lock.getLockedKeys("lock")).containsExactly("com.github.alturkovic.lock.advice.LockBeanPostProcessorTest.LockedInterfaceImpl.doLockedWithExecutionPath");
+    assertThat(lock.getLockedKeys("distributed_lock")).containsExactly("com.github.alturkovic.lock.advice.LockBeanPostProcessorTest.LockedInterfaceImpl.doLockedWithExecutionPath");
   }
 
   @Test
   public void shouldLockFromImplementationWithImplementationDetail() {
     lockedInterface.doLockedFromImplementationWithImplementationDetail(1, "hello");
-    assertThat(lock.getLockedKeys("lock")).containsExactly("lock:4");
+    assertThat(lock.getLockedKeys("distributed_lock")).containsExactly("lock:4");
   }
 
   @Test
   public void shouldRefreshLock() throws InterruptedException {
     lockedInterface.sleep();
-    final LockedKey lockedKey = this.lock.getLockMap().get("lock").get(0);
+    final LockedKey lockedKey = this.lock.getLockMap().get("distributed_lock").get(0);
     assertThat(lockedKey.getUpdatedAt()).withFailMessage(lockedKey.toString()).isCloseTo(System.currentTimeMillis(), Offset.offset(200L));
     assertThat(lockedKey.getKey()).isEqualTo("com.github.alturkovic.lock.advice.LockBeanPostProcessorTest.LockedInterfaceImpl.sleep");
 

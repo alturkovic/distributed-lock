@@ -314,6 +314,10 @@ You can also create an alias for your lock so you don't have to specify `@Locked
 
 Started tracking the changes since 1.2.0 so no changelogs available for earlier versions.
 
+==== 1.5.1
+
+- BUGFIX: Removed semicolon from SQL statements for PSQL compatibility
+
 ==== 1.5.0
 
 - CHANGE: Changed the default SQL table name from `lock` to `distributed_lock` to avoid issues with reserved database keywords

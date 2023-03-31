@@ -91,7 +91,7 @@ public class DistributedLockConfiguration {
   @Bean
   @ConditionalOnMissingBean(name = TaskManagementConfigUtils.SCHEDULED_ANNOTATION_PROCESSOR_BEAN_NAME)
   @ConditionalOnProperty(prefix = "com.github.alturkovic.lock.task-scheduler.default", name = "enabled", havingValue = "true", matchIfMissing = true)
-  public TaskScheduler taskScheduler() {
+  public TaskScheduler distributedLockTaskScheduler() {
     return new ThreadPoolTaskScheduler();
   }
 }

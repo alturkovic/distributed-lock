@@ -55,8 +55,8 @@ public class DistributedLockConfiguration {
                                                             @Lazy final LockTypeResolver lockTypeResolver,
                                                             @Lazy final IntervalConverter intervalConverter,
                                                             @Lazy final RetriableLockFactory retriableLockFactory,
-                                                            @Lazy @Autowired(required = false) final TaskScheduler taskScheduler) {
-    final LockBeanPostProcessor processor = new LockBeanPostProcessor(keyGenerator, lockTypeResolver, intervalConverter, retriableLockFactory, taskScheduler);
+                                                            @Lazy @Autowired(required = false) final TaskScheduler distributedLockTaskScheduler) {
+    final LockBeanPostProcessor processor = new LockBeanPostProcessor(keyGenerator, lockTypeResolver, intervalConverter, retriableLockFactory, distributedLockTaskScheduler);
     processor.setBeforeExistingAdvisors(true);
     return processor;
   }
@@ -91,7 +91,7 @@ public class DistributedLockConfiguration {
   @Bean
   @ConditionalOnMissingBean(name = TaskManagementConfigUtils.SCHEDULED_ANNOTATION_PROCESSOR_BEAN_NAME)
   @ConditionalOnProperty(prefix = "com.github.alturkovic.lock.task-scheduler.default", name = "enabled", havingValue = "true", matchIfMissing = true)
-  public TaskScheduler taskScheduler() {
+  public TaskScheduler distributedLockTaskScheduler() {
     return new ThreadPoolTaskScheduler();
   }
 }

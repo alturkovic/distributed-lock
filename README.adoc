@@ -314,6 +314,10 @@ You can also create an alias for your lock so you don't have to specify `@Locked
 
 Started tracking the changes since 1.2.0 so no changelogs available for earlier versions.
 
+==== 1.5.3
+
+- BUGFIX: `RetriableLock` should return `null` if lock is not acquired after the last retry
+
 ==== 1.5.2
 
 - BUGFIX: Use dedicated task scheduler for DistributedLock, avoid trying to override custom default scheduler

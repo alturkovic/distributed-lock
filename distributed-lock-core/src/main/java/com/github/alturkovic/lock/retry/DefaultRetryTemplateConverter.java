@@ -63,12 +63,11 @@ public class DefaultRetryTemplateConverter implements RetryTemplateConverter {
     final CompositeRetryPolicy compositeRetryPolicy = new CompositeRetryPolicy();
 
     final RetryPolicy timeoutRetryPolicy = resolveTimeoutRetryPolicy(locked);
-    final RetryPolicy exceptionTypeRetryPolicy = resolveExceptionTypeRetryPolicy();
-
     if (timeoutRetryPolicy == null) {
       return null;
     }
 
+    final RetryPolicy exceptionTypeRetryPolicy = resolveExceptionTypeRetryPolicy();
     compositeRetryPolicy.setPolicies(new RetryPolicy[]{timeoutRetryPolicy, exceptionTypeRetryPolicy});
     return compositeRetryPolicy;
   }

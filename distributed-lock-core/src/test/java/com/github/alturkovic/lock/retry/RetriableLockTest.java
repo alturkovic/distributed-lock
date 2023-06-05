@@ -25,7 +25,6 @@
 package com.github.alturkovic.lock.retry;
 
 import com.github.alturkovic.lock.Lock;
-import com.github.alturkovic.lock.exception.LockNotAvailableException;
 import java.util.Collections;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,7 +35,6 @@ import org.springframework.retry.policy.SimpleRetryPolicy;
 import org.springframework.retry.support.RetryTemplate;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -82,15 +80,16 @@ public class RetriableLockTest {
 
   @Test
   public void shouldFailRetryWhenFirstAttemptIsNotSuccessful() {
-    assertThatThrownBy(() -> {
-      when(lock.acquire(anyList(), anyString(), anyLong()))
-        .thenReturn(null);
+    when(lock.acquire(anyList(), anyString(), anyLong()))
+      .thenReturn(null);
 
-      final RetryTemplate retryTemplate = new RetryTemplate();
-      retryTemplate.setRetryPolicy(new NeverRetryPolicy());
+    final RetryTemplate retryTemplate = new RetryTemplate();
+    retryTemplate.setRetryPolicy(new NeverRetryPolicy());
 
-      final RetriableLock retriableLock = new RetriableLock(lock, retryTemplate);
-      retriableLock.acquire(Collections.singletonList("key"), "defaultStore", 1000L);
-    }).isInstanceOf(LockNotAvailableException.class);
+    final RetriableLock retriableLock = new RetriableLock(lock, retryTemplate);
+    final String token = retriableLock.acquire(Collections.singletonList("key"), "defaultStore", 1000L);
+
+    assertThat(token).isNull();
+    verify(lock, times(1)).acquire(anyList(), anyString(), anyLong());
   }
 }

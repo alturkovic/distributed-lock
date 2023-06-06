@@ -31,6 +31,7 @@ import com.github.alturkovic.lock.interval.IntervalConverter;
 import com.github.alturkovic.lock.key.KeyGenerator;
 import com.github.alturkovic.lock.retry.RetriableLockFactory;
 import java.lang.reflect.Method;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import lombok.AllArgsConstructor;
@@ -80,7 +81,7 @@ public class LockMethodInterceptor implements MethodInterceptor {
   private void scheduleLockRefresh(final LockContext context, final long expiration) {
     final long refresh = intervalConverter.toMillis(context.getLocked().refresh());
     if (refresh > 0) {
-      context.setScheduledFuture(taskScheduler.scheduleAtFixedRate(constructRefreshRunnable(context, expiration), refresh));
+      context.setScheduledFuture(taskScheduler.scheduleAtFixedRate(constructRefreshRunnable(context, expiration), new Date(System.currentTimeMillis() + refresh), refresh));
     }
   }
 

@@ -45,6 +45,10 @@ public class SimpleLock implements Lock {
   public String acquire(final List<String> keys, final String storeId, final long expiration) {
     log.debug("Acquiring lock for keys {} in store {} with expiration: {}", keys, storeId, expiration);
 
+    if (keys.contains("!noToken")) {
+      return null;
+    }
+
     final List<LockedKey> lockedKeysWithExpiration = lockMap.get(storeId);
     if (lockedKeysWithExpiration != null) {
       final List<String> locksForStore = lockedKeysWithExpiration.stream()

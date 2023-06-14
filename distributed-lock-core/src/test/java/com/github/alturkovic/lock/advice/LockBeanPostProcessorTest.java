@@ -29,6 +29,7 @@ import com.github.alturkovic.lock.Locked;
 import com.github.alturkovic.lock.advice.support.SimpleLock;
 import com.github.alturkovic.lock.advice.support.SimpleLock.LockedKey;
 import com.github.alturkovic.lock.advice.support.SimpleLocked;
+import com.github.alturkovic.lock.exception.DistributedLockException;
 import com.github.alturkovic.lock.interval.BeanFactoryAwareIntervalConverter;
 import com.github.alturkovic.lock.interval.IntervalConverter;
 import com.github.alturkovic.lock.key.SpelKeyGenerator;
@@ -46,6 +47,7 @@ import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 public class LockBeanPostProcessorTest {
@@ -143,6 +145,12 @@ public class LockBeanPostProcessorTest {
     lock.getLockMap().clear();
   }
 
+  @Test
+  public void shouldThrowWhenNoTokenIsAcquiredAfterRetries() {
+    assertThatThrownBy(() -> lockedInterface.noToken("!noToken"))
+      .isInstanceOf(DistributedLockException.class);
+  }
+
   private interface LockedInterface {
 
     @Locked(prefix = "lock:", expression = "#s", type = SimpleLock.class)
@@ -171,6 +179,9 @@ public class LockBeanPostProcessorTest {
 
     @SimpleLocked(refresh = @Interval("100"), expiration = @Interval("200"))
     void sleep() throws InterruptedException;
+
+    @SimpleLocked(expression = "#token")
+    void noToken(String token);
   }
 
   private class LockedInterfaceImpl implements LockedInterface {
@@ -219,6 +230,10 @@ public class LockBeanPostProcessorTest {
     @Override
     public void sleep() throws InterruptedException {
       TimeUnit.SECONDS.sleep(1);
+    }
+
+    @Override
+    public void noToken(String token) {
     }
 
     public int getStaticValue() {

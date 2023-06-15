@@ -87,7 +87,7 @@ Locking a method with the name _aliased_ in the document called _lock_ in MongoD
 
 [source,java]
 ----
-@MongoLocked(expression = "'aliased'", storeId = "lock")
+@MongoLocked(expression = "'aliased'", storeId = "distributed_lock")
 public void runLockedWithMongo() {
     // locked code
 }

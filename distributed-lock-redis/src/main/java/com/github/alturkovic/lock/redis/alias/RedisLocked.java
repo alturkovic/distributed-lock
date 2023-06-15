@@ -43,7 +43,7 @@ public @interface RedisLocked {
   boolean manuallyReleased() default false;
 
   @AliasFor(annotation = Locked.class)
-  String storeId() default "lock";
+  String storeId() default "distributed_lock";
 
   @AliasFor(annotation = Locked.class)
   String prefix() default "";

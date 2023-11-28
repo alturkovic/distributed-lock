@@ -260,8 +260,14 @@ To add the Redis dependency for an example, add the following under your `<depen
 
 === Compatibility
 
+Fully compatible with Spring 3. For earlier version support check the compatibility table below.
+Older versions will not be maintained or bugfixed.
+
 |===
 |Version |Spring Boot version
+
+|2.0.0+
+|3.1.5
 
 |1.4.1+
 |2.4.3

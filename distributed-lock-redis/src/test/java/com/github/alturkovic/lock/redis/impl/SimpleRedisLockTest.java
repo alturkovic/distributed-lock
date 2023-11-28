@@ -34,18 +34,24 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.test.annotation.DirtiesContext;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE, properties = {
-  "spring.redis.host=${embedded.redis.host}",
-  "spring.redis.port=${embedded.redis.port}",
-  "spring.redis.user=${embedded.redis.user}",
-  "spring.redis.password=${embedded.redis.password}"
-})
+@SpringBootTest
+@Testcontainers
 public class SimpleRedisLockTest implements InitializingBean {
+
+  @Container
+  @ServiceConnection
+  private static final GenericContainer<?> redis = new GenericContainer<>(DockerImageName.parse("redis:alpine")).withExposedPorts(6379);
 
   @Autowired
   private StringRedisTemplate redisTemplate;

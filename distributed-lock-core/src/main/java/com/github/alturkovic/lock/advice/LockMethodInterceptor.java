@@ -59,6 +59,12 @@ public class LockMethodInterceptor implements MethodInterceptor {
     final LockContext context = new LockContext(invocation);
     try {
       return executeLockedMethod(invocation, context);
+    } catch (DistributedLockException e) {
+      if (context.getLocked() != null && !context.getLocked().throwing()) {
+        log.warn("Cannot obtain lock for keys {} in store {}", context.getKeys(), context.getLocked().storeId(), e);
+        return null;
+      }
+      throw e;
     } finally {
       cleanAfterExecution(context);
     }

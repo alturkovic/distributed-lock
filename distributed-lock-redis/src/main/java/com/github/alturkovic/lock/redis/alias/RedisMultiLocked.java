@@ -62,4 +62,7 @@ public @interface RedisMultiLocked {
 
   @AliasFor(annotation = Locked.class)
   Interval refresh() default @Interval(value = "0");
+
+  @AliasFor(annotation = Locked.class)
+  boolean throwing() default true;
 }

@@ -48,6 +48,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.Mockito.when;
 
 public class LockBeanPostProcessorTest {
@@ -151,6 +152,11 @@ public class LockBeanPostProcessorTest {
       .isInstanceOf(DistributedLockException.class);
   }
 
+  @Test
+  public void shouldNotThrowWhenNoTokenIsAcquiredAfterRetries() {
+    assertDoesNotThrow(() -> lockedInterface.notThrown("!noToken"));
+  }
+
   private interface LockedInterface {
 
     @Locked(prefix = "lock:", expression = "#s", type = SimpleLock.class)
@@ -182,6 +188,9 @@ public class LockBeanPostProcessorTest {
 
     @SimpleLocked(expression = "#token")
     void noToken(String token);
+
+    @SimpleLocked(throwing = false)
+    void notThrown(String token);
   }
 
   private class LockedInterfaceImpl implements LockedInterface {
@@ -234,6 +243,10 @@ public class LockBeanPostProcessorTest {
 
     @Override
     public void noToken(String token) {
+    }
+
+    @Override
+    public void notThrown(String token) {
     }
 
     public int getStaticValue() {

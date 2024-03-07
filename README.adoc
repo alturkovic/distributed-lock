@@ -24,6 +24,10 @@ They wrap the `@Locked` annotation and define the type used.
 Each lock needs to define a https://docs.spring.io/spring/docs/current/spring-framework-reference/html/expressions.html[SpEL] expression used to acquire the lock.
 To learn more about Spring aliases visit https://github.com/spring-projects/spring-framework/wiki/Spring-Annotation-Programming-Model[this] link.
 
+By default, upon failure to acquire the lock `@Locked` will throw `DistributedLockException`. If you need to only log this failure without raising the exception add `throwing = false` to your
+`@Locked` annotation. Using this option on non-void methods will make the method return null - using primitives as return type with this option is not advised. This is useful if you need to lock
+an action across multiple application instances, for example cron.
+
 === Lock refresh
 
 Locks can be refreshed automatically on a regular interval. This allows methods that occasionally need to run longer than their expiration.
@@ -319,6 +323,10 @@ You can also create an alias for your lock so you don't have to specify `@Locked
 == Changelog
 
 Started tracking the changes since 1.2.0 so no changelogs available for earlier versions.
+
+==== 2.1.0
+
+- FEATURE: Added option `throwing` to `@Locked` annotations
 
 ==== 2.0.0
 

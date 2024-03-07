@@ -90,4 +90,12 @@ public @interface Locked {
    * Lock type, see implementations of {@link Lock}.
    */
   Class<? extends Lock> type() default Lock.class;
+
+  /**
+   * Flag to indicate whether an exception should be thrown or logged only.
+   * By default, an exception will be thrown upon lock failure.
+   *
+   * If false, non-void method will return {@code null} upon lock failure.
+   */
+  boolean throwing() default true;
 }

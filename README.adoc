@@ -25,7 +25,8 @@ Each lock needs to define a https://docs.spring.io/spring/docs/current/spring-fr
 To learn more about Spring aliases visit https://github.com/spring-projects/spring-framework/wiki/Spring-Annotation-Programming-Model[this] link.
 
 By default, upon failure to acquire the lock `@Locked` will throw `DistributedLockException`. If you need to only log this failure without raising the exception add `throwing = false` to your
-`@Locked` annotation. This is useful if you need to lock an action across multiple application instances, for example cron.
+`@Locked` annotation. Using this option on non-void methods will make the method return null - using primitives as return type with this option is not advised. This is useful if you need to lock
+an action across multiple application instances, for example cron.
 
 === Lock refresh
 

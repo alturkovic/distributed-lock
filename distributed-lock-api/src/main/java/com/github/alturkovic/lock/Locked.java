@@ -94,6 +94,8 @@ public @interface Locked {
   /**
    * Flag to indicate whether an exception should be thrown or logged only.
    * By default, an exception will be thrown upon lock failure.
+   *
+   * If false, non-void method will return {@code null} upon lock failure.
    */
   boolean throwing() default true;
 }

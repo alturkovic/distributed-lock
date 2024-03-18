@@ -59,7 +59,7 @@ public class Example {
     private void manuallyLocked() {
         // code before locking...
 
-        final String token = lock.acquire(keys, storeId, expiration, retry, timeout);
+        final String token = lock.acquire(keys, storeId, expiration);
 
         // check if you acquired a token
         if (StringUtils.isEmpty(token)) {

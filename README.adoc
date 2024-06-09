@@ -68,7 +68,7 @@ public class Example {
 
         // code after locking...
 
-        lock.release(keys, token, storeId);
+        lock.release(keys, storeId, token);
 
         // code after releasing the lock...
     }

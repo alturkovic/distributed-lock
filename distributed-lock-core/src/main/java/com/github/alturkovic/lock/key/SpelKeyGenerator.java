@@ -60,7 +60,7 @@ public class SpelKeyGenerator extends CachedExpressionEvaluator implements KeyGe
       throw new EvaluationConvertException("null keys are not supported: " + keys);
     }
 
-    if (StringUtils.isEmpty(lockKeyPrefix)) {
+    if (!StringUtils.hasText(lockKeyPrefix)) {
       return keys;
     }
 

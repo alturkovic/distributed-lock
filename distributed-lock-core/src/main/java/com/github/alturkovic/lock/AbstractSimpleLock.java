@@ -46,19 +46,19 @@ public abstract class AbstractSimpleLock implements Lock {
       throw new IllegalStateException("Cannot lock with empty token");
     }
 
-    return acquire(keys.get(0), storeId, token, expiration);
+    return acquire(keys.getFirst(), storeId, token, expiration);
   }
 
   @Override
   public boolean release(final List<String> keys, final String storeId, final String token) {
     Assert.isTrue(keys.size() == 1, "Cannot release lock for multiple keys with this lock");
-    return release(keys.get(0), storeId, token);
+    return release(keys.getFirst(), storeId, token);
   }
 
   @Override
   public boolean refresh(final List<String> keys, final String storeId, final String token, final long expiration) {
     Assert.isTrue(keys.size() == 1, "Cannot refresh lock for multiple keys with this lock");
-    return refresh(keys.get(0), storeId, token, expiration);
+    return refresh(keys.getFirst(), storeId, token, expiration);
   }
 
   protected abstract String acquire(String key, String storeId, String token, long expiration);

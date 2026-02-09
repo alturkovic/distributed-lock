@@ -46,7 +46,7 @@ public class RetriableLock implements Lock {
       return retryTemplate.execute(ctx -> {
         final String token = lock.acquire(keys, storeId, expiration);
 
-        if (StringUtils.isEmpty(token)) {
+        if (!StringUtils.hasText(token)) {
           throw new LockNotAvailableException(String.format("Lock not available for keys: %s in store %s", keys, storeId));
         }
 

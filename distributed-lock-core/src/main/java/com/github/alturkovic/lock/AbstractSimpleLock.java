@@ -42,7 +42,7 @@ public abstract class AbstractSimpleLock implements Lock {
     Assert.isTrue(keys.size() == 1, "Cannot acquire lock for multiple keys with this lock");
 
     final String token = tokenSupplier.get();
-    if (StringUtils.isEmpty(token)) {
+    if (!StringUtils.hasText(token)) {
       throw new IllegalStateException("Cannot lock with empty token");
     }
 

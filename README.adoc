@@ -1,4 +1,4 @@
-image:https://img.shields.io/badge/Java-17%2B-ED8B00?style=for-the-badge&labelColor=ED8B00&logo=java&color=808080[Java] image:https://img.shields.io/jitpack/v/github/alturkovic/distributed-lock?style=for-the-badge&labelColor=007ec5&color=808080&logo=Git&logoColor=white[JitPack] image:https://img.shields.io/badge/Spring%20Boot-3.1.5-ED8B00?style=for-the-badge&labelColor=6db33f&color=808080&logo=Spring%20Boot&logoColor=white[Spring Boot] image:https://img.shields.io/github/license/alturkovic/distributed-lock?style=for-the-badge&color=808080&logo=Open%20Source%20Initiative&logoColor=white[License]
+image:https://img.shields.io/badge/Java-21%2B-ED8B00?style=for-the-badge&labelColor=ED8B00&logo=java&color=808080[Java] image:https://img.shields.io/jitpack/v/github/alturkovic/distributed-lock?style=for-the-badge&labelColor=007ec5&color=808080&logo=Git&logoColor=white[JitPack] image:https://img.shields.io/badge/Spring%20Boot-4.0.2-ED8B00?style=for-the-badge&labelColor=6db33f&color=808080&logo=Spring%20Boot&logoColor=white[Spring Boot] image:https://img.shields.io/github/license/alturkovic/distributed-lock?style=for-the-badge&color=808080&logo=Open%20Source%20Initiative&logoColor=white[License]
 
 
 = Distributed Lock
@@ -264,32 +264,43 @@ To add the Redis dependency for an example, add the following under your `<depen
 
 === Compatibility
 
-Fully compatible with Spring 3. For earlier version support check the compatibility table below.
+Fully compatible with Spring Boot 4. For earlier version support check the compatibility table below.
 Older versions will not be maintained or bugfixed.
 
 |===
-|Version |Spring Boot version
+|Version |Spring Boot version |Java version
+
+|3.0.0+
+|4.0.2
+|21
 
 |2.0.0+
 |3.1.5
+|17
 
 |1.4.1+
 |2.4.3
+|8
 
 |1.3.0+
 |2.2.7.RELEASE
+|8
 
 |1.2.0+
 |2.1.0.RELEASE
+|8
 
 |1.1.8+
 |2.0.4.RELEASE
+|8
 
 |1.1.7+
 |2.0.3.RELEASE
+|8
 
 |1.1.6-
 |1.5.6.RELEASE
+|8
 
 |===
 
@@ -323,6 +334,12 @@ You can also create an alias for your lock so you don't have to specify `@Locked
 == Changelog
 
 Started tracking the changes since 1.2.0 so no changelogs available for earlier versions.
+
+==== 3.0.0
+
+- CHANGE: Upgraded Spring Boot version to 4.0.2
+- CHANGE: Upgraded Java version to 21
+- CHANGE: Upgraded Testcontainers to 2.x
 
 ==== 2.1.0
 

@@ -93,7 +93,7 @@ public class MultiRedisLock implements Lock {
     final List<String> keysWithStoreIdPrefix = keys.stream().map(key -> storeId + ":" + key).collect(Collectors.toList());
     final String token = tokenSupplier.get();
 
-    if (StringUtils.isEmpty(token)) {
+    if (!StringUtils.hasText(token)) {
       throw new IllegalStateException("Cannot lock with empty token");
     }
 

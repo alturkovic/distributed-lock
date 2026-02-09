@@ -6,7 +6,7 @@
 
   <groupId>com.github.alturkovic</groupId>
   <artifactId>distributed-lock</artifactId>
-  <version>2.1.0</version>
+  <version>3.0.0</version>
   <packaging>pom</packaging>
 
   <name>distributed-lock</name>
@@ -15,7 +15,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.1.5</version>
+    <version>4.0.2</version>
   </parent>
 
   <licenses>
@@ -42,7 +42,8 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <java.version>17</java.version>
+    <java.version>21</java.version>
+    <spring-retry.version>2.0.11</spring-retry.version>
   </properties>
 
   <modules>
@@ -93,6 +94,13 @@
           <source>${java.version}</source>
           <target>${java.version}</target>
           <encoding>${project.build.sourceEncoding}</encoding>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>org.projectlombok</groupId>
+              <artifactId>lombok</artifactId>
+              <version>${lombok.version}</version>
+            </path>
+          </annotationProcessorPaths>
         </configuration>
       </plugin>
       <plugin>

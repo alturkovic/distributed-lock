@@ -31,8 +31,8 @@ import com.github.alturkovic.lock.interval.IntervalConverter;
 import com.github.alturkovic.lock.key.KeyGenerator;
 import com.github.alturkovic.lock.retry.RetriableLockFactory;
 import java.lang.reflect.Method;
+import java.time.Duration;
 import java.time.Instant;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import lombok.AllArgsConstructor;
@@ -75,7 +75,7 @@ public class LockMethodInterceptor implements MethodInterceptor {
     try {
       Lock lock = retriableLockFactory.generate(context.getLock(), context.getLocked());
       String token = lock.acquire(context.getKeys(), context.getLocked().storeId(), expiration);
-      if (StringUtils.isEmpty(token)) {
+      if (!StringUtils.hasText(token)) {
         throw new IllegalStateException("No token acquired");
       }
       context.setToken(token);
@@ -92,8 +92,8 @@ public class LockMethodInterceptor implements MethodInterceptor {
   private void scheduleLockRefresh(final LockContext context, final long expiration) {
     final long refresh = intervalConverter.toMillis(context.getLocked().refresh());
     if (refresh > 0) {
-      Date startTime = Date.from(Instant.now().plusMillis(refresh));
-      context.setScheduledFuture(taskScheduler.scheduleAtFixedRate(constructRefreshRunnable(context, expiration), startTime, refresh));
+      Instant startTime = Instant.now().plusMillis(refresh);
+      context.setScheduledFuture(taskScheduler.scheduleAtFixedRate(constructRefreshRunnable(context, expiration), startTime, Duration.ofMillis(refresh)));
     }
   }
 
@@ -147,7 +147,7 @@ public class LockMethodInterceptor implements MethodInterceptor {
     }
 
     private void validateConstructedContext() {
-      if (StringUtils.isEmpty(locked.expression())) {
+      if (!StringUtils.hasText(locked.expression())) {
         throw new DistributedLockException(String.format("Missing expression: %s on method %s", locked, method));
       }
 
